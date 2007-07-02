@@ -1,0 +1,73 @@
+------------------------------------
+RubyJS - Ruby to Javascript Compiler
+------------------------------------
+
+COPYRIGHT
+
+  Copyright (c) 2007 by Michael Neumann (mneumann@ntecs.de).
+  All rights reserved.
+
+ABOUT
+
+  RubyJS translates Ruby code into Javascript code. NOTE that it executes the
+  Ruby code before it translates it into Javascript. This has the advantage of
+  being able to (mis-)use all of Ruby's meta-programming tricks in the global
+  scope (i.e. for defining classes and methods, NOT within methods!).
+
+REQUIREMENTS
+
+  * ParseTree 1.7.1 (with patches)
+
+MAPPING
+
+  The mapping from Ruby objects (left) to Javascript values (right) are given below. 
+
+  true          -> true (class Boolean)
+  false         -> false (class Boolean)
+  nil           -> nil (a special variable!)
+  1, 1.2        -> Javascript Number (unboxed)
+  "String"      -> immutable Javascript String (unboxed)
+  /regexp/      -> /regexp/ (unboxed)
+  [array]       -> [array] (unboxed)
+  {hash}        -> Javascript Hash object (unboxed, but indirect)
+  Proc/iterator -> function (unboxed) 
+
+TODO
+
+  Issue a warning whenever a destructive Ruby string method like gsub!
+  is used. The reason behind this warning is that, due to efficience
+  reasons, Ruby strings (which are mutable) are mapped to immutable
+  Javascript strings.
+
+  Command-line switch that avoids generation of arity checking in the
+  functions. Makes execution of RubyJS generated Javascript code much
+  faster.
+
+  Command-line switch that doesn't call methods for some operators.
+  Most important ones are "+", "-" and "/". This is of course an unsafe
+  operation as you could define a method "+" in your own class. For
+  heavy math operations, this of course increases performance a lot!
+
+  Command-line switch that removes unused methods. This is possible, as
+  we record the names of all (possibly) called methods. This of course
+  disables send() support. This switch has the potential to reduce the
+  size of the generated Javascript significantly (which also reduces
+  memory consumption on the client side). For this to work, we have to
+  generate a call chain, which method name calls which other method
+  names. This works only on method names, as we can't infer the used
+  classes.
+
+  Command-line switch that disables the generation of name-information
+  used by methods like send(), instance_variables(), methods() or
+  respond_to?(). This makes it hard to decompile the Javascript code
+  back to Ruby or assign meaningful names.
+
+LIMITATIONS
+
+  You can't inherit from core classes like Array, String, Regexp and so
+  on. It's easy to allow by adding one further indirection, e.g. in that
+  on object creation an attribute "m" is assigned, which contains a hash
+  of all methods of that object, and on method call use "obj.m.method".
+  As long as this limitation is no problem, I go the way via prototypes,
+  which should be slightly more efficient.
+
