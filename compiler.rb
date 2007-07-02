@@ -4,6 +4,7 @@ require 'sexp_processor'
 require 'set'
 require 'pp'
 require 'name_generator'
+require 'encoder'
 
 class ParseTree
   def parse_tree_for_instance_method(klass, method)
@@ -17,11 +18,9 @@ end
 
 class RubyToJavascriptCompiler < SexpProcessor
 
-  RESULT_VAR = "r"
-
   attr_accessor :method_calls
 
-  def initialize(attribute_name_generator)
+  def initialize(encoder)
     super()
     
     # don't stop at unknown nodes
@@ -40,17 +39,11 @@ class RubyToJavascriptCompiler < SexpProcessor
     #@current_iter_dvars = nil
     #@iter_dvars_stack = []
 
+    # 
+    # The encoder object used for encoding and name generation of all
+    # kind of variables etc.
     #
-    # This name generator is used for methods and instance variables
-    # (both summarized as "attributes"). 
-    #
-    @attribute_name_generator = attribute_name_generator 
-
-    # We use a second name generator for local variables. 
-    # There is no problem when method and local variable names clash, 
-    # as methods are always called in dot notation. Using a second name
-    # generator uses slighly less longer variable names.
-    @local_variable_name_generator = NameGenerator.new
+    @encoder = encoder
 
     #
     # record all (potential) names of all method calls
@@ -58,9 +51,15 @@ class RubyToJavascriptCompiler < SexpProcessor
     @method_calls = Set.new
 
     # 
-    # record all local variables
+    # record all local variables (including arguments)
     #
     @local_variables = Set.new
+
+    #
+    # Those local variables that need not be initialized with "nil" are
+    # contained in this set (mostly temporary variables).
+    #
+    @local_variables_need_no_initialization = Set.new
 
     #
     # contains all argument variables except "*args"
@@ -72,6 +71,11 @@ class RubyToJavascriptCompiler < SexpProcessor
     # or nil if none has been specified.
     #
     @argument_splat = nil
+
+    #
+    # Include all arguments
+    #
+    @argument_variables = Set.new
 
     #
     # If the result should be an expression, this is set to true.
@@ -92,12 +96,6 @@ class RubyToJavascriptCompiler < SexpProcessor
     # initialized yet and we want them to be initialized as "nil"!
     #
     @read_instance_variables = Set.new
-
-    #
-    # Used to write down all used temporary variables, so that we can
-    # declare them. 
-    #
-    @all_temporary_variables = Set.new
 
     #
     # Use to reuse unused temporary variables
@@ -138,6 +136,9 @@ class RubyToJavascriptCompiler < SexpProcessor
     method_name = exp.shift || raise
     exp = exp.shift || raise
 
+    raise if @result_name
+    @result_name = @encoder.encode_fresh_local_variable() 
+
     @want_result += 1
 
     method_body = 
@@ -153,34 +154,35 @@ class RubyToJavascriptCompiler < SexpProcessor
     end
 
     @want_result -= 1
+    @result_name = nil
 
     raise if @want_result < 0
 
-    @block_name ||= @local_variable_name_generator.fresh # TODO: anonymous?
+    @block_name ||= @encoder.encode_fresh_local_variable()
 
-    args_str = ([@block_name] + @arguments_no_splat).map {|i| encode_local_variable(i)}.join(",")
+    args_str = ([@block_name] + @arguments_no_splat).join(",")
     str = "function(#{args_str}){"
 
     #
-    # declare local variables
+    # declare local variables (except arguments)
     #
-    unless @local_variables.empty?
-      str << "var " + @local_variables.to_a.map{|i| encode_local_variable(i)}.join(",")
-      str << ";"
+    to_declare = (@local_variables - @argument_variables).to_a
+    unless to_declare.empty?
+      str << "var " + to_declare.join(",") + ";"
     end
 
     #
-    # initialize all local variables to nil
+    # initialize all local variables (that need initialization) to nil
     #
-    str << @local_variables.to_a.map{|i| encode_local_variable(i)}.join("=")
-    str << "=nil;"
+    to_initialize = (@local_variables - @argument_variables - @local_variables_need_no_initialization).to_a
+    str << to_initialize.join("=")
+    str << "=#{@encoder.encode_nil};"
 
     #
     # generate initialization code for each read instance variable
     #
     @read_instance_variables.each do |iv|
-      # FIXME: encode nil in global scope
-      str << "if(this.#{encode_instance_variable(iv)}===undefined)this.#{encode_instance_variable(iv)}=nil;"
+      str << "if(#{@encoder.encode_self}.#{iv}===undefined)#{@encoder.encode_self}.#{iv}=#{@encoder.encode_nil};"
     end
 
     str << method_body
@@ -238,7 +240,7 @@ class RubyToJavascriptCompiler < SexpProcessor
     if @block_nesting == 0
       raise if @want_expression
       if not last_stmt_is_return
-        str << ";return #{RESULT_VAR}" 
+        str << ";return #{result_name()}" 
       end
     end
 
@@ -249,11 +251,12 @@ class RubyToJavascriptCompiler < SexpProcessor
   # STATEMENT
   #
   def process_block_arg(exp)
-    raise if @want_expression
-    raise if @block_name
+    raise if @want_expression || @block_name
     block = exp.shift
-    @block_name = @local_variable_name_generator.get(block.to_s)
-    ""
+    @block_name = @encoder.encode_local_variable(block)
+    @local_variables.add(@block_name)
+    @argument_variables.add(@block_name)
+    return ""
   end
 
   def process_block_pass(exp)
@@ -294,13 +297,15 @@ class RubyToJavascriptCompiler < SexpProcessor
     args.each do |arg|
       arg = arg.to_s
       if arg[0,1] == '*'
-        arg = arg[1..-1]
-        arg_name = @local_variable_name_generator.get(arg) 
         raise if @argument_splat
-        @argument_splat = arg_name
+        @argument_splat = @encoder.encode_local_variable(arg[1..-1])
+        # argument_splat is not an argument in the function's argument list
+        @local_variables.add(@argument_splat) 
       else
-        arg_name = @local_variable_name_generator.get(arg) 
-        @arguments_no_splat << arg_name
+        v = @encoder.encode_local_variable(arg)
+        @arguments_no_splat << v 
+        @local_variables.add(v)
+        @argument_variables.add(v)
       end
     end
 
@@ -321,12 +326,13 @@ class RubyToJavascriptCompiler < SexpProcessor
         min_arity -= 1
         raise unless dv[0] == :lasgn
         raise unless dv.size == 3
-        arg = dv[1].to_s 
-        arg_name = @local_variable_name_generator.get(arg) 
+        arg = @encoder.encode_local_variable(dv[1])
+        @local_variables.add(arg)
+        @argument_variables.add(arg)
         value = dv[2]
 
-        str << "if(#{encode_local_variable(arg_name)}===undefined)"
-        str << "#{encode_local_variable(arg_name)}="
+        str << "if(#{arg}===undefined)"
+        str << "#{arg}="
         str << want_expression do process(value) end
         str << ";"
       end
@@ -368,8 +374,12 @@ class RubyToJavascriptCompiler < SexpProcessor
       # is no way to convert it to an array, except looping over each
       # value and pushing the value into a new array.
       # FIXME: variable "i"
-      str << "var #{encode_local_variable(@argument_splat)}=[];"
-      str << "for(var i=#{@arguments_no_splat.size+1};i<arguments.length;i++)#{encode_local_variable(@argument_splat)}.push(arguments[i]);"
+      str << "#{@argument_splat}=[];"
+      @local_variables_need_no_initialization.add(@argument_splat)
+      with_temporary_variable do |i|
+        @local_variables_need_no_initialization.add(i)
+        str << "for(#{i}=#{@arguments_no_splat.size+1};#{i}<arguments.length;#{i}++)#{@argument_splat}.push(arguments[#{i}]);"
+      end
     end
     
     return str 
@@ -379,21 +389,25 @@ class RubyToJavascriptCompiler < SexpProcessor
   #
   # Generates a arguments for a method call. 
   # 
-  def generate_method_call(receiver, method_name, iter, args)
+  def generate_method_call(receiver, method, iter, args)
+
+    method_name = @encoder.encode_method(method)
+    @method_calls.add(method_name)
+
     want_expression do
       if args.nil?
         # no arguments
-        "#{receiver}.#{encode_method(method_name)}(#{iter})"
+        "#{receiver}.#{method_name}(#{iter})"
       elsif args.first == :array
         # one or more arguments
         args_string = args[1..-1].map{|a| process(a)}.join(",")
-        "#{receiver}.#{encode_method(method_name)}(#{iter},#{args_string})"
+        "#{receiver}.#{method_name}(#{iter},#{args_string})"
       elsif args.first == :splat
-        # FIXME
         #
         # puts(*a)  # => [:fcall, :puts, [:splat, [:lvar, :a]]]]]]
         #
-        "#{receiver}.__invoke(#{iter},'#{encode_method(method_name)}',rubyjs_splat(#{ process(args[1]) }))"
+        # TODO: __invoke and rubyjs_splat
+        "#{receiver}.__invoke(#{iter},'#{method_name}',rubyjs_splat(#{ process(args[1]) }))"
 
       elsif args.first == :argscat
         #
@@ -403,8 +417,9 @@ class RubyToJavascriptCompiler < SexpProcessor
         splat = args[2]
         raise unless prefix[0] == :array
 
+        # TODO: rubyjs_splat, __invoke
         a = "[" + process(prefix) + "].concat(rubyjs_splat(#{ process(splat) }))"
-        "#{receiver}.__invoke(#{iter},'#{encode_method(method_name)}',#{a})"
+        "#{receiver}.__invoke(#{iter},'#{method_name}',#{a})"
       else
         raise
       end
@@ -420,11 +435,8 @@ class RubyToJavascriptCompiler < SexpProcessor
     method = exp.shift
     args = exp.shift
 
-    method_name = @attribute_name_generator.get(method.to_s)
-    @method_calls.add(method_name)
-
     @want_result -= 1
-    str = generate_method_call("this", method_name, get_iter(), args)
+    str = generate_method_call(@encoder.encode_self, method, get_iter(), args)
     @want_result += 1
 
     resultify(str)
@@ -440,14 +452,11 @@ class RubyToJavascriptCompiler < SexpProcessor
     method = exp.shift
     args = exp.shift
 
-    method_name = @attribute_name_generator.get(method.to_s)
-    @method_calls.add(method_name)
-
     @want_result -= 1
 
     iter = get_iter()
     receiver_string = want_expression do process(receiver) end
-    str = generate_method_call(receiver_string, method_name, iter, args)
+    str = generate_method_call(receiver_string, method, iter, args)
 
     @want_result += 1
     resultify(str)
@@ -479,10 +488,7 @@ class RubyToJavascriptCompiler < SexpProcessor
   def process_vcall(exp)
     method = exp.shift
 
-    method_name = @attribute_name_generator.get(method.to_s)
-    @method_calls.add(method_name)
-
-    resultify("this.#{encode_method(method_name)}(nil)")
+    resultify(generate_method_call(@encoder.encode_self, method, @encoder.encode_nil, nil))
   end
 
 
@@ -515,16 +521,16 @@ class RubyToJavascriptCompiler < SexpProcessor
     str = ""
 
     if @want_expression
-      str << "(#{cond_processed}?#{_then_processed || resultify('nil')}"
+      str << "(#{cond_processed}?#{_then_processed || resultify(@encoder.encode_nil)}"
       str << ":"
       str << (_else_processed || resultify('nil'))
       str << ")"
     else
       str << "if(#{cond_processed}){"
-      str << (_then_processed || (@want_result > 0 ? resultify('nil') : ''))
+      str << (_then_processed || (@want_result > 0 ? resultify(@encoder.encode_nil) : ''))
       str << "}"
       if @want_result > 0
-        _else_processed ||= resultify('nil') 
+        _else_processed ||= resultify(@encoder.encode_nil) 
       end
       if _else_processed
         str << "else{"
@@ -548,9 +554,9 @@ class RubyToJavascriptCompiler < SexpProcessor
       @want_result = 1
       str = process(param)
       @want_result = old_want_result
-      str << ";return #{RESULT_VAR}" # FIXME
+      str << ";return #{result_name()}" # FIXME
     else
-      "return nil"
+      "return #{@encoder.encode_nil}"
     end
   end
 
@@ -571,7 +577,7 @@ class RubyToJavascriptCompiler < SexpProcessor
     @want_result += 1
 
     if @want_result > 0
-      str << ";" + resultify("nil") + ";"
+      str << ";" + resultify(@encoder.encode_nil) + ";"
     end
 
     return str
@@ -627,15 +633,14 @@ class RubyToJavascriptCompiler < SexpProcessor
   # EXPRESSION
   #
   def process_nil(exp)
-    # FIXME: encode nil
-    resultify("nil")
+    resultify(@encoder.encode_nil)
   end
   
   #
   # EXPRESSION
   #
   def process_self(exp)
-    resultify("this")
+    resultify(@encoder.encode_self)
   end
   
   #
@@ -678,13 +683,13 @@ class RubyToJavascriptCompiler < SexpProcessor
     lvar   = exp.shift
     value = exp.shift
 
-    lvar_name = @local_variable_name_generator.get(lvar.to_s)
+    lvar_name = @encoder.encode_local_variable(lvar)
     @local_variables.add(lvar_name)
 
     @want_result -= 1
     str = 
     want_expression do
-      "#{encode_local_variable(lvar_name)}=#{process(value)}"
+      "#{lvar_name}=#{process(value)}"
     end
     @want_result += 1
 
@@ -699,10 +704,10 @@ class RubyToJavascriptCompiler < SexpProcessor
   def process_lvar(exp)
     lvar = exp.shift
 
-    lvar_name = @local_variable_name_generator.get(lvar.to_s)
-    #raise "variable not available" unless @local_variables.include?(lvar_name)
+    lvar_name = @encoder.encode_local_variable(lvar)
+    raise "variable not available" unless @local_variables.include?(lvar_name)
 
-    resultify("#{encode_local_variable(lvar_name)}")
+    resultify("#{lvar_name}")
   end
 
   #
@@ -723,9 +728,9 @@ class RubyToJavascriptCompiler < SexpProcessor
   #
   def process_ivar(exp)
     ivar = exp.shift
-    ivar_name = @attribute_name_generator.get(ivar.to_s)
+    ivar_name = @encoder.encode_instance_variable(ivar)
     @read_instance_variables.add(ivar_name)
-    resultify("this.#{encode_instance_variable(ivar_name)}")
+    resultify("#{@encoder.encode_self}.#{ivar_name}")
   end
 
   #
@@ -736,12 +741,12 @@ class RubyToJavascriptCompiler < SexpProcessor
   def process_iasgn(exp)
     ivar  = exp.shift
     value = exp.shift
-    ivar_name = @attribute_name_generator.get(ivar.to_s)
+    ivar_name = @encoder.encode_instance_variable(ivar)
 
     @want_result -= 1
     str = 
     want_expression do
-      "this.#{encode_instance_variable(ivar_name)}=#{process(value)}"
+      "#{@encoder.encode_self}.#{ivar_name}=#{process(value)}"
     end
     @want_result += 1
 
@@ -827,34 +832,50 @@ class RubyToJavascriptCompiler < SexpProcessor
     return process(s(:call, left, :=~, s(:array, right)))
   end
 
+  #######################################################################
+  
   private
+
+  #######################################################################
 
   def resultify(str)
     if @want_result > 0
       # FIXME
-      RESULT_VAR + "=" + str
+      result_name() + "=" + str
     else
       str
     end
   end
 
-  #
-  # 
+  def result_name
+    @result_name ||= @encoder.encode_fresh_local_variable() 
+    @local_variables.add(@result_name)
+    @result_name
+  end
+
   def conditionalize(exp, negate=false)
     want_expression do
-      tmp = get_temporary_variable()
-      enc = encode_local_variable(tmp)
-      if negate 
-        "(#{enc}=#{process(exp)},#{enc}===false||#{enc}===nil)"
-      else
-        "(#{enc}=#{process(exp)},#{enc}!==false&&#{enc}!==nil)"
+      with_temporary_variable do |tmp|
+        @local_variables_need_no_initialization.add(tmp)
+        if negate 
+          "(#{tmp}=#{process(exp)},#{tmp}===false||#{tmp}===nil)"
+        else
+          "(#{tmp}=#{process(exp)},#{tmp}!==false&&#{tmp}!==nil)"
+        end
       end
     end
   end
 
+  def with_temporary_variable
+    var = get_temporary_variable()
+    res = yield var
+    put_temporary_variable(var)
+    return res
+  end
+
   def get_temporary_variable
-    tmp = @temporary_variables_pool.shift || @local_variable_name_generator.fresh
-    @all_temporary_variables.add(tmp)
+    tmp = @temporary_variables_pool.shift || @encoder.encode_fresh_local_variable
+    @local_variables.add(tmp)
     return tmp
   end
 
@@ -863,25 +884,12 @@ class RubyToJavascriptCompiler < SexpProcessor
   end
 
   def get_iter
-    res = @iter || 'nil'
+    res = @iter || @encoder.encode_nil
     @iter = nil
     res
   end
 
   def put_iter(iter)
     @iter = iter
-  end
-
-
-  def encode_method(name)
-    "$" + name
-  end
-
-  def encode_local_variable(name)
-    "_" + name
-  end
-
-  def encode_instance_variable(name)
-    "$" + name
   end
 end

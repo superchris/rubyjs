@@ -1,3 +1,71 @@
+function def_class(h)
+{
+  var c = h._class || $Class.$new(h.superclass, h.classname, h.object_constructor);
+
+  if (h.instance_methods)
+  {
+    for (key in h.instance_methods)
+    {
+      c.object_constructor.prototype[key] = h.instance_methods[key];
+    }
+  }
+
+  if (h.methods)
+  {
+    for (key in h.methods) c[key] = h.methods[key];
+  }
+
+  if (h.modules)
+  {
+    for (var i=0; i<h.modules.length; i++)
+    {
+      c.modules.push(h.modules[i]);
+    }
+  }
+
+  //
+  // rebuild
+  //
+
+  // instance methods
+  if (c.superclass)
+  {
+    for (var key in c.superclass.object_constructor.prototype)
+    {
+      if (c.object_constructor.prototype[key]===undefined)
+      {
+        c.object_constructor.prototype[key] = c.superclass.object_constructor.prototype[key];
+      }
+    }
+  }
+
+  // include modules
+  for (var i=0; i<c.modules.length; i++)
+  {
+    for (var key in c.modules[i].object_constructor.prototype)
+    {
+      if (c.object_constructor.prototype[key]===undefined)
+      {
+        c.object_constructor.prototype[key] = c.modules[i].object_constructor.prototype[key];
+      }
+    }
+  }
+
+  // inherit class methods from superclass
+  if (c.superclass)
+  {
+    for (var key in c.superclass)
+    {
+      if (c[key]===undefined)
+      {
+        c[key] = c.superclass[key];
+      }
+    }
+  }
+
+  return c;
+}
+
 function $$Class(klass, superclass, classname, object_constructor)
 {
   this.superclass = superclass;
@@ -5,76 +73,8 @@ function $$Class(klass, superclass, classname, object_constructor)
   this.object_constructor = object_constructor || (function() {});
   this.modules = [];
   this.klass = klass;
-  this.rebuild();
   return this;
 }
-
-$$Class.prototype = {
-  $allocate: function() {
-    var obj = new this.object_constructor();
-    obj.klass = this; 
-    return obj;
-  },
-  $new: function() {
-    return this.$allocate();
-  },
-  $name: function() {
-    return this.classname;
-  },
-  add_instance_methods: function(hash) {
-    for (key in hash)
-    {
-      this.object_constructor.prototype[key] = hash[key];
-    }
-  },
-  add_methods: function(hash) {
-    for (key in hash)
-    {
-      this[key] = hash[key];
-    }
-  },
-  rebuild: function() {
-    // instance methods
-    if (this.superclass)
-    {
-      for (var key in this.superclass.object_constructor.prototype)
-      {
-        if (this.object_constructor.prototype[key]===undefined)
-        {
-          this.object_constructor.prototype[key] = this.superclass.object_constructor.prototype[key];
-        }
-      }
-    }
-
-    // include modules
-    for (var i=0; i<this.modules.length; i++)
-    {
-      for (var key in this.modules[i].object_constructor.prototype)
-      {
-        if (this.object_constructor.prototype[key]===undefined)
-        {
-          this.object_constructor.prototype[key] = this.modules[i].object_constructor.prototype[key];
-        }
-      }
-    }
-
-    // inherit class methods from superclass
-    if (this.superclass)
-    {
-      for (var key in this.superclass)
-      {
-        if (this[key]===undefined)
-        {
-          this[key] = this.superclass[key];
-        }
-      }
-    }
-  },
-  include_module: function(module) {
-    this.modules.push(module);
-    this.rebuild();
-  }
-};
 
 $$Class.$name = function() {
   return "(Meta)Class";
@@ -84,38 +84,58 @@ $$Class.$class = function() {
   return this;
 }
 
-$Class = new $$Class($$Class, null, "Class", $$Class);
-$Class.$new = function(superclass, classname, object_constructor)
-{
-  return new this.object_constructor($Class, superclass, classname, object_constructor);
-}
-
-$Object = $Class.$new(null, "Object");
-$Object.add_instance_methods({
-  $inspect: function() { return "halllooo" + this.toString(); },
-  $class: function() {
-    return this.klass;
+$Class = def_class({
+  _class: new $$Class($$Class, null, "Class", $$Class),
+  instance_methods: {
+    $allocate: function() {
+      var obj = new this.object_constructor();
+      obj.klass = this; 
+      return obj;
+    },
+    $new: function() {
+      return this.$allocate();
+    },
+    $name: function() {
+      return this.classname;
+    }
+  },
+  methods: {
+    $new: function(superclass, classname, object_constructor) {
+      return new this.object_constructor($Class, superclass, classname, object_constructor);
+    }
   }
 });
 
-$Object.add_methods({
-  $say_hello: function() { alert('goooguuuck'); },
+$Object = def_class({
+  superclass: null,
+  classname: "Object",
+  instance_methods: {
+    $inspect: function() { return "halllooo" + this.toString(); },
+    $class: function() {
+      return this.klass;
+    }
+  },
+  methods: {
+    $say_hello: function() { alert('goooguuuck'); }
+  }
 });
-
-$Class.superclass = $Object;
-$Class.rebuild();
-$Object.rebuild();
-
-// now add object as superclass to $Class and rebuild prototype
  
-// object constructor can also be "function() {}", for custom objects.
-$Array = $Class.$new($Object, "Array", Array);
+$Class.superclass = $Object;
 
-$Array.add_instance_methods({
-  $to_a: function() { return this; },
-  $inspect: function() { return "nur halllooo"; }
+def_class({_class: $Class});  // rebuild
+def_class({_class: $Object}); // rebuild
+
+$Array = def_class({
+  superclass: $Object,
+  classname: "Array", 
+  object_constructor: Array,
+  instance_methods: {
+    $to_a: function() { return this; },
+    $inspect: function() { return "nur halllooo"; }
+  }
 });
 
+/*
 a = $Array.$new(); // => []
 a.push(1);
 a.push(2);
@@ -129,3 +149,4 @@ b = $Object.$new();
 
 $Object.$say_hello();
 $Array.$say_hello();
+*/

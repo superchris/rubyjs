@@ -33,9 +33,11 @@ if __FILE__ == $0
   def process(klass, method)
     exp = ParseTree.new.parse_tree_for_instance_method(klass, method)
     pp exp
-    compiler = RubyToJavascriptCompiler.new(NameGenerator.new)
+    encoder = Encoder.new
+    compiler = RubyToJavascriptCompiler.new(encoder)
     p compiler.process(exp)
     p compiler.method_calls
+    encoder.reset_local_name_generator!
   end
 
   process(Test, :a)
