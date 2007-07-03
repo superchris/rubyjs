@@ -71,3 +71,7 @@ LIMITATIONS
   As long as this limitation is no problem, I go the way via prototypes,
   which should be slightly more efficient.
 
+
+TODO
+
+  Short cut conditionalize if "true", "false" or "nil" is the condition.
