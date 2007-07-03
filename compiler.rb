@@ -154,10 +154,15 @@ class RubyToJavascriptCompiler < SexpProcessor
 
     raise if @want_result < 0
 
-    @block_name ||= @encoder.encode_fresh_local_variable()
+    str = ""
 
-    args_str = ([@block_name] + @arguments_no_splat).join(",")
-    str = "function(#{args_str}){"
+    if @argument_variables.empty?
+      str << "function(){"
+    else
+      @block_name ||= @encoder.encode_fresh_local_variable()
+      args_str = ([@block_name] + @arguments_no_splat).join(",")
+      str << "function(#{args_str}){"
+    end
 
     #
     # declare local variables (except arguments)
