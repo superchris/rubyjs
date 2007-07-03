@@ -5,23 +5,8 @@
 # All rights reserved.
 #
 
-require 'rubygems'
-require 'parse_tree'
 require 'sexp_processor'
 require 'set'
-require 'pp'
-require 'name_generator'
-require 'encoder'
-
-class ParseTree
-  def parse_tree_for_instance_method(klass, method)
-    parse_tree_for_method(klass, method, false)
-  end
-
-  def parse_tree_for_class_method(klass, method)
-    parse_tree_for_method(klass, method, true)
-  end
-end
 
 class RubyToJavascriptCompiler < SexpProcessor
 
@@ -111,6 +96,10 @@ class RubyToJavascriptCompiler < SexpProcessor
 
 
     @want_result = 0
+  end
+
+  def compile(pt)
+    process(pt)
   end
 
   #

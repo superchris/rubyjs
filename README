@@ -71,6 +71,17 @@ LIMITATIONS
   As long as this limitation is no problem, I go the way via prototypes,
   which should be slightly more efficient.
 
+  You are not allowed to redefine the classes name method:
+
+    class MyClass
+      def self.name
+        # NOT ALLOWED!!!
+      end
+    end
+
+  The same is true for other methods like ancestors, superclass,
+  instance_methods, methods. But you wouldn't do that anyways in Ruby,
+  so that's no big restriction!
 
 TODO
 

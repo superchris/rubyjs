@@ -80,15 +80,8 @@ function #<globalattr:MetaClass>(#<_class>, #<superclass>, #<classname>, #<objec
   return #<self>;
 }
 
-#<globalattr:MetaClass>.#<m:name> = function()
-{
-  return "(Meta)Class";
-};
-
-#<globalattr:MetaClass>.#<m:class> = function()
-{
-  return #<self>;
-};
+#<globalattr:MetaClass>.#<m:name> = function() { return "(Meta)Class"; };
+#<globalattr:MetaClass>.#<m:class> = function() { return #<self>; };
 
 #<Class> = #<globalattr:def_class>({
   #<attr:_class>: new #<globalattr:MetaClass>(#<globalattr:MetaClass>, null, "Class", #<globalattr:MetaClass>),
@@ -158,6 +151,9 @@ EOS
 
 str = Encoder.new.interpolate(INIT_CODE)
 puts Encoder.new.strip_ws_from_js_code(str)
+
+class RubyJS::Environment::Object
+end
 
 =begin
 class Class
