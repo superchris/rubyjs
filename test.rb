@@ -1,6 +1,10 @@
 module RubyJS
   module Environment
     class Test
+      def b 
+        `return true`
+      end
+
       def a(a,b=a,c=2,*args,&block)
         b(*args, &block)
 
@@ -40,12 +44,12 @@ if __FILE__ == $0
 
   model = Model.new
   encoder = Encoder.new
-  compiler = RubyToJavascriptCompiler.new(encoder) 
 
   m = model.model_for(RubyJS::Environment::Test)
 
   m[:instance_methods].each_pair do |name, pt|
     encoder.reset_local_name_generator!
+    compiler = RubyToJavascriptCompiler.new(encoder) 
     puts compiler.compile(pt)
   end
 end

@@ -171,8 +171,10 @@ class RubyToJavascriptCompiler < SexpProcessor
     # initialize all local variables (that need initialization) to nil
     #
     to_initialize = (@local_variables - @argument_variables - @local_variables_need_no_initialization).to_a
-    str << to_initialize.join("=")
-    str << "=#{@encoder.encode_nil};"
+    unless to_initialize.empty?
+      str << to_initialize.join("=")
+      str << "=#{@encoder.encode_nil};"
+    end
 
     #
     # generate initialization code for each read instance variable
@@ -206,14 +208,14 @@ class RubyToJavascriptCompiler < SexpProcessor
     @want_result -= 1
 
     res = []
-    last_stmt_is_return = false
+    want_return = true
     loop do
       stmt = exp.shift
       if exp.empty?
         # stmt is the last statement in the block
         @want_result += 1
-        if stmt[0] == :return
-          last_stmt_is_return = true
+        if [:return, :xstr].include?(stmt[0])
+          want_return = false
         end
         res << process(stmt)
         break
@@ -235,7 +237,7 @@ class RubyToJavascriptCompiler < SexpProcessor
 
     if @block_nesting == 0
       raise if @want_expression
-      if not last_stmt_is_return
+      if want_return
         str << ";return #{result_name()}" 
       end
     end
@@ -545,12 +547,10 @@ class RubyToJavascriptCompiler < SexpProcessor
     raise if @want_expression
     param = exp.shift
     if param
-      # want_result!!!
-      old_want_result = @want_result
-      @want_result = 1
+      @want_result -= 1
       str = process(param)
-      @want_result = old_want_result
-      str << ";return #{result_name()}" # FIXME
+      @want_result += 1
+      "return #{str}" 
     else
       "return #{@encoder.encode_nil}"
     end
@@ -579,6 +579,25 @@ class RubyToJavascriptCompiler < SexpProcessor
     return str
   end
 
+
+  #
+  # UNDEFINED
+  #
+  # Backtick strings: `inline javascript`
+  #
+  # We use them for inline Javascript.
+  #
+  # It's unclear whether it's a STATEMENT or EXPRESSION.
+  # It depends on the Javascript.
+  #
+  # NOTE: You have to take care to return a value yourself
+  # in case of @want_result, i.e. there is no automatic handling
+  # thereof.
+  #
+  def process_xstr(exp)
+    str = exp.shift
+    @encoder.interpolate(str)
+  end
 
   #
   # EXPRESSION
