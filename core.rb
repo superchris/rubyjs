@@ -1,10 +1,19 @@
 require 'encoder'
 
-INIT_CODE = <<EOS
+RUNTIME_INIT = <<EOS
+// declare nil
+#<nil> = new Object(); 
+
+function #<globalattr:to_splat>(a)
+{
+  // TODO
+  return a;
+}
+
 function #<globalattr:def_class>(h)
 {
   var c,k,i;
-  c = h.#<attr:_class> || #<Class>.#<m:new>(h.#<attr:superclass>, h.#<attr:classname>, h.#<attr:object_constructor>);
+  c = h.#<attr:_class> || #<Class>.#<m:new>(#<nil>, h.#<attr:superclass>, h.#<attr:classname>, h.#<attr:object_constructor>);
 
   if (h.#<attr:instance_methods>)
   {
@@ -32,7 +41,7 @@ function #<globalattr:def_class>(h)
   //
 
   // instance methods
-  if (c.#<attr:superclass>)
+  if (c.#<attr:superclass> != #<nil>)
   {
     for (k in c.#<attr:superclass>.#<attr:object_constructor>.prototype)
     {
@@ -56,7 +65,7 @@ function #<globalattr:def_class>(h)
   }
 
   // inherit class methods from superclass
-  if (c.#<attr:superclass>)
+  if (c.#<attr:superclass> != #<nil>)
   {
     for (k in c.#<attr:superclass>)
     {
@@ -74,108 +83,70 @@ function #<globalattr:MetaClass>(#<_class>, #<superclass>, #<classname>, #<objec
 {
   #<self>.#<attr:superclass> = #<superclass>;
   #<self>.#<attr:classname> = #<classname>;
-  #<self>.#<attr:object_constructor> = #<object_constructor> || (function() {});
+  #<self>.#<attr:object_constructor> = #<object_constructor>;
   #<self>.#<attr:modules> = [];
   #<self>.#<attr:_class> = #<_class>;
   return #<self>;
 }
 
-#<globalattr:MetaClass>.#<m:name> = function() { return "(Meta)Class"; };
+#<globalattr:MetaClass>.#<m:name> = function() { return "MetaClass"; };
 #<globalattr:MetaClass>.#<m:class> = function() { return #<self>; };
-
-#<Class> = #<globalattr:def_class>({
-  #<attr:_class>: new #<globalattr:MetaClass>(#<globalattr:MetaClass>, null, "Class", #<globalattr:MetaClass>),
-  #<attr:instance_methods>: {
-    #<m:allocate>: function() {
-      var o = new #<self>.#<attr:object_constructor>();
-      o.#<attr:_class> = #<self>; 
-      return o;
-    },
-    #<m:new>: function() {
-      return #<self>.#<m:allocate>();
-    },
-    #<m:name>: function() {
-      return #<self>.#<attr:classname>;
-    }
-  },
-  #<attr:methods>: {
-    #<m:new>: function(#<superclass>, #<classname>, #<object_constructor>) {
-      return new #<self>.#<attr:object_constructor>(#<Class>, #<superclass>, #<classname>, #<object_constructor>);
-    }
-  }
-});
-
-#<Object> = #<globalattr:def_class>({
-  #<attr:superclass>: null,
-  #<attr:classname>: "Object",
-  #<attr:instance_methods>: {
-    #<m:inspect>: function() { return "halllooo" + #<self>.toString(); },
-    #<m:class>: function() {
-      return #<self>.#<attr:_class>;
-    }
-  },
-  #<attr:methods>: {
-    #<m:say_hello>: function() { alert('goooguuuck'); }
-  }
-});
- 
-#<Class>.#<attr:superclass> = #<Object>;
-
-#<globalattr:def_class>({#<attr:_class>: #<Class>});  // rebuild
-#<globalattr:def_class>({#<attr:_class>: #<Object>}); // rebuild
-
-#<Array> = #<globalattr:def_class>({
-  #<attr:superclass>: #<Object>,
-  #<attr:classname>: "Array", 
-  #<attr:object_constructor>: Array,
-  #<attr:instance_methods>: {
-    #<m:to_a>: function() { return #<self>; },
-    #<m:inspect>: function() { return "nur halllooo"; }
-  }
-});
-
-a = #<Array>.#<m:new>(); // => []
-a.push(1);
-a.push(2);
-alert(#<Array>.#<m:name>());
-alert(#<Array>.#<m:class>().#<m:name>());
-
-alert(#<Class>.#<m:class>().#<m:name>());
-alert(#<Class>.#<m:name>());
-
-b = #<Object>.#<m:new>();
-
-#<Object>.#<m:say_hello>();
-#<Array>.#<m:say_hello>();
 EOS
 
-str = Encoder.new.interpolate(INIT_CODE)
-puts Encoder.new.strip_ws_from_js_code(str)
+module RubyJS::Environment
+  class Class
+    def allocate
+      `var o = new #<self>.#<attr:object_constructor>();
+       o.#<attr:_class> = #<self>;
+       return o;`
+    end
 
-class RubyJS::Environment::Object
+    def new(*args, &block)
+      obj = allocate()
+      obj.initialize(*args, &block)
+      obj
+    end
+
+    def name
+      `return #<self>.#<attr:classname>;`
+    end
+
+    def self.new(superclass, classname, object_constructor=nil)
+      unless object_constructor
+        object_constructor = `(function() {})`
+      end
+      `return new #<self>.#<attr:object_constructor>(#<Class>, #<superclass>, #<classname>, #<object_constructor>);`
+    end
+  end
+
+  class Object
+    def __invoke(id, args, &block)
+      `return #<self>[#<id>].apply(#<self>, [#<block>].concat(#<args>));`
+    end
+
+    def initialize
+    end
+
+    def self.say_hello
+      `alert('goooguuuck')`
+    end
+
+    def inspect
+      `return "halllooo" + #<self>.toString()`
+    end
+
+    def class
+      `return #<self>.#<attr:_class>`
+    end
+  end
+
+  class Array
+    def to_a
+      self
+    end
+
+    def inspect
+      "Array#inspect"
+    end
+  end
 end
-
-=begin
-class Class
-  def allocate
-    `var o = new #<self>.#<attr:object_constructor>();
-     o.#<attr:_class> = #<self>;
-     return o;`
-  end
-
-  def new
-    allocate()
-  end
-
-  def name
-    `return #<self>.#<attr:classname>;`
-  end
-
-  def self.new(superclass, classname, object_constructor)
-    `return new #<self>.#<attr:object_constructor>(#<Class>, #<superclass>, #<classname>, #<object_constructor>);`
-  end
-end
-
-class Object
-end
-=end

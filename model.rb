@@ -6,6 +6,7 @@
 #
 
 require 'parse_tree'
+require 'sexp_processor'
 
 module RubyJS
   module Environment
@@ -16,59 +17,33 @@ module RubyJS
   end
 end
 
-class Model
+class MethodExtractor < SexpProcessor
+  attr_accessor :instance_methods, :methods
+
   def initialize
-    @pt = ParseTree.new
+    super()
+
+    self.strict = false 
+    self.auto_shift_type = false
+    self.require_empty = false
+
+    @instance_methods = {} 
+    @methods = {} 
   end
 
-  def parse_tree_for_instance_method(klass, method)
-    @pt.parse_tree_for_method(klass, method, false)
-  end
-
-  def parse_tree_for_class_method(klass, method)
-    @pt.parse_tree_for_method(klass, method, true)
-  end
-
-  def instance_methods_for_class(klass)
-    methods = {} 
-    klass.instance_methods.each do |m|
-      t = parse_tree_for_instance_method(klass, m)
-      methods[m] = t if is_method(t)
-    end
-    methods
-  end
-
-  #
-  # Class methods
-  #
-  def methods_for_class(klass)
-    methods = {} 
-    (klass.methods - klass.class.methods).each do |m|
-      t = parse_tree_for_class_method(klass, m)
-      methods[m] = t if is_method(t)
-    end
-    methods
-  end
-
-
-  #
-  # Returns true if the parse tree contains a method that we
-  # are interested in. We are only interested in methods that are
-  # actually defined directly in that class or module that we are
-  # querying. 
-  #
-  def is_method(parsetree)
-    return false if parsetree[0] == nil
-    if parsetree[0] == :defn
-      if parsetree[2] && parsetree[2][0] == :cfunc
-        return false
-      end
-      return true
+  def process_defn(exp)
+    defn, name, code = *exp  
+    name = name.to_s
+    if name =~ /^self\.(.*)$/
+      @methods[$1] = exp
     else
-      return false
+      @instance_methods[name] = exp
     end
+    return s()
   end
+end
 
+class Model
   def model_for(klass)
     name = klass.name
 
@@ -77,6 +52,9 @@ class Model
     else
       raise "must be scoped inside RubyJS module"
     end
+
+    me = MethodExtractor.new
+    me.process(ParseTree.new.parse_tree(klass))
 
     if klass.is_a?(::Class)
       a = klass.ancestors
@@ -100,13 +78,24 @@ class Model
         end
       end
 
+      sn = nil
+      if s
+        sn = s.name
+        if sn =~ /^RubyJS::Environment::(.*)$/
+          sn = $1
+        else
+          raise "must be scoped inside RubyJS module"
+        end
+      end
+
       return {
         :modules => a,
         :superclass => s,
+        :superclass_name => sn,
         :is_a => :class,
         :name => name,
-        :instance_methods => instance_methods_for_class(klass),
-        :methods => methods_for_class(klass) 
+        :instance_methods => me.instance_methods,
+        :methods => me.methods
       }
     elsif klass.is_a?(::Module)
       a = klass.ancestors
@@ -118,8 +107,8 @@ class Model
         :modules => a,
         :is_a => :module,
         :name => name,
-        :instance_methods => instance_methods_for_class(klass),
-        :methods => methods_for_class(klass)
+        :instance_methods => me.instance_methods,
+        :methods => me.methods
       }
     else
       raise

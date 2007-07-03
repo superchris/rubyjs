@@ -8,7 +8,7 @@
 require 'sexp_processor'
 require 'set'
 
-class RubyToJavascriptCompiler < SexpProcessor
+class MethodCompiler < SexpProcessor
 
   attr_accessor :method_calls
 
@@ -98,7 +98,7 @@ class RubyToJavascriptCompiler < SexpProcessor
     @want_result = 0
   end
 
-  def compile(pt)
+  def compile_method(pt)
     process(pt)
   end
 
@@ -159,8 +159,7 @@ class RubyToJavascriptCompiler < SexpProcessor
     if @argument_variables.empty?
       str << "function(){"
     else
-      @block_name ||= @encoder.encode_fresh_local_variable()
-      args_str = ([@block_name] + @arguments_no_splat).join(",")
+      args_str = ([@block_name || @encoder.encode_fresh_local_variable()] + @arguments_no_splat).join(",")
       str << "function(#{args_str}){"
     end
 
@@ -179,6 +178,14 @@ class RubyToJavascriptCompiler < SexpProcessor
     unless to_initialize.empty?
       str << to_initialize.join("=")
       str << "=#{@encoder.encode_nil};"
+    end
+
+    #
+    # If a block argument is given (&block) convert it to nil if it is
+    # undefined. 
+    #
+    if @block_name
+      str << "if(#{@block_name}===undefined)#{@block_name}=#{@encoder.encode_nil};"
     end
 
     #
@@ -315,6 +322,7 @@ class RubyToJavascriptCompiler < SexpProcessor
     # that's not the correct arity, but we decrease it by one for each
     # optional argument.
     min_arity = @arguments_no_splat.size
+    max_arity = @arguments_no_splat.size
 
     str = ""
 
@@ -404,15 +412,18 @@ class RubyToJavascriptCompiler < SexpProcessor
       elsif args.first == :array
         # one or more arguments
         args_string = args[1..-1].map{|a| process(a)}.join(",")
-        "#{receiver}.#{method_name}(#{iter},#{args_string})"
+        "#{receiver}.#{method_name}(#{iter || @encoder.encode_nil},#{args_string})"
       elsif args.first == :splat
         #
         # puts(*a)  # => [:fcall, :puts, [:splat, [:lvar, :a]]]]]]
         #
-        # TODO: __invoke and rubyjs_splat
-        "#{receiver}.__invoke(#{iter},'#{method_name}',rubyjs_splat(#{ process(args[1]) }))"
+        __invoke = @encoder.encode_method('__invoke')
+        to_splat = @encoder.encode_globalattr('to_splat')
+        @method_calls.add(__invoke)
 
+        "#{receiver}.#{__invoke}(#{iter || @encoder.encode_nil},'#{method_name}',#{to_splat}(#{ process(args[1]) }))"
       elsif args.first == :argscat
+        raise
         #
         # puts(1, *a) # => ... [:argscat, [:array, [:lit, 1]], [:lvar, :a]]
         #
@@ -420,9 +431,12 @@ class RubyToJavascriptCompiler < SexpProcessor
         splat = args[2]
         raise unless prefix[0] == :array
 
-        # TODO: rubyjs_splat, __invoke
-        a = "[" + process(prefix) + "].concat(rubyjs_splat(#{ process(splat) }))"
-        "#{receiver}.__invoke(#{iter},'#{method_name}',#{a})"
+        __invoke = @encoder.encode_method('__invoke')
+        to_splat = @encoder.encode_globalattr('to_splat')
+        @method_calls.add(__invoke)
+
+        a = "[" + process(prefix) + "].concat(#{to_splat}(#{ process(splat) }))"
+        "#{receiver}.#{__invoke}(#{iter || @encoder.encode_nil},'#{method_name}',#{a})"
       else
         raise
       end
@@ -491,7 +505,7 @@ class RubyToJavascriptCompiler < SexpProcessor
   def process_vcall(exp)
     method = exp.shift
 
-    resultify(generate_method_call(@encoder.encode_self, method, @encoder.encode_nil, nil))
+    resultify(generate_method_call(@encoder.encode_self, method, nil, nil))
   end
 
 
@@ -904,7 +918,7 @@ class RubyToJavascriptCompiler < SexpProcessor
   end
 
   def get_iter
-    res = @iter || @encoder.encode_nil
+    res = @iter
     @iter = nil
     res
   end

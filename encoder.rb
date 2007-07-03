@@ -20,6 +20,13 @@ class Encoder
     @local_name_generator = NameGenerator.new
   end
 
+  def with_local
+    reset_local_name_generator!
+    res = yield
+    reset_local_name_generator!
+    return res
+  end
+
   def encode_nil
     'nil'
   end
@@ -100,7 +107,7 @@ class Encoder
   #     #<variable>         # => encode_local_variable("variable")
   #
   def interpolate(str)
-    str.gsub(/#<(.*?)>/) {
+    str = str.gsub(/#<(.*?)>/) {
       case s = $1.strip
       when /^(\w+)\(\)$/        then encode_method($1) 
       when /^m:(\w+)$/          then encode_method($1) 
@@ -115,6 +122,7 @@ class Encoder
         raise
       end
     }
+    return str
   end
 
   #
@@ -143,7 +151,7 @@ class Encoder
       end
     end
 
-    arr.map {|a|
+    str = arr.map {|a|
       if a[0,1] == '"' || a[0,1] == "'"
         # keep strings as-is 
         a
@@ -152,5 +160,10 @@ class Encoder
           gsub(/\s*([^\w\$])\s*/) { $1 } # remove unneccessary whitespace
       end
     }.join("")
+
+    # remove leading whitespace
+    str = $~.post_match if str =~ /^\s*/
+
+    return str
   end
 end
