@@ -1,3 +1,10 @@
+#
+# A Ruby to Javascript compiler.
+#
+# Copyright (c) 2007 by Michael Neumann (mneumann@ntecs.de).
+# All rights reserved.
+#
+
 require 'rubygems'
 require 'parse_tree'
 require 'sexp_processor'

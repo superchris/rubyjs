@@ -1,6 +1,9 @@
 #
 # Generate unique names from a (custom) alphabet.
 #
+# Copyright (c) 2007 by Michael Neumann (mneumann@ntecs.de).
+# All rights reserved.
+#
 
 class NameGenerator
 

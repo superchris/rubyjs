@@ -1,3 +1,10 @@
+#
+# Encode all kind of variables or symbols for Javascript generation.
+#
+# Copyright (c) 2007 by Michael Neumann (mneumann@ntecs.de).
+# All rights reserved.
+#
+
 require 'name_generator'
 
 class Encoder
