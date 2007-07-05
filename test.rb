@@ -115,20 +115,14 @@ if __FILE__ == $0
   ipol = encoder.method(:interpolate)
 
   str = ""
-  str << ipol[RUNTIME_INIT]
+  str << ipol[RUNTIME_INIT_STAGE1]
 
   str << generate_class_declaration(class_model, encoder, true, 
     ipol[%[new #<globalattr:MetaClass>(#<globalattr:MetaClass>, #<nil>, "Class", #<globalattr:MetaClass>)]],
      obj_cons=nil, use_superclass=false)
 
   str << generate_class_declaration(object_model, encoder, true) 
-
-  str << ipol[<<-EOS]
-    #<Class>.#<attr:superclass> = #<Object>;
-    #<globalattr:def_class>({#<attr:_class>: #<Class>});  // rebuild
-    #<globalattr:def_class>({#<attr:_class>: #<Object>}); // rebuild
-  EOS
-
+  str << ipol[RUNTIME_INIT_STAGE2]
   str << generate_class_declaration(array_model, encoder, true, nil, "Array") 
 
 

@@ -1,6 +1,6 @@
 require 'encoder'
 
-RUNTIME_INIT = <<EOS
+RUNTIME_INIT_STAGE1 = <<EOS
 // declare nil
 #<nil> = new Object(); 
 
@@ -91,6 +91,12 @@ function #<globalattr:MetaClass>(#<_class>, #<superclass>, #<classname>, #<objec
 
 #<globalattr:MetaClass>.#<m:name> = function() { return "MetaClass"; };
 #<globalattr:MetaClass>.#<m:class> = function() { return #<self>; };
+EOS
+
+RUNTIME_INIT_STAGE2 = <<EOS
+#<Class>.#<attr:superclass> = #<Object>;
+#<globalattr:def_class>({#<attr:_class>: #<Class>});  // rebuild
+#<globalattr:def_class>({#<attr:_class>: #<Object>}); // rebuild
 EOS
 
 module RubyJS::Environment
