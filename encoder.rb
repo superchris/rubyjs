@@ -12,7 +12,7 @@ class Encoder
     @method_and_ivar_name_generator = NameGenerator.new
     @attribute_name_generator = NameGenerator.new
     @global_attribute_name_generator = NameGenerator.new
-    @constant_name_generator = NameGenerator.new
+    @global_name_generator = NameGenerator.new
     reset_local_name_generator!
   end
 
@@ -39,9 +39,25 @@ class Encoder
   # Constants are encoded with a preceding "$". Doesn't conflict with 
   # methods or instance variables, as they are always used in dot
   # notation while constants not.
+  #
+  # Constants use the global_name_generator. They use the same namespace
+  # as global variables do. There is no nameclash, as global variables 
+  # are prefixed in Ruby with a $ character, so the generated name will
+  # always differ (e.g. Constant vs. $Constant leads two two different
+  # names).
   # 
   def encode_constant(name)
-    "$" + @constant_name_generator.get(name.to_s)
+    "$" + @global_name_generator.get(name.to_s)
+  end
+
+  #
+  # Encode global variable.
+  #
+  # See encode_constant().
+  #
+  def encode_global_variable(name)
+    raise if name.to_s[0,1] != '$'
+    "$" + @global_name_generator.get(name.to_s)
   end
 
   #
@@ -114,6 +130,7 @@ class Encoder
       when /^self$/             then encode_self()
       when /^nil$/              then encode_nil()
       when /^(@\w+)$/           then encode_instance_variable($1)
+      when /^(\$.+)$/           then encode_global_variable($1)
       when /^([A-Z]\w+)$/       then encode_constant($1) 
       when /^attr:(\w+)$/       then encode_attr($1)
       when /^globalattr:(\w+)$/ then encode_globalattr($1)

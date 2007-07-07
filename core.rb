@@ -2,7 +2,8 @@ require 'encoder'
 
 RUNTIME_INIT_STAGE1 = <<EOS
 // declare nil
-#<nil> = new Object(); 
+function NilClass() {}
+#<nil> = new NilClass();
 
 function #<globalattr:to_splat>(a)
 {
@@ -100,6 +101,14 @@ RUNTIME_INIT_STAGE2 = <<EOS
 EOS
 
 module RubyJS; module Environment
+
+  class NilClass
+    __OBJECT_CONSTRUCTOR = "NilClass"
+    def nil?
+      true
+    end
+  end
+
   class Class
     def allocate
       `var o = new #<self>.#<attr:object_constructor>();
@@ -437,6 +446,14 @@ module RubyJS; module Environment
 =end
     def self.test
       a,b,*c = [1,2,3] + [4, 5] 
+
+      x = nil
+
+      if x.nil?
+        `alert('true');`
+      else
+        `alert('false');`
+      end
 
       `alert(#<a>);`
       `alert(#<b>)`

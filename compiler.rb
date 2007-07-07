@@ -535,7 +535,7 @@ class MethodCompiler < SexpProcessor
   #
   def process_const(exp)
     name = exp.shift
-    return @encoder.encode_constant(name)
+    return resultify(@encoder.encode_constant(name))
   end
 
   # 
@@ -796,6 +796,38 @@ class MethodCompiler < SexpProcessor
   #
   # EXPRESSION
   #
+  # Global variable lookup
+  #
+  def process_gvar(exp)
+    gvar = exp.shift
+    gvar_name = @encoder.encode_global_variable(gvar)
+    resultify("#{gvar_name}")
+  end
+
+  #
+  # EXPRESSION
+  #
+  # Global variable assignment
+  #
+  def process_gasgn(exp)
+    gvar   = exp.shift
+    value = exp.shift
+
+    gvar_name = @encoder.encode_global_variable(gvar)
+
+    @want_result -= 1
+    str = 
+    want_expression do
+      "#{gvar_name}=#{process(value)}"
+    end
+    @want_result += 1
+
+    resultify(str)
+  end
+
+  #
+  # EXPRESSION
+  #
   # A dynamic variable lookup can be replaced with a local variable
   # lookup lvar, as it is handled in the code generation in the same
   # way.
@@ -901,6 +933,7 @@ class MethodCompiler < SexpProcessor
 
     want_expression do
       with_temporary_variable do |tmp|
+        @want_result -= 1
         assgn = [] 
         assgn << "#{tmp}=#{process(rhs)}"
 
@@ -915,6 +948,10 @@ class MethodCompiler < SexpProcessor
           splat << s(:special_inline_js_value, "#{tmp}.slice(#{lhs.size-1})")
           assgn << process(splat)
         end
+        @want_result += 1
+
+        # return value of the expression is the array
+        assgn << resultify("#{tmp}")
 
         "(" + assgn.join(",") + ")" 
       end
