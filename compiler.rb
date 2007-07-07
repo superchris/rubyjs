@@ -272,11 +272,11 @@ class MethodCompiler < SexpProcessor
   def process_block_pass(exp)
     block = exp.shift
     call = exp.shift
-    @want_result -= 1
-    want_expression do
-      put_iter(process(block))
+    without_result do 
+      want_expression do
+        put_iter(process(block))
+      end
     end
-    @want_result += 1
     process(call)
   end
 
@@ -456,9 +456,9 @@ class MethodCompiler < SexpProcessor
     method = exp.shift
     args = exp.shift
 
-    @want_result -= 1
-    str = generate_method_call(@encoder.encode_self, method, get_iter(), args)
-    @want_result += 1
+    str = without_result do
+      generate_method_call(@encoder.encode_self, method, get_iter(), args)
+    end
 
     resultify(str)
   end
@@ -484,13 +484,11 @@ class MethodCompiler < SexpProcessor
     method = exp.shift
     args = exp.shift
 
-    @want_result -= 1
-
-    iter = get_iter()
-    receiver_string = want_expression do process(receiver) end
-    str = generate_method_call(receiver_string, method, iter, args)
-
-    @want_result += 1
+    str = without_result do 
+      iter = get_iter()
+      receiver_string = want_expression do process(receiver) end
+      generate_method_call(receiver_string, method, iter, args)
+    end
     resultify(str)
   end
 
@@ -580,9 +578,9 @@ class MethodCompiler < SexpProcessor
                         nil
                       end
 
-    @want_result -= 1
-    cond_processed = conditionalize(cond)
-    @want_result += 1
+    cond_processed = without_result do
+      conditionalize(cond)
+    end
 
     str = ""
 
@@ -615,9 +613,9 @@ class MethodCompiler < SexpProcessor
     raise if @want_expression
     param = exp.shift
     if param
-      @want_result -= 1
-      str = process(param)
-      @want_result += 1
+      str = without_result do
+        process(param)
+      end
       "return #{str}" 
     else
       "return #{@encoder.encode_nil}"
@@ -635,10 +633,9 @@ class MethodCompiler < SexpProcessor
     flag = exp.shift
     raise unless flag == true
 
-    @want_result -= 1
-    str = ""
-    str << "while(#{conditionalize(cond)}){#{process(block)}}" 
-    @want_result += 1
+    str = without_result do
+      "while(#{conditionalize(cond)}){#{process(block)}}" 
+    end
 
     if @want_result > 0
       str << ";" + resultify(@encoder.encode_nil) + ";"
@@ -769,12 +766,11 @@ class MethodCompiler < SexpProcessor
     lvar_name = @encoder.encode_local_variable(lvar)
     @local_variables.add(lvar_name)
 
-    @want_result -= 1
-    str = 
-    want_expression do
-      "#{lvar_name}=#{process(value)}"
+    str = without_result do
+      want_expression do
+        "#{lvar_name}=#{process(value)}"
+      end
     end
-    @want_result += 1
 
     resultify(str)
   end
@@ -815,12 +811,11 @@ class MethodCompiler < SexpProcessor
 
     gvar_name = @encoder.encode_global_variable(gvar)
 
-    @want_result -= 1
-    str = 
-    want_expression do
-      "#{gvar_name}=#{process(value)}"
+    str = without_result do
+      want_expression do
+        "#{gvar_name}=#{process(value)}"
+      end
     end
-    @want_result += 1
 
     resultify(str)
   end
@@ -933,22 +928,22 @@ class MethodCompiler < SexpProcessor
 
     want_expression do
       with_temporary_variable do |tmp|
-        @want_result -= 1
         assgn = [] 
-        assgn << "#{tmp}=#{process(rhs)}"
+        without_result do
+          assgn << "#{tmp}=#{process(rhs)}"
 
-        # lhs[0] == :array -> skip it
-        lhs[1..-1].each_with_index do |assignment, i|  # for example where assignment == [:lasgn, :a]
-          assignment << s(:special_inline_js_value, "#{tmp}[#{i}]===undefined?#{@encoder.encode_nil}:#{tmp}[#{i}]")
-          assgn << process(assignment)
-        end
+          # lhs[0] == :array -> skip it
+          lhs[1..-1].each_with_index do |assignment, i|  # for example where assignment == [:lasgn, :a]
+            assignment << s(:special_inline_js_value, "#{tmp}[#{i}]===undefined?#{@encoder.encode_nil}:#{tmp}[#{i}]")
+            assgn << process(assignment)
+          end
 
-        if splat
-          # splat is for example [:lasgn, :a]
-          splat << s(:special_inline_js_value, "#{tmp}.slice(#{lhs.size-1})")
-          assgn << process(splat)
+          if splat
+            # splat is for example [:lasgn, :a]
+            splat << s(:special_inline_js_value, "#{tmp}.slice(#{lhs.size-1})")
+            assgn << process(splat)
+          end
         end
-        @want_result += 1
 
         # return value of the expression is the array
         assgn << resultify("#{tmp}")
@@ -968,12 +963,11 @@ class MethodCompiler < SexpProcessor
     value = exp.shift
     ivar_name = @encoder.encode_instance_variable(ivar)
 
-    @want_result -= 1
-    str = 
-    want_expression do
-      "#{@encoder.encode_self}.#{ivar_name}=#{process(value)}"
+    str = without_result do
+      want_expression do
+        "#{@encoder.encode_self}.#{ivar_name}=#{process(value)}"
+      end
     end
-    @want_result += 1
 
     resultify(str)
   end
@@ -1062,6 +1056,16 @@ class MethodCompiler < SexpProcessor
   private
 
   #######################################################################
+  
+  def without_result
+    old_want_result = @want_result
+    begin
+      @want_result = 0
+      return yield
+    ensure
+      @want_result = old_want_result
+    end
+  end
 
   def resultify(str)
     if @want_result > 0
