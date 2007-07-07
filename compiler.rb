@@ -408,6 +408,10 @@ class MethodCompiler < SexpProcessor
     want_expression do
       if args.nil?
         # no arguments
+        #
+        # NOTE: We don't have to encode an iter of "nil" as "nil".
+        # Instead we save us the space and check for undefined in the
+        # method definition.
         "#{receiver}.#{method_name}(#{iter})"
       elsif args.first == :array
         # one or more arguments
@@ -462,6 +466,17 @@ class MethodCompiler < SexpProcessor
   #
   # EXPRESSION
   #
+  # Attribute assignment: receiver.attr=(value)
+  #
+  # Same as a method call!
+  #
+  def process_attrasgn(exp)
+    process_call(exp)
+  end
+
+  #
+  # EXPRESSION
+  #
   # Method call with receiver
   #
   def process_call(exp)
@@ -508,6 +523,40 @@ class MethodCompiler < SexpProcessor
     resultify(generate_method_call(@encoder.encode_self, method, nil, nil))
   end
 
+  #
+  # Constant lookup
+  # ===============
+  #
+  # Constant lookup in RubyJS is performed statically. This is possible
+  # because the whole class hierarchy is available at compile-time. 
+
+  #
+  # STATEMENT
+  #
+  def process_const(exp)
+    name = exp.shift
+    return @encoder.encode_constant(name)
+  end
+
+  # 
+  # STATEMENT
+  #
+  # A::B     # => [:colon2, [:const, :A], :B]
+  #
+  def process_colon2(exp)
+    name = exp.shift
+    raise
+  end
+
+  # 
+  # STATEMENT
+  #
+  # ::A     # => [:colon3, :A]
+  #
+  def process_colon3(exp)
+    name = exp.shift
+    raise
+  end
 
   #
   # STATEMENT/EXPRESSION
@@ -767,6 +816,111 @@ class MethodCompiler < SexpProcessor
     resultify("#{@encoder.encode_self}.#{ivar_name}")
   end
 
+  def process_svalue
+    raise
+  end
+
+  def process_to_ary(exp)
+    value = exp.shift
+    case value.first
+    when :lit
+      "[" + process(value) + "]"
+    when :array, :zarray
+      process(value)
+    else
+      generate_method_call(process(value), "to_ary", nil, nil)
+    end
+  end
+
+  #
+  # EXPRESSION
+  #
+  # This is used to insert a pure inline JS string into the
+  # code. It is used for example in process_masgn.
+  #
+  # It is not part of the ParseTree returned node types!
+  #
+  def process_special_inline_js_value(exp)
+    return exp.shift
+  end
+
+  #
+  # EXPRESSION
+  #
+  # Multiple assignment
+  #
+  # Simple case:
+  #
+  # a, b = 1, 2
+  #
+  # [:masgn,
+  #  [:array, [:lasgn, :a], [:lasgn, :b]],
+  #  [:array, [:lit, 1], [:lit, 2]]]]]]
+  #
+  # Case with splat argument:
+  #
+  # a, *b = 1, 2, 3
+  #
+  # [:masgn,
+  #  [:array, [:lasgn, :a]],
+  #  [:lasgn, :b],
+  #  [:array, [:lit, 1], [:lit, 2], [:lit, 3]]]]]]
+  #
+  # Another case:
+  #
+  # a, b = 1
+  #
+  # [:masgn,
+  #  [:array, [:lasgn, :a], [:lasgn, :b]],
+  #  [:to_ary, [:lit, 1]]]
+  #
+  # We actually implement multiple assignment using a
+  # temporary array. Example:
+  #
+  #   a, b = b, a
+  #
+  # leads to the following javascript code 
+  #
+  #   (_t = [b,a],
+  #    a  = _t[0] === undefined ? nil : _t[0], 
+  #    b  = _t[1] === undefined ? nil : _t[1])
+  #
+  # When a splat argument is given, there's just an
+  # additional assignment which takes the rest of the
+  # array.
+  #
+  def process_masgn(exp)
+    lhs = exp.shift
+    if exp.first[0] != :array
+      splat = exp.shift 
+    end
+    rhs = exp.shift
+
+    raise unless lhs.first == :array
+    raise unless rhs.first == :array or rhs.first == :to_ary
+
+    want_expression do
+      with_temporary_variable do |tmp|
+        assgn = [] 
+        assgn << "#{tmp}=#{process(rhs)}"
+
+        # lhs[0] == :array -> skip it
+        lhs[1..-1].each_with_index do |assignment, i|  # for example where assignment == [:lasgn, :a]
+          assignment << s(:special_inline_js_value, "#{tmp}[#{i}]===undefined?#{@encoder.encode_nil}:#{tmp}[#{i}]")
+          assgn << process(assignment)
+        end
+
+        if splat
+          # splat is for example [:lasgn, :a]
+          splat << s(:special_inline_js_value, "#{tmp}.slice(#{lhs.size-1})")
+          assgn << process(splat)
+        end
+
+        "(" + assgn.join(",") + ")" 
+      end
+    end
+  end
+
   #
   # EXPRESSION
   #
@@ -902,9 +1056,11 @@ class MethodCompiler < SexpProcessor
 
   def with_temporary_variable
     var = get_temporary_variable()
-    res = yield var
-    put_temporary_variable(var)
-    return res
+    begin
+      return (yield var)
+    ensure
+      put_temporary_variable(var)
+    end
   end
 
   def get_temporary_variable

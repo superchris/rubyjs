@@ -64,6 +64,7 @@ TODO
 
 LIMITATIONS
 
+  --
   You can't inherit from core classes like Array, String, Regexp and so
   on. It's easy to allow by adding one further indirection, e.g. in that
   on object creation an attribute "m" is assigned, which contains a hash
@@ -71,6 +72,7 @@ LIMITATIONS
   As long as this limitation is no problem, I go the way via prototypes,
   which should be slightly more efficient.
 
+  --
   You are not allowed to redefine the classes name method:
 
     class MyClass
@@ -82,6 +84,16 @@ LIMITATIONS
   The same is true for other methods like ancestors, superclass,
   instance_methods, methods. But you wouldn't do that anyways in Ruby,
   so that's no big restriction!
+
+  --
+  Constant assignment inside methods is forbidden. This is due to
+  using static constant lookup. Constant assignment inside the class
+  scope or module scope is not affected, as this is executed by the 
+  Ruby interpreter.
+  Constants are either inlined in the case it is a value type (Fixnum, Float)
+  or a reference is generated (i.e. a variable holding it's value + a name).
+  References are only generated on demand, i.e. only when a constant is
+  accessed. 
 
 TODO
 

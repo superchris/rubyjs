@@ -1,41 +1,3 @@
-module RubyJS
-  module Environment
-    class Test
-      def b 
-        `return true`
-      end
-
-      def a(a,b=a,c=2,*args,&block)
-        b(*args, &block)
-
-        p 1, 2, 3
-        p 2
-        a.b()
-
-        a = b = c = 1
-        l = 1
-        l = @hallo
-        @hallo = 1;
-
-        if @hallo == 4
-          a = b
-        elsif true
-        else
-        end
-
-        a = if true then 1 else 5 end
-
-        while true
-          a += 1
-          a += 2
-        end
-
-        return 3
-      end
-    end
-  end
-end
-
 if __FILE__ == $0
   require 'rubygems'
   require 'compiler'
@@ -128,19 +90,7 @@ if __FILE__ == $0
 
   str << ipol[<<EOS]
 function test() {
-a = #<Array>.#<m:new>(); // => []
-a.push(1);
-a.push(2);
-alert(#<Array>.#<m:name>());
-alert(#<Array>.#<m:class>().#<m:name>());
-
-alert(#<Class>.#<m:class>().#<m:name>());
-alert(#<Class>.#<m:name>());
-
-b = #<Object>.#<m:new>();
-
-#<Object>.#<m:say_hello>();
-#<Array>.#<m:say_hello>();
+  #<Array>.#<m:test>();
 }
 EOS
 

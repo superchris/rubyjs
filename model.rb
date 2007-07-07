@@ -7,15 +7,7 @@
 
 require 'parse_tree'
 require 'sexp_processor'
-
-module RubyJS
-  module Environment
-    class Object
-    end
-    class Class
-    end
-  end
-end
+require 'enumerator'
 
 class MethodExtractor < SexpProcessor
   attr_accessor :instance_methods, :methods
@@ -44,10 +36,20 @@ class MethodExtractor < SexpProcessor
 end
 
 class Model
+  SCOPE_R = /^RubyJS::Environment::(.*)$/
+
+  def initialize
+    @klasses = ObjectSpace.enum_for(:each_object).select {|o| o.is_a?(::Class) && o.name =~ SCOPE_R }
+    @modules = ObjectSpace.enum_for(:each_object).select {|o| o.is_a?(::Module) && o.name =~ SCOPE_R } - @klasses
+
+    #p @klasses
+    #p @modules
+  end
+
   def model_for(klass)
     name = klass.name
 
-    if name =~ /^RubyJS::Environment::(.*)$/
+    if name =~ SCOPE_R
       name = $1
     else
       raise "must be scoped inside RubyJS module"
@@ -81,7 +83,7 @@ class Model
       sn = nil
       if s
         sn = s.name
-        if sn =~ /^RubyJS::Environment::(.*)$/
+        if sn =~ SCOPE_R
           sn = $1
         else
           raise "must be scoped inside RubyJS module"
@@ -89,6 +91,7 @@ class Model
       end
 
       return {
+        :for => klass,
         :modules => a,
         :superclass => s,
         :superclass_name => sn,
@@ -104,6 +107,7 @@ class Model
       a = a[1..-1] if a[0] == klass
 
       return {
+        :for => klass,
         :modules => a,
         :is_a => :module,
         :name => name,

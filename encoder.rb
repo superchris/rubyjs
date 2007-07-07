@@ -110,7 +110,7 @@ class Encoder
     str = str.gsub(/#<(.*?)>/) {
       case s = $1.strip
       when /^(\w+)\(\)$/        then encode_method($1) 
-      when /^m:(\w+)$/          then encode_method($1) 
+      when /^m:(.+)$/          then encode_method($1) 
       when /^self$/             then encode_self()
       when /^nil$/              then encode_nil()
       when /^(@\w+)$/           then encode_instance_variable($1)
@@ -119,7 +119,7 @@ class Encoder
       when /^globalattr:(\w+)$/ then encode_globalattr($1)
       when /^([a-z_]\w*)$/      then encode_local_variable($1)
       else
-        raise
+        raise s
       end
     }
     return str

@@ -99,7 +99,7 @@ RUNTIME_INIT_STAGE2 = <<EOS
 #<globalattr:def_class>({#<attr:_class>: #<Object>}); // rebuild
 EOS
 
-module RubyJS::Environment
+module RubyJS; module Environment
   class Class
     def allocate
       `var o = new #<self>.#<attr:object_constructor>();
@@ -125,7 +125,34 @@ module RubyJS::Environment
     end
   end
 
+  module Kernel
+    def nil?
+      false
+    end
+
+    def loop
+      while true
+        # TODO
+        #yield
+      end
+    end
+
+    # TODO
+    def raise
+    end
+  end
+
   class Object
+    include Kernel
+
+    def eql?(other)
+      `return (#<self> === #<other>)`
+    end
+
+    def kind_of?(klass)
+      # TODO
+    end
+
     def __invoke(id, args, &block)
       `return #<self>[#<id>].apply(#<self>, [#<block>].concat(#<args>));`
     end
@@ -133,26 +160,293 @@ module RubyJS::Environment
     def initialize
     end
 
-    def self.say_hello
-      `alert('goooguuuck')`
-    end
-
-    def inspect
-      `return "halllooo" + #<self>.toString()`
-    end
-
     def class
       `return #<self>.#<attr:_class>`
     end
+
+    def inspect
+      `return #<self>.toString()`
+    end
   end
 
+=begin
+  module Enumerable
+    def map(&block)
+      result = []
+      each {|elem|
+        if block
+          result << block.call(elem)
+        else
+          result << elem 
+        end
+      }
+      result
+    end
+    alias collect map
+
+    def select
+      result = []
+      each {|elem|
+        cond = yield(elem)
+        if cond
+          result << elem 
+        end
+      }
+      result
+    end
+    alias find_all select
+
+    def reject
+      result = []
+      each {|elem|
+        cond = yield(elem)
+        unless cond
+          result << elem
+        end
+      }
+      result
+    end
+
+    def to_a
+      result = []
+      each {|elem| result << elem}
+      result
+    end
+  end
+=end
+=begin
+  class Exception
+    attr_reader :message
+    def initialize(message)
+      @message = message
+    end
+  end
+
+  class StandardError < Exception; end
+  class NameError < StandardError; end
+  class NoMethodError < NameError; end
+  class RuntimeError < StandardError; end
+  class ArgumentError < StandardError; end
+
+  class NilClass
+    class << self
+      undef_method :new
+      undef_method :allocate 
+    end
+
+    def nil?
+      true
+    end 
+
+    def inspect
+      "nil"
+    end
+  end 
+
+  # TODO: make undef_method working
+  class Number
+    class << self
+      undef_method :new
+      undef_method :allocate 
+    end
+
+    def +(x)  `return #<self> + #<x>` end
+    def -(x)  `return #<self> - #<x>` end
+    def *(x)  `return #<self> * #<x>` end
+    def /(x)  `return #<self> / #<x>` end
+    def <(x)  `return #<self> < #<x>` end
+    def <=(x) `return #<self> <= #<x>` end
+    def >(x)  `return #<self> > #<x>` end
+    def >=(x) `return #<self> >= #<x>` end
+    def ==(x) `return #<self> == #<x>` end
+    def %(x)  `return #<self> % #<x>` end
+
+    def times
+      i = 0
+      while i < self
+        yield i
+        i += 1
+      end
+      return self
+    end
+
+    def downto(x)
+      i = self
+      while i >= x  
+        yield i
+        i -= 1
+      end
+      return self
+    end
+
+    def upto(x)
+      i = self
+      while i <= x  
+        yield i
+        i += 1
+      end
+      return self
+    end
+  end
+
+  #
+  # NOTE: Strings in RubyJS are immutable!!!
+  #
+  class String
+    def +(str)
+      `return (#<self> + #<str>)`
+    end
+    
+    def empty?
+      `return (#<self> === "")`
+    end
+  
+    # FIXME: escape special characters
+    def inspect
+      '"' + self + '"'
+    end
+  end
+=end
+
   class Array
+    __OBJECT_CONSTRUCTOR = "Array"
+
+    #include Enumerable
+
     def to_a
       self
     end
 
+    def to_ary
+      self
+    end
+
+    def self.new
+      `return []`
+    end
+
+    # TODO: test that otherArray is array 
+    def +(otherArray)
+      `return #<self>.concat(#<otherArray>)`
+    end
+
+    def dup
+      `return #<self>.concat()`
+    end
+
+    def reverse
+      `return #<self>.concat().reverse()`
+    end
+
+    def reverse!
+      `#<self>.reverse(); return #<self>`
+    end
+
+    def length
+      `return #<self>.length`
+    end
+  
+    alias size length
+
+    # TODO: check arrary bounds
+    def [](i)
+      `var val = #<self>[#<i>]; return ((val === undefined || val === null) ? #<nil> : val)`
+    end
+
+    def []=(i, val)
+      `return (#<self>[#<i>] = #<val>)`
+    end
+
+    def push(*args)
+      `#<self>.push.apply(#<self>, #<args>); return #<self>`
+    end
+
+    def <<(arg)
+      `#<self>.push(#<arg>); return #<self>`
+    end
+
+    def pop
+      `return #<self>.pop()`
+    end
+
+    def shift
+      `return #<self>.shift()`
+    end
+   
+    def unshift(*args)
+      `#<self>.unshift.apply(#<self>, #<args>); return #<self>`
+    end
+
+    def empty?
+      `return (#<self>.length == 0)`
+    end
+
+    # TODO: inspect elements as well
+=begin
     def inspect
-      "Array#inspect"
+      str = "["
+      self.each_with_index {|elem, i|
+        str += elem.inspect
+        str += ", " if i != self.length-1
+      }
+      str += "]"
+      str
+    end
+=end
+
+=begin
+    def each
+      `for (var i=0; i < #<self>.length; i++) {`
+      yield `#<self>[i]`
+      `}`
+      self
+    end
+
+    def each_with_index
+      `for (var i=0; i < self.length; i++) {`
+      yield `self[i]`, `i`
+      `}`
+      self
+    end
+=end
+
+    # FIXME: don't hard code eql? formatting. implement and use #<eql?> expression.
+=begin
+    def eql?(other)
+      `
+      if (!(#<other> instanceof Array)) return false;
+      if (self.length != #<other>.length) return false;  
+ 
+      /*
+       * compare element-wise
+       */
+      for (var i = 0; i < self.length; i++) 
+      {
+        if (!rubyjs_test(rubyjs_send(self[i], '__eql$q', [#<other>[i]], null)))
+        {
+          /* 
+           * at least for one element #eql? holds not true
+           */
+          return false;
+        }
+      }
+      
+      return true;
+      `
+    end
+=end
+    def self.test
+      a,b,*c = [1,2,3] + [4, 5] 
+
+      `alert(#<a>);`
+      `alert(#<b>)`
+      `alert(#<c>)`
+
+      a = Array.new
+      a.push(1)
+      a.push(2)
+      v = a.size
+      `alert(#<v>)`
     end
   end
-end
+end; end
