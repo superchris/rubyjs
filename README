@@ -34,20 +34,43 @@ MAPPING
 
 TODO
 
+  --
+  Improve "if"/"unless". If the "then" block is empty, negate and
+  don't use the "else" block.
+
+  --
+  Short cut conditionalize if "true", "false" or "nil" is the condition.
+
+  --
+  In case "yield" is used, introduce a fresh temporary variable, which
+  gets assigned the passed block argument. use this instead of the block
+  argument variable:
+
+    def a(&block)
+      block = nil
+      yield
+    end
+
+    a { p "hallo" }  # => "hallo"
+
+  --
   Issue a warning whenever a destructive Ruby string method like gsub!
   is used. The reason behind this warning is that, due to efficience
   reasons, Ruby strings (which are mutable) are mapped to immutable
   Javascript strings.
 
+  --
   Command-line switch that avoids generation of arity checking in the
   functions. Makes execution of RubyJS generated Javascript code much
   faster.
 
+  --
   Command-line switch that doesn't call methods for some operators.
   Most important ones are "+", "-" and "/". This is of course an unsafe
   operation as you could define a method "+" in your own class. For
   heavy math operations, this of course increases performance a lot!
 
+  --
   Command-line switch that removes unused methods. This is possible, as
   we record the names of all (possibly) called methods. This of course
   disables send() support. This switch has the potential to reduce the
@@ -57,6 +80,7 @@ TODO
   names. This works only on method names, as we can't infer the used
   classes.
 
+  --
   Command-line switch that disables the generation of name-information
   used by methods like send(), instance_variables(), methods() or
   respond_to?(). This makes it hard to decompile the Javascript code
@@ -94,21 +118,3 @@ LIMITATIONS
   or a reference is generated (i.e. a variable holding it's value + a name).
   References are only generated on demand, i.e. only when a constant is
   accessed. 
-
-TODO
-
-  Improve "if"/"unless". If the "then" block is empty, negate and
-  don't use the "else" block.
-
-  Short cut conditionalize if "true", "false" or "nil" is the condition.
-
-  In case "yield" is used, introduce a fresh temporary variable, which
-  gets assigned the passed block argument. use this instead of the block
-  argument variable:
-
-    def a(&block)
-      block = nil
-      yield
-    end
-
-    a { p "hallo" }  # => "hallo"

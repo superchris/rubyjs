@@ -73,6 +73,7 @@ if __FILE__ == $0
   object_model = model.model_for(RubyJS::Environment::Object)
   array_model = model.model_for(RubyJS::Environment::Array)
   nilclass_model = model.model_for(RubyJS::Environment::NilClass)
+  proc_model = model.model_for(RubyJS::Environment::Proc)
   
   # to interpolates it's string
   ipol = encoder.method(:interpolate)
@@ -88,6 +89,7 @@ if __FILE__ == $0
   str << ipol[RUNTIME_INIT_STAGE2]
   str << generate_class_declaration(array_model, encoder, true, nil, "Array") 
   str << generate_class_declaration(nilclass_model, encoder, true, nil, "NilClass") 
+  str << generate_class_declaration(proc_model, encoder, true, nil, "Function") 
 
   str << ipol[<<EOS]
 function test() {

@@ -405,44 +405,30 @@ class MethodCompiler < SexpProcessor
     method_name = @encoder.encode_method(method)
     @method_calls.add(method_name)
 
-    want_expression do
-      if args.nil?
-        # no arguments
-        #
-        # NOTE: We don't have to encode an iter of "nil" as "nil".
-        # Instead we save us the space and check for undefined in the
-        # method definition.
-        "#{receiver}.#{method_name}(#{iter})"
-      elsif args.first == :array
-        # one or more arguments
-        args_string = args[1..-1].map{|a| process(a)}.join(",")
-        "#{receiver}.#{method_name}(#{iter || @encoder.encode_nil},#{args_string})"
-      elsif args.first == :splat
-        #
-        # puts(*a)  # => [:fcall, :puts, [:splat, [:lvar, :a]]]]]]
-        #
-        __invoke = @encoder.encode_method('__invoke')
-        to_splat = @encoder.encode_globalattr('to_splat')
-        @method_calls.add(__invoke)
-
-        "#{receiver}.#{__invoke}(#{iter || @encoder.encode_nil},'#{method_name}',#{to_splat}(#{ process(args[1]) }))"
-      elsif args.first == :argscat
-        raise
-        #
-        # puts(1, *a) # => ... [:argscat, [:array, [:lit, 1]], [:lvar, :a]]
-        #
-        prefix = args[1]
-        splat = args[2]
-        raise unless prefix[0] == :array
-
-        __invoke = @encoder.encode_method('__invoke')
-        to_splat = @encoder.encode_globalattr('to_splat')
-        @method_calls.add(__invoke)
-
-        a = "[" + process(prefix) + "].concat(#{to_splat}(#{ process(splat) }))"
-        "#{receiver}.#{__invoke}(#{iter || @encoder.encode_nil},'#{method_name}',#{a})"
-      else
-        raise
+    without_result do
+      want_expression do
+        if args.nil?
+          # no arguments
+          #
+          # NOTE: We don't have to encode an iter of "nil" as "nil".
+          # Instead we save us the space and check for undefined in the
+          # method definition.
+          "#{receiver}.#{method_name}(#{iter})"
+        elsif args.first == :array
+          # one or more arguments
+          args_string = args[1..-1].map{|a| process(a)}.join(",")
+          "#{receiver}.#{method_name}(#{iter || @encoder.encode_nil},#{args_string})"
+        elsif args.first == :splat or args.first == :argscat
+          #
+          # puts(*a)  # => [:fcall, :puts, [:splat, [:lvar, :a]]]]]]
+          #
+          # puts(1, *a) # => ... [:argscat, [:array, [:lit, 1]], [:lvar, :a]]
+          #
+          @method_calls.add(__invoke = @encoder.encode_method('__invoke'))
+          "#{receiver}.#{__invoke}(#{iter || @encoder.encode_nil},'#{method_name}',#{ process(args) })"
+        else
+          raise
+        end
       end
     end
   end
@@ -519,6 +505,13 @@ class MethodCompiler < SexpProcessor
     method = exp.shift
 
     resultify(generate_method_call(@encoder.encode_self, method, nil, nil))
+  end
+
+  def process_yield(exp)
+    value = exp.shift
+    p value
+    ""
+    #raise
   end
 
   #
@@ -722,15 +715,47 @@ class MethodCompiler < SexpProcessor
   def process_self(exp)
     resultify(@encoder.encode_self)
   end
-  
+ 
+  #
+  # EXPRESSION
+  #
+  def process_splat(exp)
+    value = exp.shift
+    to_splat = @encoder.encode_globalattr('to_splat')
+    str = without_result do
+      want_expression do
+        "#{to_splat}(#{ process(value) })"
+      end
+    end
+    resultify(str)
+  end
+
+  #
+  # EXPRESSION
+  #
+  def process_argscat(exp)
+    prefix = exp.shift
+    splat = exp.shift
+    raise unless prefix.first == :array
+    to_splat = @encoder.encode_globalattr('to_splat')
+    str = without_result do
+      want_expression do
+        "#{process(prefix)}.concat(#{to_splat}(#{ process(value) }))"
+      end
+    end
+    resultify(str)
+  end
+
   #
   # EXPRESSION
   #
   # Array literal
   #
   def process_array(exp)
-    str = want_expression do
-      "[" + exp.map{|e| process(e)}.compact.join(",") + "]"
+    str = without_result do
+      want_expression do
+        "[" + exp.map{|e| process(e)}.compact.join(",") + "]"
+      end
     end
     exp.clear
     resultify(str)
@@ -849,14 +874,19 @@ class MethodCompiler < SexpProcessor
 
   def process_to_ary(exp)
     value = exp.shift
-    case value.first
-    when :lit
-      "[" + process(value) + "]"
-    when :array, :zarray
-      process(value)
-    else
-      generate_method_call(process(value), "to_ary", nil, nil)
+    str = without_result do
+      want_expression do
+        case value.first
+        when :lit
+          "[" + process(value) + "]"
+        when :array, :zarray
+          process(value)
+        else
+          generate_method_call(process(value), "to_ary", nil, nil)
+        end
+      end
     end
+    resultify(str)
   end
 
   #

@@ -102,6 +102,16 @@ EOS
 
 module RubyJS; module Environment
 
+  class Proc
+    __OBJECT_CONSTRUCTOR = "Function"
+
+    def call(*args)
+      `if (#<args>.length == 0) return #<self>();
+       else if (#<args>.length == 1) return #<self>(#<args>[0]);
+       else return #<self>(#<args>);`
+    end
+  end
+
   class NilClass
     __OBJECT_CONSTRUCTOR = "NilClass"
     def nil?
@@ -454,6 +464,10 @@ module RubyJS; module Environment
       else
         `alert('false');`
       end
+
+      yield 
+      yield 1
+      yield 1,2
 
       `alert(#<a>);`
       `alert(#<b>)`

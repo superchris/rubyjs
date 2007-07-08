@@ -173,7 +173,8 @@ class Encoder
         # keep strings as-is 
         a
       else
-        a.gsub(/\/\/[^\n]*/,"").         # remove comments
+        a.squeeze(";").                  # remove duplicate semicolons (;; -> ;)
+          gsub(/\/\/[^\n]*/,"").         # remove comments
           gsub(/\s*([^\w\$])\s*/) { $1 } # remove unneccessary whitespace
       end
     }.join("")
