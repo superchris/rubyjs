@@ -8,6 +8,8 @@
 RUNTIME_INIT = <<EOS
 // declare nil
 function NilClass() {}
+
+// FIXME: remove
 NilClass.prototype.toString = function() { return "nil"; };
 #<nil> = new NilClass();
 
@@ -34,35 +36,15 @@ function #<globalattr:masgn_iter>(a)
   return a;
 }
 
-function #<globalattr:def_class>(h)
+function #<globalattr:rebuild_classes>(c)
 {
-  var c,k,i;
-  c = h.#<attr:_class> || #<Class>.#<m:new>(#<nil>, h.#<attr:superclass>, h.#<attr:classname>, h.#<attr:object_constructor>);
+  for (var i=0; i<c.length; i++)
+    #<globalattr:rebuild_class>(c[i]);
+}
 
-  if (h.#<attr:instance_methods>)
-  {
-    for (k in h.#<attr:instance_methods>)
-    {
-      c.#<attr:object_constructor>.prototype[k] = h.#<attr:instance_methods>[k];
-    }
-  }
-
-  if (h.#<attr:methods>)
-  {
-    for (k in h.#<attr:methods>) c[k] = h.#<attr:methods>[k];
-  }
-
-  if (h.#<attr:modules>)
-  {
-    for (i=0; i<h.#<attr:modules>.length; i++)
-    {
-      c.#<attr:modules>.push(h.#<attr:modules>[i]);
-    }
-  }
-
-  //
-  // rebuild
-  //
+function #<globalattr:rebuild_class>(c)
+{
+  var k,i;
 
   // instance methods
   if (c.#<attr:superclass> != #<nil>)
@@ -99,6 +81,33 @@ function #<globalattr:def_class>(h)
       }
     }
   }
+}
+
+function #<globalattr:def_class>(h)
+{
+  var c,k,i;
+  c = h.#<attr:_class> || #<Class>.#<m:new>(#<nil>, h.#<attr:superclass>, h.#<attr:classname>, h.#<attr:object_constructor>);
+
+  if (h.#<attr:instance_methods>)
+  {
+    for (k in h.#<attr:instance_methods>)
+    {
+      c.#<attr:object_constructor>.prototype[k] = h.#<attr:instance_methods>[k];
+    }
+  }
+
+  if (h.#<attr:methods>)
+  {
+    for (k in h.#<attr:methods>) c[k] = h.#<attr:methods>[k];
+  }
+
+  if (h.#<attr:modules>)
+  {
+    for (i=0; i<h.#<attr:modules>.length; i++)
+    {
+      c.#<attr:modules>.push(h.#<attr:modules>[i]);
+    }
+  }
 
   return c;
 }
@@ -129,14 +138,38 @@ module RubyJS; module Environment
     end
   end
 
+  class Boolean
+    OBJECT_CONSTRUCTOR__ = "Boolean"
+
+    class << self
+      undef_method :new
+      undef_method :allocate 
+    end
+
+    def to_s
+      `return (#<self> == true ? 'true' : 'false')` 
+    end
+
+    alias inspect to_s
+  end
+
   class NilClass
     OBJECT_CONSTRUCTOR__ = "NilClass"
+
+    class << self
+      undef_method :new
+      undef_method :allocate 
+    end
 
     def nil?
       true
     end
 
     def to_s
+      ""
+    end
+
+    def inspect
       "nil"
     end
   end
@@ -173,8 +206,7 @@ module RubyJS; module Environment
 
     def loop
       while true
-        # TODO
-        #yield
+        yield
       end
     end
 
@@ -275,15 +307,6 @@ module RubyJS; module Environment
   class ArgumentError < StandardError; end
 
   class NilClass
-    class << self
-      undef_method :new
-      undef_method :allocate 
-    end
-
-    def nil?
-      true
-    end 
-
     def inspect
       "nil"
     end
@@ -517,6 +540,10 @@ module RubyJS; module Environment
 
 
     def self.test
+      alert(true.nil?)
+      alert(false.nil?)
+      alert(nil.nil?)
+      alert(1.nil?)
       1.upto(3) do |i| alert(i) end
 
       [1,2,3,"hallo"].each_with_index do |v, i|

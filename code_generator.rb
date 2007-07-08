@@ -14,107 +14,132 @@ class CodeGenerator
     @world = Model.new
   end
 
+  def def_Class
+    m = @world.models[RubyJS::Environment::Class]
+
+    str = ""
+    str << generate_class_declaration(
+      m,
+      assign=true,
+      _class=ipol(%[new #<globalattr:MetaClass>(#<globalattr:MetaClass>, #<nil>, "Class", #<globalattr:MetaClass>)]),
+      obj_cons=nil,
+      use_superclass=false,
+      use_modules=false)
+
+    str << @world.encode_globalattr('rebuild_class') + "(" + @world.encode_constant(m[:name]) + ");"
+
+    str
+  end
+
   def generate(additional_code="")
     str = ""
 
     # Code of runtime
     str << ipol(RUNTIME_INIT)
 
+    #
     # Code for Class
-    str << generate_class_declaration(
-             @world.models[RubyJS::Environment::Class],
-             assign=true,
-             _class=ipol(%[new #<globalattr:MetaClass>(#<globalattr:MetaClass>, #<nil>, "Class", #<globalattr:MetaClass>)]),
-             obj_cons=nil,
-             use_superclass=false)
+    #
+    # Required at the beginning because all other classes are created as
+    # objects from Class using Class.new.
+    #
+    str << def_Class()
 
-    # Code for Object
-    str << generate_class_declaration(
-             @world.models[RubyJS::Environment::Object],
-             assign=true) 
-    
-    # Code to make Class a subclass of Object and rebuild everything
-    str << ipol(<<-EOS)
-      #<Class>.#<attr:superclass> = #<Object>;
-      #<globalattr:def_class>({#<attr:_class>: #<Class>});  // rebuild
-      #<globalattr:def_class>({#<attr:_class>: #<Object>}); // rebuild
-    EOS
+    #
+    # Now define all other classes/modules
+    #
 
-    # Now generate code for all remaining classes/modules
-    seen = Set.new([RubyJS::Environment::Class, RubyJS::Environment::Object])
-    @world.iterate_all(seen) do |m|
-      next if m[:is_a] != :class # TODO
+    @world.iterate_all(Set.new) do |m|
+
+      #
+      # We have to add the modules for class Class here.
+      #
+      if m[:for] == RubyJS::Environment::Class
+        h = { "_class" => @world.encode_constant(m[:name]) }
+        b_modules(m, h)
+        str << b_def_class(h)
+        next
+      end
+
       begin
         obj_cons = m[:for].const_get(:OBJECT_CONSTRUCTOR__)
       rescue
         obj_cons = nil
       end
 
-      str << generate_class_declaration(
-               m,
-               assign=true,
-               _class=nil,
-               obj_cons)
+      str << generate_class_declaration(m, assign=true, _class=nil, obj_cons)
     end
 
+    #
+    # Class is a subclass of Object
+    #
+    str << ipol(<<-EOS)
+      #<Class>.#<attr:superclass> = #<Object>;
+    EOS
+
+    #
+    # rebuild all classes and modules
+    #
+    klasses = []
+    @world.iterate_all(Set.new) do |m|
+      klasses << @world.encode_constant(m[:name])
+    end
+    str << @world.encode_globalattr('rebuild_classes') + "([" + klasses.join(",") + "]);"
+
+    #
+    # add additional code
+    #
     str << ipol(additional_code)
 
     return @world.strip_ws_from_js_code(str)
   end
-  
-  def generate_class_declaration(model, assign=true, _class=nil, object_constructor=nil, use_superclass=true)
+
+  def b_methods(kind, model, h)
+    m = {}
+    model[kind].each_pair do |name, pt|
+      @world.with_local do 
+        m[name] = MethodCompiler.new(@world).compile_method(pt)
+      end
+    end
+    unless m.empty?
+      h[kind.to_s] = "{" + m.map {|name, fn| @world.encode_method(name) + ": #{fn}" }.join(",") + "}"
+    end
+  end
+
+  def b_modules(model, h)
+    h["modules"] = "[" + model[:modules].map {|m|
+      @world.encode_constant(@world.namify(m))
+    }.join(",") + "]"
+  end
+
+  def b_def_class(h)
+    @world.encode_globalattr('def_class') + "({" + 
+    h.map {|k, v| @world.encode_attr(k) + ": #{v}"}.join(",") + "});"
+  end
+
+  def generate_class_declaration(model, assign=true, _class=nil, object_constructor=nil, use_superclass=true, use_modules=true)
     h = {}
     h["_class"] = _class if _class 
     h["object_constructor"] = object_constructor if object_constructor
 
-    #
-    # Instance methods
-    #
-    m = {}
-    model[:instance_methods].each_pair do |name, pt|
-      @world.with_local do 
-        m[name] = MethodCompiler.new(@world).compile_method(pt)
-      end
-    end
-    unless m.empty?
-      h["instance_methods"] = "{" + m.map {|name, fn| @world.encode_method(name) + ": #{fn}" }.join(",") + "}"
-    end
-
-    #
-    # Class methods
-    #
-    m = {}
-    model[:methods].each_pair do |name, pt|
-      @world.with_local do 
-        m[name] = MethodCompiler.new(@world).compile_method(pt)
-      end
-    end
-    unless m.empty?
-      h["methods"] = "{" + m.map {|name, fn| @world.encode_method(name) + ": #{fn}" }.join(",") + "}"
-    end
+    b_methods(:instance_methods, model, h)
+    b_methods(:methods, model, h)
 
     h["classname"] = model[:name].inspect
 
     if model[:superclass] and use_superclass
-      h["superclass"] = ipol("#<#{model[:superclass_name]}>")   # FIXME: name of constants?
+      h["superclass"] = @world.encode_constant(@world.namify(model[:superclass]))
     else
       # we need this as def_class expects a nil value if no superclass
       # is given!
       h["superclass"] = @world.encode_nil
     end
 
-    #
-    # TODO: modules and included modules
-    #
-    raise if model[:is_a] != :class
+    b_modules(model, h) if use_modules
 
     str = ""
-
-    str << ipol("#<#{model[:name]}>") + " = " if assign
-      
-    str << ipol("#<globalattr:def_class>") + "({" + 
-          h.map {|k, v| ipol("#<attr:#{k}>") + ": #{v}"}.join(",") + 
-          "});"
+    str << @world.encode_constant(model[:name]) + " = " if assign
+    str << b_def_class(h)
 
     return str
   end

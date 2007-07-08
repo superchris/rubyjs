@@ -69,14 +69,18 @@ class Model < Encoder
     seen.add(model[:for])
   end 
 
-  def model_for(klass)
+  def namify(klass)
     name = klass.name
-
     if name =~ SCOPE_R
       name = $1
     else
       raise "must be scoped inside RubyJS module"
     end
+    return name
+  end
+
+  def model_for(klass)
+    name = namify(klass)
 
     me = MethodExtractor.new
     me.process(ParseTree.new.parse_tree(klass))
@@ -103,21 +107,10 @@ class Model < Encoder
         end
       end
 
-      sn = nil
-      if s
-        sn = s.name
-        if sn =~ SCOPE_R
-          sn = $1
-        else
-          raise "must be scoped inside RubyJS module"
-        end
-      end
-
       return {
         :for => klass,
         :modules => a,
         :superclass => s,
-        :superclass_name => sn,
         :is_a => :class,
         :name => name,
         :instance_methods => me.instance_methods,
