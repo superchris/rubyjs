@@ -122,11 +122,13 @@ class Encoder
   #     #<globalattr:name>  # => encode_globalattr("name")
   #     #<variable>         # => encode_local_variable("variable")
   #
+  # FIXME: You can't interpolate methods like ">" yet.
+  #
   def interpolate(str)
     str = str.gsub(/#<(.*?)>/) {
       case s = $1.strip
       when /^(\w+)\(\)$/        then encode_method($1) 
-      when /^m:(.+)$/          then encode_method($1) 
+      when /^m:(.+)$/           then encode_method($1) 
       when /^self$/             then encode_self()
       when /^nil$/              then encode_nil()
       when /^(@\w+)$/           then encode_instance_variable($1)

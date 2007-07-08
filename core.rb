@@ -1,6 +1,11 @@
-require 'encoder'
+#
+# Runtime and core classes for the Javascript side 
+#
+# Copyright (c) 2007 by Michael Neumann (mneumann@ntecs.de).
+# All rights reserved.
+#
 
-RUNTIME_INIT_STAGE1 = <<EOS
+RUNTIME_INIT = <<EOS
 // declare nil
 function NilClass() {}
 NilClass.prototype.toString = function() { return "nil"; };
@@ -112,16 +117,10 @@ function #<globalattr:MetaClass>(#<_class>, #<superclass>, #<classname>, #<objec
 #<globalattr:MetaClass>.#<m:class> = function() { return this; };
 EOS
 
-RUNTIME_INIT_STAGE2 = <<EOS
-#<Class>.#<attr:superclass> = #<Object>;
-#<globalattr:def_class>({#<attr:_class>: #<Class>});  // rebuild
-#<globalattr:def_class>({#<attr:_class>: #<Object>}); // rebuild
-EOS
-
 module RubyJS; module Environment
 
   class Proc
-    __OBJECT_CONSTRUCTOR = "Function"
+    OBJECT_CONSTRUCTOR__ = "Function"
 
     def call(*args)
       `if (#<args>.length == 0) return #<self>();
@@ -131,7 +130,8 @@ module RubyJS; module Environment
   end
 
   class NilClass
-    __OBJECT_CONSTRUCTOR = "NilClass"
+    OBJECT_CONSTRUCTOR__ = "NilClass"
+
     def nil?
       true
     end
@@ -291,9 +291,42 @@ module RubyJS; module Environment
 
   # TODO: make undef_method working
   class Number
+=end
+
+  #
+  # NOTE: Strings in RubyJS are immutable!!!
+  #
+  class String
+    OBJECT_CONSTRUCTOR__ = "String"
+
+    def +(str)
+      `return(#<self> + #<str>)`
+    end
+    
+    def empty?
+      `return(#<self> === "")`
+    end
+  
+    # FIXME: escape special characters
+    def inspect
+      `return('"' + #<self> + '"')`
+    end
+
+    def to_s
+      self
+    end
+  end
+
+  class Number
+    OBJECT_CONSTRUCTOR__ = "Number"
+
     class << self
       undef_method :new
       undef_method :allocate 
+    end
+
+    def to_s
+      `return #<self>.toString()`
     end
 
     def +(x)  `return #<self> + #<x>` end
@@ -333,44 +366,11 @@ module RubyJS; module Environment
       end
       return self
     end
-  end
 
-=end
-
-  #
-  # NOTE: Strings in RubyJS are immutable!!!
-  #
-  class String
-    __OBJECT_CONSTRUCTOR = "String"
-
-    def +(str)
-      `return(#<self> + #<str>)`
-    end
-    
-    def empty?
-      `return(#<self> === "")`
-    end
-  
-    # FIXME: escape special characters
-    def inspect
-      `return('"' + #<self> + '"')`
-    end
-
-    def to_s
-      self
-    end
-  end
-
-  class Number
-    __OBJECT_CONSTRUCTOR = "Number"
-
-    def to_s
-      `return #<self>.toString()`
-    end
   end
 
   class Array
-    __OBJECT_CONSTRUCTOR = "Array"
+    OBJECT_CONSTRUCTOR__ = "Array"
 
     #include Enumerable
 
@@ -517,6 +517,7 @@ module RubyJS; module Environment
 
 
     def self.test
+      1.upto(3) do |i| alert(i) end
 
       [1,2,3,"hallo"].each_with_index do |v, i|
         alert(v)
@@ -527,36 +528,6 @@ module RubyJS; module Environment
         alert(i)
         alert(j)
       end
-
-      #return
-
-
-
-      a,b,*c = [1,2,3] + [4, 5] 
-
-      x = nil
-
-      if x.nil?
-        `alert('true');`
-      else
-        `alert('false');`
-      end
-
-      `alert('iter follows');`
-      `#<self>.#<m:iter>(function(a) { alert(typeof(a)); alert(a); });`
-      `alert('iter2 follows');`
-      `#<self>.#<m:iter2>(function(a) { alert(typeof(a)); alert(a); });`
-      `alert('iter done');`
-
-      `alert(#<a>);`
-      `alert(#<b>)`
-      `alert(#<c>)`
-
-      a = Array.new
-      a.push(1)
-      a.push(2)
-      v = a.size
-      `alert(#<v>)`
     end
   end
 end; end

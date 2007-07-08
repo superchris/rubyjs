@@ -419,6 +419,18 @@ class MethodCompiler < SexpProcessor
   end
 
 
+  # 
+  # Same as generate_method_call, but where recv_exp is an sexp.
+  # We take care that it gets processed, and that in case of a
+  # numeric literal, it gets surrounded by parens.
+  #
+  def generate_method_call_receiver_exp(recv_exp, method, iter, args)
+    is_num = is_numeric_literal(recv_exp)
+    receiver = want_expression do process(recv_exp) end 
+    receiver = "(" + receiver + ")" if is_num
+    generate_method_call(receiver, method, iter, args)
+  end
+
   #
   # Generates a arguments for a method call. 
   # 
@@ -493,9 +505,7 @@ class MethodCompiler < SexpProcessor
     args = exp.shift
 
     str = without_result do 
-      iter = get_iter()
-      receiver_string = want_expression do process(receiver) end
-      generate_method_call(receiver_string, method, iter, args)
+      generate_method_call_receiver_exp(receiver, method, get_iter(), args)
     end
     resultify(str)
   end
@@ -710,6 +720,14 @@ class MethodCompiler < SexpProcessor
 
     resultify(res)
   end 
+
+  def is_numeric_literal(exp)
+    type = exp[0]
+    str = exp[1].inspect
+
+    return true if type == :lit and (str =~ /^-?\d+/ or str == "Infinity" or str == "-Infinity")
+    return false
+  end
 
   #
   # EXPRESSION
@@ -967,7 +985,7 @@ class MethodCompiler < SexpProcessor
           # assignment.
           value[1]
         else
-          generate_method_call(process(value), "to_ary", nil, nil)
+          generate_method_call_receiver_exp(value, "to_ary", nil, nil)
         end
       end
     end

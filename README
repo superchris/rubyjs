@@ -77,6 +77,9 @@ TODO
 LIMITATIONS
 
   --
+  Module's are mapped to Classes for now.
+
+  --
   You can't inherit from core classes like Array, String, Regexp and so
   on. It's easy to allow by adding one further indirection, e.g. in that
   on object creation an attribute "m" is assigned, which contains a hash

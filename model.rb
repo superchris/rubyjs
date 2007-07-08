@@ -8,6 +8,7 @@
 require 'parse_tree'
 require 'sexp_processor'
 require 'enumerator'
+require 'encoder'
 
 class MethodExtractor < SexpProcessor
   attr_accessor :instance_methods, :methods
@@ -35,16 +36,38 @@ class MethodExtractor < SexpProcessor
   end
 end
 
-class Model
+class Model < Encoder
   SCOPE_R = /^RubyJS::Environment::(.*)$/
 
-  def initialize
-    @klasses = ObjectSpace.enum_for(:each_object).select {|o| o.is_a?(::Class) && o.name =~ SCOPE_R }
-    @modules = ObjectSpace.enum_for(:each_object).select {|o| o.is_a?(::Module) && o.name =~ SCOPE_R } - @klasses
+  attr_accessor :models
 
-    #p @klasses
-    #p @modules
+  def initialize
+    super()
+    @models = {}
+
+    # all modules and classes (a Class is_a Module)
+    ObjectSpace.each_object {|o| 
+      @models[o] = model_for(o) if o.is_a?(::Module) && o.name =~ SCOPE_R
+    }
   end
+
+  def iterate_all(seen, &block)
+    @models.each_value do |v|
+      iterate_rec(v, seen, &block)
+    end
+  end
+
+  def iterate_rec(model, seen, &block)
+    return if seen.include?(model[:for])
+    iterate_rec(@models[model[:superclass]], seen, &block) if model[:superclass]
+
+    model[:modules].each do |m|
+      iterate_rec(@models[m], seen, &block)
+    end
+
+    block.call(model)
+    seen.add(model[:for])
+  end 
 
   def model_for(klass)
     name = klass.name
