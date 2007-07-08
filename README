@@ -42,18 +42,6 @@ TODO
   Short cut conditionalize if "true", "false" or "nil" is the condition.
 
   --
-  In case "yield" is used, introduce a fresh temporary variable, which
-  gets assigned the passed block argument. use this instead of the block
-  argument variable:
-
-    def a(&block)
-      block = nil
-      yield
-    end
-
-    a { p "hallo" }  # => "hallo"
-
-  --
   Issue a warning whenever a destructive Ruby string method like gsub!
   is used. The reason behind this warning is that, due to efficience
   reasons, Ruby strings (which are mutable) are mapped to immutable

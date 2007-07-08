@@ -467,7 +467,9 @@ module RubyJS; module Environment
 
       yield 
       yield 1
+      yield [1]
       yield 1,2
+      yield [1,2]
 
       `alert(#<a>);`
       `alert(#<b>)`

@@ -96,6 +96,32 @@ class MethodCompiler < SexpProcessor
 
 
     @want_result = 0
+
+
+    #
+    # contains the name of the block argument, e.g.
+    #
+    #   def a(&block)
+    #   end
+    #
+    # would contain the encoded name of "block".
+    #
+    @block_arg_name = nil
+
+    #
+    # Argument name used for the block argument: 
+    #
+    #   function (#{@block_name}, ...) { ... }
+    #
+    # Generated on demand with block_name().
+    #
+    @block_name = nil
+
+    #
+    # If this method contains a yield statement this
+    # is set to true.
+    #
+    @uses_yield = false
   end
 
   def compile_method(pt)
@@ -159,7 +185,7 @@ class MethodCompiler < SexpProcessor
     if @argument_variables.empty?
       str << "function(){"
     else
-      args_str = ([@block_name || @encoder.encode_fresh_local_variable()] + @arguments_no_splat).join(",")
+      args_str = ([block_name()] + @arguments_no_splat).join(",")
       str << "function(#{args_str}){"
     end
 
@@ -184,8 +210,8 @@ class MethodCompiler < SexpProcessor
     # If a block argument is given (&block) convert it to nil if it is
     # undefined. 
     #
-    if @block_name
-      str << "if(#{@block_name}===undefined)#{@block_name}=#{@encoder.encode_nil};"
+    if @block_arg_name
+      str << "#{@block_arg_name}=#{block_name()}===undefined?#{@encoder.encode_nil}:#{block_name()};"
     end
 
     #
@@ -261,14 +287,18 @@ class MethodCompiler < SexpProcessor
   # STATEMENT
   #
   def process_block_arg(exp)
-    raise if @want_expression || @block_name
+    raise if @want_expression || @block_arg_name
     block = exp.shift
-    @block_name = @encoder.encode_local_variable(block)
-    @local_variables.add(@block_name)
-    @argument_variables.add(@block_name)
+    block_name() # make sure that the function signature contains a block argument!
+    @block_arg_name = @encoder.encode_local_variable(block)
+    @local_variables.add(@block_arg_name)
+    @local_variables_need_no_initialization.add(@block_arg_name)
     return ""
   end
 
+  # 
+  # TODO?
+  #
   def process_block_pass(exp)
     block = exp.shift
     call = exp.shift
@@ -507,11 +537,23 @@ class MethodCompiler < SexpProcessor
     resultify(generate_method_call(@encoder.encode_self, method, nil, nil))
   end
 
+  #
+  # EXPRESSION
+  #
+  # Q: Always call with "nil" if no argument is given?
+  # A: No, because then we could not distinguish between
+  #    no arguments and "nil" as argument.
+  #
   def process_yield(exp)
     value = exp.shift
-    p value
-    ""
-    #raise
+    @uses_yield = true
+
+    str = without_result do
+      want_expression do
+        block_name() + "(" + (value ? process(value) : '') + ")"
+      end
+    end
+    resultify(str)
   end
 
   #
@@ -522,7 +564,7 @@ class MethodCompiler < SexpProcessor
   # because the whole class hierarchy is available at compile-time. 
 
   #
-  # STATEMENT
+  # EXPRESSION
   #
   def process_const(exp)
     name = exp.shift
@@ -530,7 +572,7 @@ class MethodCompiler < SexpProcessor
   end
 
   # 
-  # STATEMENT
+  # EXPRESSION
   #
   # A::B     # => [:colon2, [:const, :A], :B]
   #
@@ -540,7 +582,7 @@ class MethodCompiler < SexpProcessor
   end
 
   # 
-  # STATEMENT
+  # EXPRESSION
   #
   # ::A     # => [:colon3, :A]
   #
@@ -1110,6 +1152,16 @@ class MethodCompiler < SexpProcessor
     @result_name ||= @encoder.encode_fresh_local_variable() 
     @local_variables.add(@result_name)
     @result_name
+  end
+
+  # 
+  # Generate a name for @block_name (which is the argument for
+  # the block in the Javascript function signature).
+  #
+  def block_name
+    @block_name ||= @encoder.encode_fresh_local_variable()
+    @argument_variables.add(@block_name)
+    @block_name
   end
 
   def conditionalize(exp, negate=false)
