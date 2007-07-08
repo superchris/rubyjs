@@ -32,7 +32,7 @@ class Encoder
   end
 
   def encode_self
-    'this'
+    'self'
   end
 
   #

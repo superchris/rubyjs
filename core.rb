@@ -3,11 +3,29 @@ require 'encoder'
 RUNTIME_INIT_STAGE1 = <<EOS
 // declare nil
 function NilClass() {}
+NilClass.prototype.toString = function() { return "nil"; };
 #<nil> = new NilClass();
 
 function #<globalattr:to_splat>(a)
 {
   // TODO
+  return a;
+}
+
+// 
+// helper function for multiple assignment in 
+// iterator parameters.
+// 
+//   undefined -> []
+//   1         -> [1]
+//   [1]       -> [[1]]
+//   []        -> [[]]
+//   [1,2]     -> [1,2]
+// 
+function #<globalattr:masgn_iter>(a)
+{
+  if (a===undefined) return [];
+  if (a.constructor!=Array || a.length<2) return [a];
   return a;
 }
 
@@ -82,16 +100,16 @@ function #<globalattr:def_class>(h)
 
 function #<globalattr:MetaClass>(#<_class>, #<superclass>, #<classname>, #<object_constructor>) 
 {
-  #<self>.#<attr:superclass> = #<superclass>;
-  #<self>.#<attr:classname> = #<classname>;
-  #<self>.#<attr:object_constructor> = #<object_constructor>;
-  #<self>.#<attr:modules> = [];
-  #<self>.#<attr:_class> = #<_class>;
-  return #<self>;
+  this.#<attr:superclass> = #<superclass>;
+  this.#<attr:classname> = #<classname>;
+  this.#<attr:object_constructor> = #<object_constructor>;
+  this.#<attr:modules> = [];
+  this.#<attr:_class> = #<_class>;
+  return this;
 }
 
 #<globalattr:MetaClass>.#<m:name> = function() { return "MetaClass"; };
-#<globalattr:MetaClass>.#<m:class> = function() { return #<self>; };
+#<globalattr:MetaClass>.#<m:class> = function() { return this; };
 EOS
 
 RUNTIME_INIT_STAGE2 = <<EOS
@@ -116,6 +134,10 @@ module RubyJS; module Environment
     __OBJECT_CONSTRUCTOR = "NilClass"
     def nil?
       true
+    end
+
+    def to_s
+      "nil"
     end
   end
 
@@ -185,6 +207,11 @@ module RubyJS; module Environment
 
     def inspect
       `return #<self>.toString()`
+    end
+
+    def alert(str)
+      str = str.to_s
+      `alert(#<str>); return #<nil>`
     end
   end
 
@@ -308,29 +335,58 @@ module RubyJS; module Environment
     end
   end
 
+=end
+
   #
   # NOTE: Strings in RubyJS are immutable!!!
   #
   class String
+    __OBJECT_CONSTRUCTOR = "String"
+
     def +(str)
-      `return (#<self> + #<str>)`
+      `return(#<self> + #<str>)`
     end
     
     def empty?
-      `return (#<self> === "")`
+      `return(#<self> === "")`
     end
   
     # FIXME: escape special characters
     def inspect
-      '"' + self + '"'
+      `return('"' + #<self> + '"')`
+    end
+
+    def to_s
+      self
     end
   end
-=end
+
+  class Number
+    __OBJECT_CONSTRUCTOR = "Number"
+
+    def to_s
+      `return #<self>.toString()`
+    end
+  end
 
   class Array
     __OBJECT_CONSTRUCTOR = "Array"
 
     #include Enumerable
+
+    def each
+      `for (var i=0; i < #<self>.length; i++) {`
+      yield `#<self>[i]`
+      `}`
+      self
+    end
+
+    def each_with_index
+      `for (var i=0; i < self.length; i++) {`
+      yield `self[i]`, `i`
+      `}`
+      self
+    end
 
     def to_a
       self
@@ -400,6 +456,10 @@ module RubyJS; module Environment
       `return (#<self>.length == 0)`
     end
 
+    def to_s
+      `return('[' + #<self>.toString() + ']');`
+    end
+
     # TODO: inspect elements as well
 =begin
     def inspect
@@ -414,19 +474,6 @@ module RubyJS; module Environment
 =end
 
 =begin
-    def each
-      `for (var i=0; i < #<self>.length; i++) {`
-      yield `#<self>[i]`
-      `}`
-      self
-    end
-
-    def each_with_index
-      `for (var i=0; i < self.length; i++) {`
-      yield `self[i]`, `i`
-      `}`
-      self
-    end
 =end
 
     # FIXME: don't hard code eql? formatting. implement and use #<eql?> expression.
@@ -454,7 +501,37 @@ module RubyJS; module Environment
       `
     end
 =end
+    def self.iter
+      yield
+      yield 1
+      yield [1]
+      yield 1,2
+    end
+
+    def self.iter2(&block)
+      block.call
+      block.call(1)
+      block.call([1])
+      block.call(1,2)
+    end
+
+
     def self.test
+
+      [1,2,3,"hallo"].each_with_index do |v, i|
+        alert(v)
+        alert(i)
+      end
+      
+      iter do |i,j|
+        alert(i)
+        alert(j)
+      end
+
+      #return
+
+
+
       a,b,*c = [1,2,3] + [4, 5] 
 
       x = nil
@@ -465,11 +542,11 @@ module RubyJS; module Environment
         `alert('false');`
       end
 
-      yield 
-      yield 1
-      yield [1]
-      yield 1,2
-      yield [1,2]
+      `alert('iter follows');`
+      `#<self>.#<m:iter>(function(a) { alert(typeof(a)); alert(a); });`
+      `alert('iter2 follows');`
+      `#<self>.#<m:iter2>(function(a) { alert(typeof(a)); alert(a); });`
+      `alert('iter done');`
 
       `alert(#<a>);`
       `alert(#<b>)`

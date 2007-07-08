@@ -28,8 +28,11 @@ class MethodCompiler < SexpProcessor
     # expected result class
     self.expected = String
 
-    #@current_iter_dvars = nil
-    #@iter_dvars_stack = []
+    #
+    # Used to collect the dynamic variable declarations for
+    # an iterator. 
+    #
+    @current_iter_dvars = nil
 
     # 
     # The encoder object used for encoding and name generation of all
@@ -80,9 +83,6 @@ class MethodCompiler < SexpProcessor
     # 
     @scope_nesting = 0
 
-
-    @block_nesting = 0
-
     #
     # We collect all instance variable reads, because they might not be
     # initialized yet and we want them to be initialized as "nil"!
@@ -95,7 +95,10 @@ class MethodCompiler < SexpProcessor
     @temporary_variables_pool = []
 
 
-    @want_result = 0
+    #
+    # If a return value should be assigned or not. 
+    #
+    @want_result = false 
 
 
     #
@@ -118,10 +121,9 @@ class MethodCompiler < SexpProcessor
     @block_name = nil
 
     #
-    # If this method contains a yield statement this
-    # is set to true.
+    # The name of the variable that contains the return value.
     #
-    @uses_yield = false
+    @result_name = nil
   end
 
   def compile_method(pt)
@@ -131,9 +133,9 @@ class MethodCompiler < SexpProcessor
   #
   # 
   #
-  def want_expression
+  def want_expression(wish=true)
     old = @want_expression
-    @want_expression = true
+    @want_expression = wish
     res = yield 
     @want_expression = old
     return res
@@ -155,30 +157,22 @@ class MethodCompiler < SexpProcessor
   #   [:block, [:args, :v], [:iasgn, :variable_name, [:lvar, :v]]]
   #
   def process_defn(exp)
+    raise if @result_name
     method_name = exp.shift || raise
     exp = exp.shift || raise
 
-    raise if @result_name
-    @result_name = @encoder.encode_fresh_local_variable() 
-
-    @want_result += 1
-
-    method_body = 
-    case exp.first
-    when :ivar
-      process(s(:block, exp))
-    when :attrset
-      process(s(:block, s(:args, :_), s(:iasgn, exp[1], s(:lvar, :_))))
-    when :scope, :block, :fbody
-      process(exp)
-    else
-      raise
+    method_body = want_result do
+      case exp.first
+      when :ivar
+        process(s(:block, exp))
+      when :attrset
+        process(s(:block, s(:args, :_), s(:iasgn, exp[1], s(:lvar, :_))))
+      when :scope, :block, :fbody
+        process(exp)
+      else
+        raise
+      end
     end
-
-    @want_result -= 1
-    @result_name = nil
-
-    raise if @want_result < 0
 
     str = ""
 
@@ -189,10 +183,20 @@ class MethodCompiler < SexpProcessor
       str << "function(#{args_str}){"
     end
 
+    raise if @local_variables.include?(@encoder.encode_self)
+    raise if @argument_variables.include?(@encoder.encode_self)
+
+    #
+    # Add "self" to the local variables
+    #
+    @local_variables.add(@encoder.encode_self)
+    @local_variables_need_no_initialization.add(@encoder.encode_self)
+
     #
     # declare local variables (except arguments)
     #
     to_declare = (@local_variables - @argument_variables).to_a
+    to_declare << @result_name if @result_name
     unless to_declare.empty?
       str << "var " + to_declare.join(",") + ";"
     end
@@ -201,10 +205,16 @@ class MethodCompiler < SexpProcessor
     # initialize all local variables (that need initialization) to nil
     #
     to_initialize = (@local_variables - @argument_variables - @local_variables_need_no_initialization).to_a
+    to_initialize << @result_name if @result_name
     unless to_initialize.empty?
       str << to_initialize.join("=")
       str << "=#{@encoder.encode_nil};"
     end
+
+    #
+    # initialize "self"
+    #
+    str << "#{@encoder.encode_self}=this;"
 
     #
     # If a block argument is given (&block) convert it to nil if it is
@@ -222,6 +232,7 @@ class MethodCompiler < SexpProcessor
     end
 
     str << method_body
+    str << ";return #{@result_name}" if @result_name
     str << "}"
 
     return str
@@ -241,46 +252,27 @@ class MethodCompiler < SexpProcessor
 
   def process_block(exp)
     raise "empty block" if exp.empty?
-    @block_nesting += 1
-
-    @want_result -= 1
 
     res = []
-    want_return = true
-    loop do
-      stmt = exp.shift
-      if exp.empty?
-        # stmt is the last statement in the block
-        @want_result += 1
-        if [:return, :xstr].include?(stmt[0])
-          want_return = false
-        end
-        res << process(stmt)
-        break
-      else
+
+    # all statements except the last don't want a result
+    without_result do 
+      exp[0..-2].each do |stmt|
         res << process(stmt)
       end
     end
-
-    @block_nesting -= 1
+    # last statement
+    res << process(exp[-1])
 
     res = res.reject {|r| r.nil? || r.empty? || r == "" || r == ";"}
 
-    str =
+    exp.clear
+
     if @want_expression
       "(" + res.join(",") + ")"
     else
       res.join(";")
     end
-
-    if @block_nesting == 0
-      raise if @want_expression
-      if want_return
-        str << ";return #{result_name()}" 
-      end
-    end
-
-    str
   end
 
   #
@@ -546,7 +538,6 @@ class MethodCompiler < SexpProcessor
   #
   def process_yield(exp)
     value = exp.shift
-    @uses_yield = true
 
     str = without_result do
       want_expression do
@@ -626,9 +617,9 @@ class MethodCompiler < SexpProcessor
       str << ")"
     else
       str << "if(#{cond_processed}){"
-      str << (_then_processed || (@want_result > 0 ? resultify(@encoder.encode_nil) : ''))
+      str << (_then_processed || (@want_result ? resultify(@encoder.encode_nil) : ''))
       str << "}"
-      if @want_result > 0
+      if @want_result
         _else_processed ||= resultify(@encoder.encode_nil) 
       end
       if _else_processed
@@ -672,7 +663,7 @@ class MethodCompiler < SexpProcessor
       "while(#{conditionalize(cond)}){#{process(block)}}" 
     end
 
-    if @want_result > 0
+    if @want_result
       str << ";" + resultify(@encoder.encode_nil) + ";"
     end
 
@@ -890,12 +881,60 @@ class MethodCompiler < SexpProcessor
   #
   # EXPRESSION
   #
-  # A dynamic variable lookup can be replaced with a local variable
-  # lookup lvar, as it is handled in the code generation in the same
-  # way.
+  # Dynamic variable lookup
   #
   def process_dvar(exp)
-    process_lvar(exp)
+    dvar = exp.shift
+    dvar_name = @encoder.encode_local_variable(dvar)
+    raise "dynamic variable not available" unless @current_iter_dvars.include?(dvar_name)
+
+    resultify("#{dvar_name}")
+  end
+
+  # 
+  # EXPRESSION
+  #
+  # Dynamic variable assignment
+  #
+  def process_dasgn(exp)
+    dvar = exp.shift
+    value = exp.shift
+    dvar_name = @encoder.encode_local_variable(dvar)
+    raise "dynamic variable not available" unless @current_iter_dvars.include?(dvar_name)
+
+    str = without_result do
+      want_expression do
+        "#{dvar_name}=#{process(value)}"
+      end
+    end
+
+    resultify(str)
+  end
+
+  #
+  # EXPRESSION
+  #
+  # Dynamic variable declaration and assignment 
+  #
+  def process_dasgn_curr(exp)
+    dvar = exp.shift
+    value = exp.shift
+    dvar_name = @encoder.encode_local_variable(dvar)
+
+    @current_iter_dvars.add(dvar_name)
+
+    str = without_result do
+      want_expression do
+        if value
+          "#{dvar_name}=#{process(value)}"
+        else
+          # this should never happen, see process_iter()
+          raise "no declarations possible"
+        end
+      end
+    end
+
+    resultify(str)
   end
 
   #
@@ -923,6 +962,10 @@ class MethodCompiler < SexpProcessor
           "[" + process(value) + "]"
         when :array, :zarray
           process(value)
+        when :special_to_ary
+          # this is used inside of process_iter to build the multiple
+          # assignment.
+          value[1]
         else
           generate_method_call(process(value), "to_ary", nil, nil)
         end
@@ -990,10 +1033,8 @@ class MethodCompiler < SexpProcessor
   #
   def process_masgn(exp)
     lhs = exp.shift
-    if exp.first[0] != :array
-      splat = exp.shift 
-    end
-    rhs = exp.shift
+    rhs = exp.pop
+    splat = exp.shift 
 
     raise unless lhs.first == :array
     raise unless rhs.first == :array or rhs.first == :to_ary
@@ -1045,48 +1086,117 @@ class MethodCompiler < SexpProcessor
   end
 
   #
+  # EXPRESSION (doesn't generate any code directly!) 
+  #
+  # Iterator block.
+  #
+  # We process as follows:
+  #
+  #   1. Generate code for the arguments of the block (multiple
+  #   assignment etc.)
+  #
+  #   2. Generate code for the code block.
+  #
+  #   3. In 1 and 2 we also write down all dynamic variable assignments.
+  #      ("dasgn_curr" which introduces a new scope)
+  #
+  #   4. Generate code for variable declarations.
   # 
-  # 
+  # TODO: assign arity to function object!
+  #
   def process_iter(exp)
-    call   = exp.shift
-    params = exp.shift
-    block  = exp.shift
+    call   = exp.shift # the method call to which the iterator is passed
+    params = exp.shift # arguments of the block
+    code   = exp.shift # the code block
 
-    raise
+    old_iter_dvars = @current_iter_dvars
+    @current_iter_dvars = Set.new 
+    
+    # Get an argument name for the iterator function signature.
+    arg_name = @encoder.encode_fresh_local_variable()
 
-    # dynamic variables in the call belong to the outer scope. 
-    # that's why we call it before collecting dvar declarations
-    # into current_iter_dvars. 
-    call = process(call) 
+    fun_str = ""
+    asgn_str = ""
+   
+    if params.nil? 
+      # Case 1: {}: Any number of arguments may be passed
+      arity = -1
+      fun_str << "function(){"
+    elsif params == :zero_arguments
+      # Case 2: {||}: Zero arguments
+      arity = 0
+      fun_str << "function(){"
+    elsif params.first == :masgn
+      # Case 3: {|i,j|}: Multiple arguments (multiple assignment)
+      arity = nil # |arity| >= 2 
+      fun_str << "function(#{arg_name}){"
 
-    @iter_dvars_stack.push(@current_iter_dvars) 
-    @current_iter_dvars = []
-
-    block = process(block)
-    inner = process(inner)
-
-    raise
-    res = s(:iter, call, s(:dvar_decl, *@current_iter_dvars), block, inner) 
-
-    @current_iter_dvars = @iter_dvars_stack.pop
-
-    return res
-  end
-
-  #
-  #  
-  #
-  def process_dasgn_curr(exp)
-    raise
-    variable = exp.shift
-    value = exp.shift# || s(:nil)
-
-    @current_iter_dvars << variable 
-    if value
-      return s(:dasgn, variable, process(value))
+      # TODO: remove masgn_iter and instead put the corresponding logic
+      # into yield!
+      masgn_iter = @encoder.encode_globalattr("masgn_iter")
+      params << [:to_ary, [:special_to_ary, "#{masgn_iter}(#{arg_name})"]]
+      want_expression(false) do
+        without_result do
+          asgn_str << process(params) 
+        end
+      end
     else
-      return s(:dasgn, variable)
+      # Case 4: {|i|}: Single argument
+      # TODO: warning if not exactly one argument is passed  
+      arity = 1
+      fun_str << "function(#{arg_name}){"
+
+      # we convert a single argument into a multiple assignment clause
+      # with one argument.
+
+      masgn_iter = @encoder.encode_globalattr("masgn_iter")
+      new_params = [:masgn, [:array, params]]
+      new_params << [:to_ary, [:special_to_ary, "#{masgn_iter}(#{arg_name})"]]
+
+      want_expression(false) do
+        without_result do
+          asgn_str << process(new_params) 
+        end
+      end
     end
+
+    old_result_name = @result_name
+    @result_name = nil
+
+    block_str = ""
+    want_expression(false) do
+      want_result do
+        block_str << process(code) if code
+      end
+    end
+
+    # generate code for the variable declarations
+    var_str = ""
+    unless @current_iter_dvars.empty?
+      var_str << "var "
+      var_str << @current_iter_dvars.to_a.join(",")
+      var_str << ";"
+    end
+
+    # declare and initialize the return value
+    if @result_name
+      var_str << "var #{@result_name}=#{@encoder.encode_nil};"
+    end
+
+    # NOTE: we don't need to initialize any dvar to nil, as 
+    # they can't be used before being assigned to (because
+    # otherwise they are vcall's and not dynamic variables).   
+
+    str = fun_str + var_str + asgn_str + ";" + block_str
+    str << ";return #{@result_name}" if @result_name
+    str << "}"
+
+    put_iter(str)
+
+    @result_name = old_result_name
+    @current_iter_dvars = old_iter_dvars
+
+    return process(call)
   end
 
   # 
@@ -1129,10 +1239,14 @@ class MethodCompiler < SexpProcessor
 
   #######################################################################
   
-  def without_result
+  def without_result(&block)
+    want_result(false, &block)
+  end
+
+  def want_result(wish=true)
     old_want_result = @want_result
     begin
-      @want_result = 0
+      @want_result = wish
       return yield
     ensure
       @want_result = old_want_result
@@ -1140,7 +1254,7 @@ class MethodCompiler < SexpProcessor
   end
 
   def resultify(str)
-    if @want_result > 0
+    if @want_result
       # FIXME
       result_name() + "=" + str
     else
@@ -1150,7 +1264,7 @@ class MethodCompiler < SexpProcessor
 
   def result_name
     @result_name ||= @encoder.encode_fresh_local_variable() 
-    @local_variables.add(@result_name)
+    #@local_variables.add(@result_name)
     @result_name
   end
 

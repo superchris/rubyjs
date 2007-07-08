@@ -8,7 +8,7 @@
 class NameGenerator
 
   DEFAULT_ALPHABET = ('a' .. 'z').to_a + ('A' .. 'Z').to_a + ('0' .. '9').to_a + ['_', '$']
-  RESERVED_WORDS = %w(this new break continue if then else while true false null undefined function) 
+  RESERVED_WORDS = %w(this self new break continue if then else while true false null undefined function) 
 
   def initialize(alphabet=DEFAULT_ALPHABET, reserved_words=RESERVED_WORDS)
     @alphabet = alphabet
