@@ -97,7 +97,7 @@ class CodeGenerator
     m = {}
     model[kind].each_pair do |name, pt|
       @world.with_local do 
-        m[name] = MethodCompiler.new(@world).compile_method(pt)
+        m[name] = MethodCompiler.new(@world, @world.encode_method(name)).compile_method(pt)
       end
     end
     unless m.empty?

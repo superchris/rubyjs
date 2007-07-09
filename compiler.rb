@@ -10,7 +10,7 @@ require 'set'
 
 class MethodCompiler < SexpProcessor
 
-  def initialize(model)
+  def initialize(model, method_name)
     super()
     
     # don't stop at unknown nodes
@@ -33,10 +33,15 @@ class MethodCompiler < SexpProcessor
     @current_iter_dvars = nil
 
     # 
-    # The encoder object used for encoding and name generation of all
+    # The model object used for encoding and name generation of all
     # kind of variables etc.
     #
     @model = model
+
+    #
+    # The (encoded) name of the method being compiled
+    #
+    @method_name = method_name
 
     # 
     # record all local variables (including arguments)
@@ -425,7 +430,7 @@ class MethodCompiler < SexpProcessor
   end
 
   #
-  # Generates a arguments for a method call. 
+  # Generates a method call. 
   # 
   def generate_method_call(receiver, method, iter, args)
 
@@ -458,6 +463,41 @@ class MethodCompiler < SexpProcessor
         end
       end
     end
+  end
+  
+  #
+  # Generates a super call. 
+  # 
+  def generate_super_call(iter, args)
+    @model.add_method_call(@method_name)
+
+    args_str = without_result do
+      want_expression do
+        if args.nil?
+          # no arguments
+          #
+          # NOTE: We don't have to encode an iter of "nil" as "nil".
+          # Instead we save us the space and check for undefined in the
+          # method definition.
+          "[]"
+        else
+          process(args)
+        end
+      end
+    end
+
+    sc = @model.encode_globalattr('supercall')
+    "#{sc}(#{@model.encode_self},'#{@method_name}',#{iter || @model.encode_nil},#{args_str})"
+  end
+
+  #
+  # EXPRESSION
+  #
+  # Super call.
+  #
+  def process_super(exp)
+    args = exp.shift
+    generate_super_call(get_iter(), args)
   end
 
   #

@@ -77,6 +77,15 @@ TODO
 LIMITATIONS
 
   --
+  In inline Javascript strings or in general everywhere interpolation or
+  stripping is used, dont use strings (or ' and " characters) in
+  comments. For example:
+
+    // this won't work
+    // this "neither"
+    // whereas this will work
+
+  --
   Module's are mapped to Classes for now.
 
   --

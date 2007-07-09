@@ -36,6 +36,18 @@ function #<globalattr:masgn_iter>(a)
   return a;
 }
 
+//
+// Call the method in the superclass.
+//
+// As super is used quite rarely, we dont optimize for it.
+// 
+// object, method, iterator, arguments
+//
+function #<globalattr:supercall>(o, m, i, a) 
+{
+  return o.#<attr:_class>.#<attr:superclass>.#<attr:object_constructor>.prototype[m].apply(o, [i].concat(a));
+}
+
 function #<globalattr:rebuild_classes>(c)
 {
   for (var i=0; i<c.length; i++)
