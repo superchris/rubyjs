@@ -593,6 +593,55 @@ class MethodCompiler < SexpProcessor
   end
 
   #
+  # EXPRESSION
+  #
+  def process_and(exp)
+    a = exp.shift
+    b = exp.shift
+
+    without_result do
+      want_expression do
+        a = conditionalize(a)
+        b = conditionalize(b)
+      end
+    end
+
+    return resultify("((#{a}) && (#{b}))")
+  end
+  
+  #
+  # EXPRESSION
+  #
+  def process_or(exp)
+    a = exp.shift
+    b = exp.shift
+
+    without_result do
+      want_expression do
+        a = conditionalize(a)
+        b = conditionalize(b)
+      end
+    end
+
+    return resultify("((#{a}) || (#{b}))")
+  end
+
+  #
+  # EXPRESSION
+  #
+  def process_not(exp)
+    a = exp.shift
+
+    without_result do
+      want_expression do
+        a = conditionalize(a, true)
+      end
+    end
+
+    return resultify(a)
+  end
+
+  #
   # STATEMENT/EXPRESSION
   #
   # unless is converted by the Ruby parser into an "if"
