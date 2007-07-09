@@ -873,7 +873,7 @@ class MethodCompiler < SexpProcessor
   def process_gvar(exp)
     gvar = exp.shift
     gvar_name = @encoder.encode_global_variable(gvar)
-    resultify("#{gvar_name}")
+    resultify("(typeof(#{gvar_name})=='undefined'?#{@encoder.encode_nil}:#{gvar_name})")
   end
 
   #
@@ -1167,13 +1167,12 @@ class MethodCompiler < SexpProcessor
       # we convert a single argument into a multiple assignment clause
       # with one argument.
 
-      masgn_iter = @encoder.encode_globalattr("masgn_iter")
-      new_params = [:masgn, [:array, params]]
-      new_params << [:to_ary, [:special_to_ary, "#{masgn_iter}(#{arg_name})"]]
+      sasgn_iter = @encoder.encode_globalattr("sasgn_iter")
+      params << [:special_inline_js_value, "#{arg_name}===undefined?#{@encoder.encode_nil}:#{arg_name}"]
 
       want_expression(false) do
         without_result do
-          asgn_str << process(new_params) 
+          asgn_str << process(params) 
         end
       end
     end

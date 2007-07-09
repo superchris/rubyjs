@@ -31,7 +31,11 @@ class CodeGenerator
     str
   end
 
-  def generate(additional_code="")
+  def encode(code)
+    return @world.strip_ws_from_js_code(ipol(code))
+  end
+  
+  def generate
     str = ""
 
     # Code of runtime
@@ -85,11 +89,6 @@ class CodeGenerator
       klasses << @world.encode_constant(m[:name])
     end
     str << @world.encode_globalattr('rebuild_classes') + "([" + klasses.join(",") + "]);"
-
-    #
-    # add additional code
-    #
-    str << ipol(additional_code)
 
     return @world.strip_ws_from_js_code(str)
   end

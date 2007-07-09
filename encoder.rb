@@ -133,7 +133,7 @@ class Encoder
       when /^nil$/              then encode_nil()
       when /^(@\w+)$/           then encode_instance_variable($1)
       when /^(\$.+)$/           then encode_global_variable($1)
-      when /^([A-Z]\w+)$/       then encode_constant($1) 
+      when /^([A-Z]\w*)$/       then encode_constant($1) 
       when /^attr:(\w+)$/       then encode_attr($1)
       when /^globalattr:(\w+)$/ then encode_globalattr($1)
       when /^([a-z_]\w*)$/      then encode_local_variable($1)

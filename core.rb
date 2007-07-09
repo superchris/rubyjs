@@ -210,6 +210,17 @@ module RubyJS; module Environment
       end
     end
 
+    def puts(str)
+      str = str.to_s
+      `alert(#<str>); return #<nil>`
+    end
+
+    def p(*args)
+      args.each do |arg|
+        puts arg.inspect
+      end
+    end
+
     # TODO
     def raise
     end
@@ -241,10 +252,6 @@ module RubyJS; module Environment
       `return #<self>.toString()`
     end
 
-    def alert(str)
-      str = str.to_s
-      `alert(#<str>); return #<nil>`
-    end
   end
 
 =begin
@@ -352,6 +359,11 @@ module RubyJS; module Environment
       `return #<self>.toString()`
     end
 
+    def inspect
+      to_s()
+    end
+    #alias inspect to_s
+
     def +(x)  `return #<self> + #<x>` end
     def -(x)  `return #<self> - #<x>` end
     def *(x)  `return #<self> * #<x>` end
@@ -405,8 +417,8 @@ module RubyJS; module Environment
     end
 
     def each_with_index
-      `for (var i=0; i < self.length; i++) {`
-      yield `self[i]`, `i`
+      `for (var i=0; i < #<self>.length; i++) {`
+      yield `#<self>[i]`, `i`
       `}`
       self
     end
@@ -483,8 +495,6 @@ module RubyJS; module Environment
       `return('[' + #<self>.toString() + ']');`
     end
 
-    # TODO: inspect elements as well
-=begin
     def inspect
       str = "["
       self.each_with_index {|elem, i|
@@ -494,10 +504,6 @@ module RubyJS; module Environment
       str += "]"
       str
     end
-=end
-
-=begin
-=end
 
     # FIXME: don't hard code eql? formatting. implement and use #<eql?> expression.
 =begin
@@ -539,7 +545,8 @@ module RubyJS; module Environment
     end
 
 
-    def self.test
+    def self.main
+      alert([1,2,3].inspect)
       alert(true.nil?)
       alert(false.nil?)
       alert(nil.nil?)

@@ -1,0 +1,91 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'ostruct'
+require 'rubygems'
+
+require 'code_generator'
+require 'core'
+require 'eval_into'
+
+if __FILE__ == $0
+
+  options = OpenStruct.new 
+  options.load_path = []
+  options.library = []
+  options.platform = []
+  options.output = nil
+  options.main = nil
+  options.code = nil
+
+  opts = OptionParser.new do |opts|
+    opts.banner = "Usage: rubyjs_gen [options] [file, [file, ...]]"
+    opts.on("-r", "--require LIBRARY",
+            "Require the LIBRARY before executing your script") do |lib|
+      options.library << lib
+    end
+    opts.on("-I", "--load-path DIRECTORY", "Specifies load path") do |lib|
+      options.load_path << lib
+    end
+    opts.on("-P", "--platform PLATFORM", "Specifies platform") do |plat|
+      options.platform << plat
+    end
+    opts.on("-m", "--main CLASSNAME", "Entry point") do |main|
+      raise "only one entry point allowed" if options.main
+      options.main = main
+    end
+    opts.on("-e", "--eval STRING", "Eval code") do |code|
+      raise "only one code allowed" if options.code
+      options.code = code
+    end
+    opts.on("-o", "--output FILE", "Filename to write output to") do |out|
+      raise "only one output allowed" if options.output
+      options.output = out
+    end
+    opts.on_tail("-h", "--help", "Show this message") do
+      puts opts
+      exit
+    end
+  end
+
+  args = ARGV.dup
+  opts.parse!(args)
+
+  if args.empty? and !options.code 
+    puts opts
+    puts "ERROR: Either code or file required"
+    exit 1
+  end
+
+  $RUBYJS__LOAD_PATH = options.load_path.map {|i| File.expand_path(i)}  
+  $RUBYJS__PLATFORM = options.platform
+  $RUBYJS = true    # to distinguish between Ruby and RubyJS
+
+  # process requires
+
+  eval_into(RubyJS::Environment) do |eval|
+    options.library.each do |lib|
+      require lib 
+    end
+
+    eval.call(options.code || "")
+
+    args.each do |file|
+      eval.call(File.read(file))
+    end
+  end
+
+  out = STDOUT
+  out = File.open(options.output, 'w+') if options.output and options.output != '-'
+
+  gen = CodeGenerator.new
+
+  out << gen.generate()
+
+  if options.main
+    out << gen.encode("function main() { #<#{options.main}>.#<m:main>() }")
+    out << "main();"
+  end
+
+  out.close if options.output and options.output != '-'
+end
