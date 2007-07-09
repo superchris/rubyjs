@@ -16,7 +16,7 @@ class MethodCompiler < SexpProcessor
     super()
     
     # don't stop at unknown nodes
-    self.strict = false 
+    self.strict = true 
 
     # remove the type from the sexp array
     self.auto_shift_type = true
@@ -791,7 +791,7 @@ class MethodCompiler < SexpProcessor
     to_splat = @encoder.encode_globalattr('to_splat')
     str = without_result do
       want_expression do
-        "#{process(prefix)}.concat(#{to_splat}(#{ process(value) }))"
+        "#{process(prefix)}.concat(#{to_splat}(#{ process(splat) }))"
       end
     end
     resultify(str)

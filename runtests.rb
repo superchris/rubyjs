@@ -1,7 +1,7 @@
-if ARGV[0]
-  tests = Dir["test/test_#{ARGV[0]}.rb"]
-else
+if ARGV.empty?
   tests = Dir['test/test_*.rb']
+else
+  tests = Dir["test/test_{" + ARGV.join(',') + "}.rb"] 
 end
 
 tests.each_with_index do |file, i|

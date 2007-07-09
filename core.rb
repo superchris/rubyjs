@@ -230,7 +230,7 @@ module RubyJS; module Environment
     include Kernel
 
     def eql?(other)
-      `return (#<self> === #<other>)`
+      `return (#<self>.constructor == #<other>.constructor && #<self> == #<other>)`
     end
 
     def kind_of?(klass)
@@ -345,6 +345,7 @@ module RubyJS; module Environment
     def to_s
       self
     end
+
   end
 
   class Number
@@ -359,10 +360,7 @@ module RubyJS; module Environment
       `return #<self>.toString()`
     end
 
-    def inspect
-      to_s()
-    end
-    #alias inspect to_s
+    alias inspect to_s
 
     def +(x)  `return #<self> + #<x>` end
     def -(x)  `return #<self> - #<x>` end
@@ -505,23 +503,21 @@ module RubyJS; module Environment
       str
     end
 
-    # FIXME: don't hard code eql? formatting. implement and use #<eql?> expression.
-=begin
     def eql?(other)
       `
       if (!(#<other> instanceof Array)) return false;
-      if (self.length != #<other>.length) return false;  
+      if (#<self>.length != #<other>.length) return false;  
  
-      /*
-       * compare element-wise
-       */
-      for (var i = 0; i < self.length; i++) 
+      //
+      // compare element-wise
+      //
+      for (var i = 0; i < #<self>.length; i++) 
       {
-        if (!rubyjs_test(rubyjs_send(self[i], '__eql$q', [#<other>[i]], null)))
+        if (! #<self>[i].#<m:eql?>(#<nil>, #<other>[i]))
         {
-          /* 
-           * at least for one element #eql? holds not true
-           */
+          // 
+          // at least for one element #eql? holds not true
+          //
           return false;
         }
       }
@@ -529,7 +525,7 @@ module RubyJS; module Environment
       return true;
       `
     end
-=end
+
     def self.iter
       yield
       yield 1
