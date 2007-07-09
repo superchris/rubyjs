@@ -264,9 +264,11 @@ module RubyJS; module Environment
       `return #<self>.toString()`
     end
 
+    def hash
+      `return #<self>.toString()`
+    end
   end
 
-=begin
   module Enumerable
     def map(&block)
       result = []
@@ -284,8 +286,7 @@ module RubyJS; module Environment
     def select
       result = []
       each {|elem|
-        cond = yield(elem)
-        if cond
+        if yield(elem)
           result << elem 
         end
       }
@@ -296,8 +297,7 @@ module RubyJS; module Environment
     def reject
       result = []
       each {|elem|
-        cond = yield(elem)
-        unless cond
+        unless yield(elem)
           result << elem
         end
       }
@@ -310,7 +310,7 @@ module RubyJS; module Environment
       result
     end
   end
-=end
+
 =begin
   class Exception
     attr_reader :message
@@ -324,15 +324,6 @@ module RubyJS; module Environment
   class NoMethodError < NameError; end
   class RuntimeError < StandardError; end
   class ArgumentError < StandardError; end
-
-  class NilClass
-    def inspect
-      "nil"
-    end
-  end 
-
-  # TODO: make undef_method working
-  class Number
 =end
 
   #
@@ -417,7 +408,7 @@ module RubyJS; module Environment
   class Array
     OBJECT_CONSTRUCTOR__ = "Array"
 
-    #include Enumerable
+    include Enumerable
 
     def each
       `for (var i=0; i < #<self>.length; i++) {`
@@ -431,6 +422,15 @@ module RubyJS; module Environment
       yield `#<self>[i]`, `i`
       `}`
       self
+    end
+
+    def join(sep="")
+      str = ""
+      self.each_with_index {|elem, i|
+        str += elem.to_s
+        str += sep if i != self.length-1
+      }
+      str
     end
 
     def to_a
@@ -507,10 +507,7 @@ module RubyJS; module Environment
 
     def inspect
       str = "["
-      self.each_with_index {|elem, i|
-        str += elem.inspect
-        str += ", " if i != self.length-1
-      }
+      str += self.map {|elem| elem.inspect}.join(", ")
       str += "]"
       str
     end
@@ -537,39 +534,164 @@ module RubyJS; module Environment
       return true;
       `
     end
-
-    def self.iter
-      yield
-      yield 1
-      yield [1]
-      yield 1,2
-    end
-
-    def self.iter2(&block)
-      block.call
-      block.call(1)
-      block.call([1])
-      block.call(1,2)
-    end
-
-
-    def self.main
-      alert([1,2,3].inspect)
-      alert(true.nil?)
-      alert(false.nil?)
-      alert(nil.nil?)
-      alert(1.nil?)
-      1.upto(3) do |i| alert(i) end
-
-      [1,2,3,"hallo"].each_with_index do |v, i|
-        alert(v)
-        alert(i)
-      end
-      
-      iter do |i,j|
-        alert(i)
-        alert(j)
-      end
-    end
   end
+  
+  class Regexp
+    OBJECT_CONSTRUCTOR__ = "RegExp"
+  end
+
+  class Hash
+    include Enumerable
+
+    #
+    # Construct an empty Hash
+    #
+    def initialize
+      `
+      #<self>.#<attr:items> = {}; 
+      #<self>.#<attr:default_value> = #<nil>;
+      `
+    end
+
+    #
+    # Construct a Hash from key, value pairs, e.g.
+    #
+    #   Hash.new_from_key_value_list(1,2, 3,4, 5,6)
+    #
+    # will result in
+    #
+    #   {1 => 2, 3 => 4, 5 => 6}
+    #
+    def self.new_from_key_value_list(*list) 
+      obj = allocate()
+      `
+      if (#<list>.length % 2 != 0) throw('ArgumentError');
+
+      // 
+      // we use an associate array to store the items. But unlike
+      // Javascript, the entries are arrays which contain the collisions.
+      // NOTE that we have to prefix the hash code with a prefix so that
+      // there are no collisions with methods etc.   
+      // I prefix it for now with 1.
+      //
+      var items = {};
+      var hashed_key, current_key, current_val;
+     
+      for (var i = 0; i < #<list>.length; i += 2)
+      {
+        current_key = #<list>[i];
+        hashed_key = "1" + current_key.#<m:hash>();
+        current_val = #<list>[i+1];
+
+        if (items[hashed_key] === undefined)
+        {
+          // 
+          // create new bucket
+          // a bucket stores all the elements with key collisions.
+          //
+          items[hashed_key] = [];
+        }
+
+        items[hashed_key].push(current_key, current_val);
+      }
+
+      #<obj>.#<attr:items> = items; 
+      #<obj>.#<attr:default_value> = #<nil>;
+      return #<obj>;
+      `
+    end
+
+    def [](key)
+      `
+      var hashed_key = "1" + #<key>.#<m:hash>();
+      var bucket = #<self>.#<attr:items>[hashed_key];
+
+      if (bucket !== undefined)
+      {
+        //
+        // find the matching element inside the bucket
+        //
+
+        for (var i = 0; i < bucket.length; i += 2)
+        {
+          if (bucket[i].#<m:eql?>(#<nil>,#<key>))
+            return bucket[i+1];
+        }
+      }
+
+      // no matching key found -> return default value
+      return #<self>.#<attr:default_value>;
+      `
+    end
+
+    def []=(key, value)
+      `
+      var hashed_key = "1" + #<key>.#<m:hash>();
+      var bucket = #<self>.#<attr:items>[hashed_key];
+
+      if (bucket !== undefined)
+      {
+        //
+        // find the matching element inside the bucket
+        //
+
+        for (var i = 0; i < bucket.length; i += 2)
+        {
+          if (bucket[i].#<m:eql?>(#<nil>,#<key>))
+          {
+            // overwrite value
+            bucket[i+1] = #<value>;
+            return #<value>;
+          }
+        }
+        // key not found in this bucket. append key, value pair to bucket
+        bucket.push(#<key>, #<value>);
+        return #<value>;
+      }
+      else 
+      {
+        //
+        // create new bucket
+        //
+        #<self>.#<attr:items>[hashed_key] = [#<key>, #<value>];
+        return #<value>;
+      }
+      `
+    end
+
+    def keys
+      map {|k,v| k}
+    end
+
+    def values
+      map {|k,v| v}
+    end
+
+    def each 
+      `
+      var key, bucket, i;
+      for (key in #<self>.#<attr:items>)
+      {
+        if (key[0] == "1")
+        {
+          bucket = #<self>.#<attr:items>[key];
+          for (i=0; i<bucket.length; i+=2)
+          {`
+          yield `bucket[i]`, `bucket[i+1]`
+          `
+          }
+        }
+      }
+      `
+    end
+
+    def inspect
+      str = "{"
+      str += map {|k, v| (k.inspect + " => " + v.inspect) }.join(", ")
+      str += "}"
+      str
+    end
+
+  end
+
 end; end

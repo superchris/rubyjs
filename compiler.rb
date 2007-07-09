@@ -395,6 +395,7 @@ class MethodCompiler < SexpProcessor
     end
 
     # prepend
+    # TODO: option to disable argument arity checks
     str = str2 + str
 
 
@@ -894,8 +895,36 @@ class MethodCompiler < SexpProcessor
     resultify(str)
   end
 
+  #
+  # EXPRESSION
+  #
+  # We box the hash and use our own implementation, as Javascript's
+  # associative arrays are very different to Ruby hashes.
+  #
   def process_hash(exp)
-    raise
+    kv_list = exp
+    raise if kv_list.length % 2 != 0 
+
+    args = 
+    without_result do
+      want_expression do
+        kv_list.map {|i| process(i)}.join(",")
+      end
+    end
+
+    str = @model.encode_constant('Hash') + "."
+    if kv_list.empty?
+      # empty Hash
+      @model.add_method_call(m = @model.encode_method("new"))
+      str << "#{m}()" 
+    else
+      @model.add_method_call(m = @model.encode_method("new_from_key_value_list"))
+      str << "#{m}(#{@model.encode_nil},#{args})" 
+    end
+
+    exp.clear
+
+    return str
   end
 
   # 
