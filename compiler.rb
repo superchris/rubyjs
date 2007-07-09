@@ -10,9 +10,7 @@ require 'set'
 
 class MethodCompiler < SexpProcessor
 
-  attr_accessor :method_calls
-
-  def initialize(encoder)
+  def initialize(model)
     super()
     
     # don't stop at unknown nodes
@@ -38,12 +36,7 @@ class MethodCompiler < SexpProcessor
     # The encoder object used for encoding and name generation of all
     # kind of variables etc.
     #
-    @encoder = encoder
-
-    #
-    # record all (potential) names of all method calls
-    #
-    @method_calls = Set.new
+    @model = model
 
     # 
     # record all local variables (including arguments)
@@ -183,14 +176,14 @@ class MethodCompiler < SexpProcessor
       str << "function(#{args_str}){"
     end
 
-    raise if @local_variables.include?(@encoder.encode_self)
-    raise if @argument_variables.include?(@encoder.encode_self)
+    raise if @local_variables.include?(@model.encode_self)
+    raise if @argument_variables.include?(@model.encode_self)
 
     #
     # Add "self" to the local variables
     #
-    @local_variables.add(@encoder.encode_self)
-    @local_variables_need_no_initialization.add(@encoder.encode_self)
+    @local_variables.add(@model.encode_self)
+    @local_variables_need_no_initialization.add(@model.encode_self)
 
     #
     # declare local variables (except arguments)
@@ -208,27 +201,27 @@ class MethodCompiler < SexpProcessor
     to_initialize << @result_name if @result_name
     unless to_initialize.empty?
       str << to_initialize.join("=")
-      str << "=#{@encoder.encode_nil};"
+      str << "=#{@model.encode_nil};"
     end
 
     #
     # initialize "self"
     #
-    str << "#{@encoder.encode_self}=this;"
+    str << "#{@model.encode_self}=this;"
 
     #
     # If a block argument is given (&block) convert it to nil if it is
     # undefined. 
     #
     if @block_arg_name
-      str << "#{@block_arg_name}=#{block_name()}===undefined?#{@encoder.encode_nil}:#{block_name()};"
+      str << "#{@block_arg_name}=#{block_name()}===undefined?#{@model.encode_nil}:#{block_name()};"
     end
 
     #
     # generate initialization code for each read instance variable
     #
     @read_instance_variables.each do |iv|
-      str << "if(#{@encoder.encode_self}.#{iv}===undefined)#{@encoder.encode_self}.#{iv}=#{@encoder.encode_nil};"
+      str << "if(#{@model.encode_self}.#{iv}===undefined)#{@model.encode_self}.#{iv}=#{@model.encode_nil};"
     end
 
     str << method_body
@@ -282,7 +275,7 @@ class MethodCompiler < SexpProcessor
     raise if @want_expression || @block_arg_name
     block = exp.shift
     block_name() # make sure that the function signature contains a block argument!
-    @block_arg_name = @encoder.encode_local_variable(block)
+    @block_arg_name = @model.encode_local_variable(block)
     @local_variables.add(@block_arg_name)
     @local_variables_need_no_initialization.add(@block_arg_name)
     return ""
@@ -330,11 +323,11 @@ class MethodCompiler < SexpProcessor
       arg = arg.to_s
       if arg[0,1] == '*'
         raise if @argument_splat
-        @argument_splat = @encoder.encode_local_variable(arg[1..-1])
+        @argument_splat = @model.encode_local_variable(arg[1..-1])
         # argument_splat is not an argument in the function's argument list
         @local_variables.add(@argument_splat) 
       else
-        v = @encoder.encode_local_variable(arg)
+        v = @model.encode_local_variable(arg)
         @arguments_no_splat << v 
         @local_variables.add(v)
         @argument_variables.add(v)
@@ -359,7 +352,7 @@ class MethodCompiler < SexpProcessor
         min_arity -= 1
         raise unless dv[0] == :lasgn
         raise unless dv.size == 3
-        arg = @encoder.encode_local_variable(dv[1])
+        arg = @model.encode_local_variable(dv[1])
         @local_variables.add(arg)
         @argument_variables.add(arg)
         value = dv[2]
@@ -436,8 +429,8 @@ class MethodCompiler < SexpProcessor
   # 
   def generate_method_call(receiver, method, iter, args)
 
-    method_name = @encoder.encode_method(method)
-    @method_calls.add(method_name)
+    method_name = @model.encode_method(method)
+    @model.add_method_call(method_name)
 
     without_result do
       want_expression do
@@ -451,15 +444,15 @@ class MethodCompiler < SexpProcessor
         elsif args.first == :array
           # one or more arguments
           args_string = args[1..-1].map{|a| process(a)}.join(",")
-          "#{receiver}.#{method_name}(#{iter || @encoder.encode_nil},#{args_string})"
+          "#{receiver}.#{method_name}(#{iter || @model.encode_nil},#{args_string})"
         elsif args.first == :splat or args.first == :argscat
           #
           # puts(*a)  # => [:fcall, :puts, [:splat, [:lvar, :a]]]]]]
           #
           # puts(1, *a) # => ... [:argscat, [:array, [:lit, 1]], [:lvar, :a]]
           #
-          @method_calls.add(__invoke = @encoder.encode_method('__invoke'))
-          "#{receiver}.#{__invoke}(#{iter || @encoder.encode_nil},'#{method_name}',#{ process(args) })"
+          @model.add_method_call(__invoke = @model.encode_method('__invoke'))
+          "#{receiver}.#{__invoke}(#{iter || @model.encode_nil},'#{method_name}',#{ process(args) })"
         else
           raise
         end
@@ -477,7 +470,7 @@ class MethodCompiler < SexpProcessor
     args = exp.shift
 
     str = without_result do
-      generate_method_call(@encoder.encode_self, method, get_iter(), args)
+      generate_method_call(@model.encode_self, method, get_iter(), args)
     end
 
     resultify(str)
@@ -536,7 +529,7 @@ class MethodCompiler < SexpProcessor
   def process_vcall(exp)
     method = exp.shift
 
-    resultify(generate_method_call(@encoder.encode_self, method, nil, nil))
+    resultify(generate_method_call(@model.encode_self, method, nil, nil))
   end
 
   #
@@ -569,7 +562,7 @@ class MethodCompiler < SexpProcessor
   #
   def process_const(exp)
     name = exp.shift
-    return resultify(@encoder.encode_constant(name))
+    return resultify(@model.encode_constant(name))
   end
 
   # 
@@ -670,16 +663,16 @@ class MethodCompiler < SexpProcessor
     str = ""
 
     if @want_expression
-      str << "(#{cond_processed}?#{_then_processed || resultify(@encoder.encode_nil)}"
+      str << "(#{cond_processed}?#{_then_processed || resultify(@model.encode_nil)}"
       str << ":"
       str << (_else_processed || resultify('nil'))
       str << ")"
     else
       str << "if(#{cond_processed}){"
-      str << (_then_processed || (@want_result ? resultify(@encoder.encode_nil) : ''))
+      str << (_then_processed || (@want_result ? resultify(@model.encode_nil) : ''))
       str << "}"
       if @want_result
-        _else_processed ||= resultify(@encoder.encode_nil) 
+        _else_processed ||= resultify(@model.encode_nil) 
       end
       if _else_processed
         str << "else{"
@@ -703,7 +696,7 @@ class MethodCompiler < SexpProcessor
       end
       "return #{str}" 
     else
-      "return #{@encoder.encode_nil}"
+      "return #{@model.encode_nil}"
     end
   end
 
@@ -723,7 +716,7 @@ class MethodCompiler < SexpProcessor
     end
 
     if @want_result
-      str << ";" + resultify(@encoder.encode_nil) + ";"
+      str << ";" + resultify(@model.encode_nil) + ";"
     end
 
     return str
@@ -746,7 +739,7 @@ class MethodCompiler < SexpProcessor
   #
   def process_xstr(exp)
     str = exp.shift
-    @encoder.interpolate(str)
+    @model.interpolate(str)
   end
 
   #
@@ -806,14 +799,14 @@ class MethodCompiler < SexpProcessor
   # EXPRESSION
   #
   def process_nil(exp)
-    resultify(@encoder.encode_nil)
+    resultify(@model.encode_nil)
   end
   
   #
   # EXPRESSION
   #
   def process_self(exp)
-    resultify(@encoder.encode_self)
+    resultify(@model.encode_self)
   end
  
   #
@@ -821,7 +814,7 @@ class MethodCompiler < SexpProcessor
   #
   def process_splat(exp)
     value = exp.shift
-    to_splat = @encoder.encode_globalattr('to_splat')
+    to_splat = @model.encode_globalattr('to_splat')
     str = without_result do
       want_expression do
         "#{to_splat}(#{ process(value) })"
@@ -837,7 +830,7 @@ class MethodCompiler < SexpProcessor
     prefix = exp.shift
     splat = exp.shift
     raise unless prefix.first == :array
-    to_splat = @encoder.encode_globalattr('to_splat')
+    to_splat = @model.encode_globalattr('to_splat')
     str = without_result do
       want_expression do
         "#{process(prefix)}.concat(#{to_splat}(#{ process(splat) }))"
@@ -888,7 +881,7 @@ class MethodCompiler < SexpProcessor
     lvar   = exp.shift
     value = exp.shift
 
-    lvar_name = @encoder.encode_local_variable(lvar)
+    lvar_name = @model.encode_local_variable(lvar)
     @local_variables.add(lvar_name)
 
     str = without_result do
@@ -908,7 +901,7 @@ class MethodCompiler < SexpProcessor
   def process_lvar(exp)
     lvar = exp.shift
 
-    lvar_name = @encoder.encode_local_variable(lvar)
+    lvar_name = @model.encode_local_variable(lvar)
     raise "variable not available" unless @local_variables.include?(lvar_name)
 
     resultify("#{lvar_name}")
@@ -921,8 +914,8 @@ class MethodCompiler < SexpProcessor
   #
   def process_gvar(exp)
     gvar = exp.shift
-    gvar_name = @encoder.encode_global_variable(gvar)
-    resultify("(typeof(#{gvar_name})=='undefined'?#{@encoder.encode_nil}:#{gvar_name})")
+    gvar_name = @model.encode_global_variable(gvar)
+    resultify("(typeof(#{gvar_name})=='undefined'?#{@model.encode_nil}:#{gvar_name})")
   end
 
   #
@@ -934,7 +927,7 @@ class MethodCompiler < SexpProcessor
     gvar   = exp.shift
     value = exp.shift
 
-    gvar_name = @encoder.encode_global_variable(gvar)
+    gvar_name = @model.encode_global_variable(gvar)
 
     str = without_result do
       want_expression do
@@ -952,7 +945,7 @@ class MethodCompiler < SexpProcessor
   #
   def process_dvar(exp)
     dvar = exp.shift
-    dvar_name = @encoder.encode_local_variable(dvar)
+    dvar_name = @model.encode_local_variable(dvar)
     raise "dynamic variable not available" unless @current_iter_dvars.include?(dvar_name)
 
     resultify("#{dvar_name}")
@@ -966,7 +959,7 @@ class MethodCompiler < SexpProcessor
   def process_dasgn(exp)
     dvar = exp.shift
     value = exp.shift
-    dvar_name = @encoder.encode_local_variable(dvar)
+    dvar_name = @model.encode_local_variable(dvar)
     raise "dynamic variable not available" unless @current_iter_dvars.include?(dvar_name)
 
     str = without_result do
@@ -986,7 +979,7 @@ class MethodCompiler < SexpProcessor
   def process_dasgn_curr(exp)
     dvar = exp.shift
     value = exp.shift
-    dvar_name = @encoder.encode_local_variable(dvar)
+    dvar_name = @model.encode_local_variable(dvar)
 
     @current_iter_dvars.add(dvar_name)
 
@@ -1011,9 +1004,9 @@ class MethodCompiler < SexpProcessor
   #
   def process_ivar(exp)
     ivar = exp.shift
-    ivar_name = @encoder.encode_instance_variable(ivar)
+    ivar_name = @model.encode_instance_variable(ivar)
     @read_instance_variables.add(ivar_name)
-    resultify("#{@encoder.encode_self}.#{ivar_name}")
+    resultify("#{@model.encode_self}.#{ivar_name}")
   end
 
   def process_svalue
@@ -1114,7 +1107,7 @@ class MethodCompiler < SexpProcessor
 
           # lhs[0] == :array -> skip it
           lhs[1..-1].each_with_index do |assignment, i|  # for example where assignment == [:lasgn, :a]
-            assignment << s(:special_inline_js_value, "#{tmp}[#{i}]===undefined?#{@encoder.encode_nil}:#{tmp}[#{i}]")
+            assignment << s(:special_inline_js_value, "#{tmp}[#{i}]===undefined?#{@model.encode_nil}:#{tmp}[#{i}]")
             assgn << process(assignment)
           end
 
@@ -1141,11 +1134,11 @@ class MethodCompiler < SexpProcessor
   def process_iasgn(exp)
     ivar  = exp.shift
     value = exp.shift
-    ivar_name = @encoder.encode_instance_variable(ivar)
+    ivar_name = @model.encode_instance_variable(ivar)
 
     str = without_result do
       want_expression do
-        "#{@encoder.encode_self}.#{ivar_name}=#{process(value)}"
+        "#{@model.encode_self}.#{ivar_name}=#{process(value)}"
       end
     end
 
@@ -1180,7 +1173,7 @@ class MethodCompiler < SexpProcessor
     @current_iter_dvars = Set.new 
     
     # Get an argument name for the iterator function signature.
-    arg_name = @encoder.encode_fresh_local_variable()
+    arg_name = @model.encode_fresh_local_variable()
 
     fun_str = ""
     asgn_str = ""
@@ -1200,7 +1193,7 @@ class MethodCompiler < SexpProcessor
 
       # TODO: remove masgn_iter and instead put the corresponding logic
       # into yield!
-      masgn_iter = @encoder.encode_globalattr("masgn_iter")
+      masgn_iter = @model.encode_globalattr("masgn_iter")
       params << [:to_ary, [:special_to_ary, "#{masgn_iter}(#{arg_name})"]]
       want_expression(false) do
         without_result do
@@ -1216,8 +1209,8 @@ class MethodCompiler < SexpProcessor
       # we convert a single argument into a multiple assignment clause
       # with one argument.
 
-      sasgn_iter = @encoder.encode_globalattr("sasgn_iter")
-      params << [:special_inline_js_value, "#{arg_name}===undefined?#{@encoder.encode_nil}:#{arg_name}"]
+      sasgn_iter = @model.encode_globalattr("sasgn_iter")
+      params << [:special_inline_js_value, "#{arg_name}===undefined?#{@model.encode_nil}:#{arg_name}"]
 
       want_expression(false) do
         without_result do
@@ -1246,7 +1239,7 @@ class MethodCompiler < SexpProcessor
 
     # declare and initialize the return value
     if @result_name
-      var_str << "var #{@result_name}=#{@encoder.encode_nil};"
+      var_str << "var #{@result_name}=#{@model.encode_nil};"
     end
 
     # NOTE: we don't need to initialize any dvar to nil, as 
@@ -1329,7 +1322,7 @@ class MethodCompiler < SexpProcessor
   end
 
   def result_name
-    @result_name ||= @encoder.encode_fresh_local_variable() 
+    @result_name ||= @model.encode_fresh_local_variable() 
     #@local_variables.add(@result_name)
     @result_name
   end
@@ -1339,7 +1332,7 @@ class MethodCompiler < SexpProcessor
   # the block in the Javascript function signature).
   #
   def block_name
-    @block_name ||= @encoder.encode_fresh_local_variable()
+    @block_name ||= @model.encode_fresh_local_variable()
     @argument_variables.add(@block_name)
     @block_name
   end
@@ -1367,7 +1360,7 @@ class MethodCompiler < SexpProcessor
   end
 
   def get_temporary_variable
-    tmp = @temporary_variables_pool.shift || @encoder.encode_fresh_local_variable
+    tmp = @temporary_variables_pool.shift || @model.encode_fresh_local_variable
     @local_variables.add(tmp)
     return tmp
   end

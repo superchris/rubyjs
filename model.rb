@@ -9,6 +9,7 @@ require 'parse_tree'
 require 'sexp_processor'
 require 'enumerator'
 require 'encoder'
+require 'set'
 
 class MethodExtractor < SexpProcessor
   attr_accessor :instance_methods, :methods
@@ -43,12 +44,23 @@ class Model < Encoder
 
   def initialize
     super()
+
+    #
+    # record all (potential) names of all method calls
+    #
+    @method_calls = Set.new
+
+
     @models = {}
 
     # all modules and classes (a Class is_a Module)
     ObjectSpace.each_object {|o| 
       @models[o] = model_for(o) if o.is_a?(::Module) && o.name =~ SCOPE_R
     }
+  end
+
+  def add_method_call(name)
+    @method_calls.add(name)
   end
 
   def iterate_all(seen, &block)
