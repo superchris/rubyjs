@@ -25,7 +25,8 @@ class TestYield
     end
   end
 
-  def test
+  def test_three_times
+    puts "three_times"
     three_times {|i| p i }
     puts "--"
     three_times_block {|i| p i }
@@ -34,8 +35,10 @@ class TestYield
     puts "--"
     three_times_indirect_block {|i| p i }
     puts "--"
-    puts "loop"
+  end
 
+  def test_loop
+    puts "loop"
     i = 0 
     loop do
       i += 1
@@ -44,7 +47,9 @@ class TestYield
       break if i > 8
     end
     puts "--"
+  end
 
+  def test_while_loop
     puts "while-loop"
     i = 0 
     while true
@@ -54,6 +59,12 @@ class TestYield
       break if i > 8
     end
     puts "--"
+  end
+
+  def test
+    test_three_times
+    test_loop
+    test_while_loop
   end
 
   def self.main
