@@ -5,7 +5,7 @@
 # All rights reserved.
 #
 
-require 'name_generator'
+require 'rubyjs/name_generator'
 
 class Encoder
   def initialize

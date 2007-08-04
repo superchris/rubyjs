@@ -5,8 +5,8 @@
 # All rights reserved.
 #
 
-require 'compiler'
-require 'model'
+require 'rubyjs/compiler'
+require 'rubyjs/model'
 require 'set'
 
 class CodeGenerator

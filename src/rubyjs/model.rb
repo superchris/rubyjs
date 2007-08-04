@@ -8,7 +8,7 @@
 require 'parse_tree'
 require 'sexp_processor'
 require 'enumerator'
-require 'encoder'
+require 'rubyjs/encoder'
 require 'set'
 
 class MethodExtractor < SexpProcessor

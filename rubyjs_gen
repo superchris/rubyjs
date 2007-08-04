@@ -4,9 +4,11 @@ require 'optparse'
 require 'ostruct'
 require 'rubygems'
 
-require 'code_generator'
-require 'core'
-require 'eval_into'
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), "src"))
+
+require 'rubyjs/code_generator'
+require 'rubyjs/core'
+require 'rubyjs/eval_into'
 
 if __FILE__ == $0
 
