@@ -1,6 +1,10 @@
 # 
 # Evals into the given module_scope.
 #
+# Copyright (c) 2007 by Michael Neumann (mneumann@ntecs.de).
+# All rights reserved.
+#
+
 def eval_into(module_scope, &block)
   $RUBYJS__MODULE_SCOPE = module_scope
   $RUBYJS__LOADED ||= [] # avoids recursive loads
