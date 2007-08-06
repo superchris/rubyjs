@@ -41,6 +41,7 @@ class Model < Encoder
   SCOPE_R = /^RubyJS::Environment::(.*)$/
 
   attr_accessor :models
+  attr_accessor :current_model
 
   def initialize
     super()
@@ -81,6 +82,109 @@ class Model < Encoder
     seen.add(model[:for])
   end 
 
+  #
+  # Compile time constant lookup.
+  #
+  # Lookup rules (like Ruby 1.9+):
+  #
+  #   1. Current class
+  #   2. Super classes except object
+  #   3. lexically enclosing modules/classes
+  #   4. Object
+  #
+  def lookup_constant(name)
+    model = @current_model
+    prefix, *path = name.split("::")
+
+    start_lookup_at = nil
+    done = false
+
+    if prefix.empty?
+      # e.g. "::A"
+      start_lookup_at = RubyJS::Environment
+      done = true
+    else
+
+      # 1. Current class
+      begin
+        start_lookup_at = model[:for].const_get(prefix)
+        done = true
+      rescue NameError
+      end
+
+      # 2. Super classes except object 
+      unless done
+        m = model
+        loop do
+          if m[:superclass] and m[:superclass] != RubyJS::Environment::Object
+            begin
+              start_lookup_at = m[:superclass].const_get(prefix)
+              done = true
+              break
+            rescue NameError
+              m = @models[m[:superclass]]
+            end
+          else
+            break
+          end
+        end
+      end
+
+      # 3. lexically enclosing modules/classes
+      # FIXME
+      unless done
+        arr = model[:name].split("::")
+        loop do
+          arr.pop
+
+          begin
+            start_lookup_at = eval((["RubyJS", "Environment"] + arr + [prefix]).join("::"))
+            done = true
+            break
+          rescue NameError
+          end
+
+          break if arr.empty?
+        end
+      end
+
+      # 4. Object
+      unless done
+        begin
+          start_lookup_at = RubyJS::Environment::Object.const_get(prefix)
+          done = true
+        rescue NameError
+        end
+      end
+
+    end
+
+    unless done
+      raise "failed to lookup constant prefix #{prefix}" 
+    end
+
+    #
+    # follow the whole path, e.g. A::B::C
+    #
+    value = start_lookup_at
+    path.each do |piece|
+      value = value.const_get(piece)
+    end
+
+    if value.is_a?(::Class) or value.is_a?(::Module)
+      # A class or module
+      model = @models[value] || raise("unrecognized class/module referenced by constant")
+      return encode_constant(model[:name])
+    else
+      # A value
+      if value.is_a?(Fixnum)
+        return value.inspect
+      else
+        raise
+      end
+    end
+  end
+
   def namify(klass)
     name = klass.name
     if name =~ SCOPE_R
@@ -89,6 +193,16 @@ class Model < Encoder
       raise "must be scoped inside RubyJS module"
     end
     return name
+  end
+
+  def with_current_model(model)
+    old_current_model = @current_model 
+    @current_model = model
+    begin
+      yield
+    ensure
+      @current_model = old_current_model
+    end
   end
 
   def model_for(klass)

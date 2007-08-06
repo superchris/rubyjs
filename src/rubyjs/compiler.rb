@@ -602,18 +602,38 @@ class MethodCompiler < SexpProcessor
   # EXPRESSION
   #
   def process_const(exp)
-    name = exp.shift
-    return resultify(@model.encode_constant(name))
+    resultify(@model.lookup_constant(constify(exp, :const)))
   end
 
+  #
+  # helper methods
+  #
+
+  def constify(exp, type)
+    exp.unshift(type)
+    const_rec(exp).join("::")
+  end
+
+  def const_rec(exp)
+    case exp.shift
+    when :const
+      return [exp.shift]
+    when :colon2
+      const_rec(exp.shift) + [exp.shift]
+    when :colon3
+      [nil, exp.shift]
+    else
+      raise
+    end
+  end
+  
   # 
   # EXPRESSION
   #
   # A::B     # => [:colon2, [:const, :A], :B]
   #
   def process_colon2(exp)
-    name = exp.shift
-    raise
+    resultify(@model.lookup_constant(constify(exp, :colon2)))
   end
 
   # 
@@ -622,8 +642,7 @@ class MethodCompiler < SexpProcessor
   # ::A     # => [:colon3, :A]
   #
   def process_colon3(exp)
-    name = exp.shift
-    raise
+    resultify(@model.lookup_constant(constify(exp, :colon3)))
   end
 
   #
@@ -912,7 +931,7 @@ class MethodCompiler < SexpProcessor
       end
     end
 
-    str = @model.encode_constant('Hash') + "."
+    str = @model.lookup_constant('::Hash') + "."
     if kv_list.empty?
       # empty Hash
       @model.add_method_call(m = @model.encode_method("new"))
