@@ -64,6 +64,40 @@ class Element
     return #<self>; 
  `end
 
+  def observeEvents(mask)
+    `#<self>.#<@domElement>.#<attr:eventMask> = #<mask> = #<mask> || 0;`
+    elem = @domElement
+    `
+    #<elem>.onclick       = (#<mask> & 0x00001) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.ondblclick    = (#<mask> & 0x00002) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.onmousedown   = (#<mask> & 0x00004) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.onmouseup     = (#<mask> & 0x00008) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.onmouseover   = (#<mask> & 0x00010) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.onmouseout    = (#<mask> & 0x00020) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.onmousemove   = (#<mask> & 0x00040) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.onkeydown     = (#<mask> & 0x00080) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.onkeypress    = (#<mask> & 0x00100) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.onkeyup       = (#<mask> & 0x00200) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.onchange      = (#<mask> & 0x00400) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.onfocus       = (#<mask> & 0x00800) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.onblur        = (#<mask> & 0x01000) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.onlosecapture = (#<mask> & 0x02000) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.onscroll      = (#<mask> & 0x04000) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.onload        = (#<mask> & 0x08000) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.onerror       = (#<mask> & 0x10000) ? window.#<attr:dispatchEvent> : null;
+    #<elem>.onmousewheel  = (#<mask> & 0x20000) ? window.#<attr:dispatchEvent> : null;
+    `
+  end
+
+  INIT__ = `
+    // assign event dispatcher
+    window.#<attr:dispatchEvent> = function(evt) {
+      // NOTE: "this" in this context is a DOM element.
+      if (this.#<attr:listener>)
+        this.#<attr:listener>.#<m:onBrowserEvent>(#<nil>, evt) 
+    }
+  `
+
   def self.create(tag)
     new(`document.createElement(#<tag>)`)
   end
