@@ -178,7 +178,11 @@ class Model < Encoder
     else
       # A value
       if value.is_a?(Fixnum)
-        return value.inspect
+        # If it is the receiver of a method call, we have to surround it
+        # with parens, e.g. (1).
+        # As we can't easily decide whether it's a receiver of a method
+        # call, we simply surround every constant Fixnum with parens.
+        return "(" + value.inspect + ")"
       else
         raise
       end

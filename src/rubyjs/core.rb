@@ -375,6 +375,9 @@ module RubyJS; module Environment
     def >=(x) `return #<self> >= #<x>` end
     def ==(x) `return #<self> == #<x>` end
     def %(x)  `return #<self> % #<x>` end
+    def |(x)  `return #<self> | #<x>` end
+    def &(x)  `return #<self> & #<x>` end
+    def ^(x)  `return #<self> ^ #<x>` end
 
     def times
       i = 0
