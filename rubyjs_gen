@@ -59,6 +59,11 @@ if __FILE__ == $0
   args = ARGV.dup
   opts.parse!(args)
 
+  if args.empty? and !options.code
+    puts opts
+    exit
+  end
+
   $RUBYJS__LOAD_PATH = options.load_path.map {|i| File.expand_path(i)}  
   $RUBYJS__PLATFORM = options.platform
   $RUBYJS = true    # to distinguish between Ruby and RubyJS
