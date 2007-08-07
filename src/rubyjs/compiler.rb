@@ -529,6 +529,28 @@ class MethodCompiler < SexpProcessor
   end
 
   #
+  # The ||= operator.
+  #
+  # For example:
+  #
+  #   a = a || "hallo"
+  #
+  #     [:lasgn, :a, [:or, [:lvar, :a], [:str, "hallo"]]],
+  #
+  #   a ||= "hallo" 
+  #
+  #     [:op_asgn_or, [:lvar, :a], [:lasgn, :a, [:str, "hallo"]]]]]]
+  #
+  # We rewrite the one to the other.
+  #
+  def process_op_asgn_or(exp)
+    ref = exp.shift
+    asgn = exp.shift
+    asgn[2] = [:or, ref, asgn[2]]
+    process(asgn)
+  end
+
+  #
   # EXPRESSION
   #
   # Method call with receiver
@@ -648,35 +670,55 @@ class MethodCompiler < SexpProcessor
   #
   # EXPRESSION
   #
+  # Implements the "&&" operator, which has short circuit behaviour.  
+  #
+  # a && b
+  #
+  #   is equivalent in Ruby to
+  #
+  # if a then b else a end 
+  #
   def process_and(exp)
     a = exp.shift
     b = exp.shift
 
-    without_result do
+    res = without_result do
       want_expression do
-        a = conditionalize(a)
-        b = conditionalize(b)
+        with_temporary_variable do |tmp|
+          @local_variables_need_no_initialization.add(tmp)
+          "(#{tmp}=#{process(a)}, (#{tmp}!==false&&#{tmp}!==nil) ? (#{process(b)}) : #{tmp})"
+        end
       end
     end
 
-    return resultify("((#{a}) && (#{b}))")
+    return resultify(res)
   end
   
   #
   # EXPRESSION
   #
+  # Implements the "||" operator, which has short circuit behaviour.  
+  #
+  # a || b
+  #
+  #   is equivalent in Ruby to
+  #
+  # if a then a else b end 
+  #
   def process_or(exp)
     a = exp.shift
     b = exp.shift
 
-    without_result do
+    res = without_result do
       want_expression do
-        a = conditionalize(a)
-        b = conditionalize(b)
+        with_temporary_variable do |tmp|
+          @local_variables_need_no_initialization.add(tmp)
+          "(#{tmp}=#{process(a)}, (#{tmp}!==false&&#{tmp}!==nil) ? #{tmp} : (#{process(b)}))"
+        end
       end
     end
 
-    return resultify("((#{a}) || (#{b}))")
+    return resultify(res)
   end
 
   #
