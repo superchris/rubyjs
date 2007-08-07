@@ -421,10 +421,10 @@ class DOM
   # evt::    the event to be tested
   # return:: the Unicode character or key code.
   #
-  def self.eventGetKeyCode(evt) `
-    // +which+ gives the right key value, except when it doesnt -- in which
-    // case, +keyCode+ gives the right value on all browsers.
-    return #<evt>.which || #<evt>.keyCode`
+  def self.eventGetKeyCode(evt) 
+    # 'which' gives the right key value, except when it doesnt -- in which
+    # case, keyCode gives the right value on all browsers.
+    `return #<evt>.which || #<evt>.keyCode`
   end
 
   #
@@ -1065,11 +1065,11 @@ class DOM
   # text::   the text to set
   # index::  the index of the option whose text should be set
   #
-  def self.setOptionText(select, text, index) `
-    // IE doesnt properly update the screen when you use
-    // setAttribute(+option+, text), so we instead directly assign to the
-    // +option+ property, which works correctly on all browsers.
-    var option = #<select>.options[#<index>];
+  def self.setOptionText(select, text, index) 
+    # IE doesnt properly update the screen when you use
+    # setAttribute('option', text), so we instead directly assign to the
+    # 'option' property, which works correctly on all browsers.
+    `var option = #<select>.options[#<index>];
     option.text = #<text>;
     return #<nil>`
   end
