@@ -66,6 +66,10 @@ class Element
      return #<self>`
   end
 
+  def getEventsSunk
+    `return #<self>.#<attr:eventMask>`
+  end
+
   def sinkEvents(mask)
     `#<self>.#<attr:eventMask> = #<mask> = #<mask> || 0;
      #<self>.onclick       = (#<mask> & 0x00001) ? window.#<attr:dispatchEvent> : null;
@@ -98,7 +102,7 @@ class Element
   end
 
   def setEventListener(listener)
-    `#<self>.#<attr:listener> = #<listener>; return #<self>`
+    `#<self>.#<attr:listener> = (#<listener> == #<nil>) ? null : #<listener>; return #<self>`
   end
 
   def self.create(tag)
@@ -389,6 +393,7 @@ class UIObject
   # ----------------------------------------------------------
 
   def setElement(element)
+    # TODO: replaceNode
     @element = element
   end
 
@@ -461,10 +466,70 @@ class UIObject
   def setTitle(title)
   end
 
-  def registerEvents(eventBitsToAdd)
+  def sinkEvents(eventBitsToAdd)
+    @element.sinkEvents(eventBitsToAdd | @element.getEventsSunk)
   end
 
-  def unregisterEvents(eventBitsToRemove)
+  def unsinkEvents(eventBitsToRemove)
+  end
+end
+
+class Widget < UIObject
+  def onAttach
+    if @attached
+      #raise "IllegalStateException"
+    end
+    @attached = true
+
+    getElement().setEventListener(self)
+
+    onLoad()
+  end
+
+  def onDetach
+    unless @attached
+      # raise "IllegalStateException"
+    end
+
+    onUnload()
+    @attached = false
+
+    getElement().setEventListener(nil)
+  end
+
+  def onLoad
+  end
+
+  def onUnload
+  end
+
+  def setElement(elem)
+    getElement().setEventListener(nil) if @attached
+    super(elem)
+    getElement().setEventListener(self) if @attached if @attached
+  end
+
+end
+
+class Label < Widget
+  def initialize(text=nil, wordwrap=nil)
+    setElement(Element.createDiv)
+    sinkEvents(Event::ONCLICK | Event::MOUSEEVENTS | Event::ONMOUSEWHEEL)
+    setStyleName('rwt-Label')
+    setText(text) unless text.nil?
+    setWordWrap(wordwrap) unless wordwrap.nil?
+  end
+
+  def getText
+    # getElement().getInnerText
+  end
+
+  def setText(text)
+    getElement().setInnerText(text)
+  end
+
+  def setWordWrap(wrap)
+    # FIXME
   end
 end
 
