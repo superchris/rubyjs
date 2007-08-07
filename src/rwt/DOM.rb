@@ -1014,7 +1014,7 @@ class DOM
   # listener:: the listener to receive events
   #
   def self.setEventListener(elem, listener)
-    `#<elem>.#<attr:listener> = #<listener>; return #<nil>`
+    `#<elem>.#<attr:listener> = (#<listener> == #<nil>) ? null : #<listener>; return #<nil>`
   end
 
   #
@@ -1139,6 +1139,7 @@ class DOM
   #            event.
   #
   def self.dispatchEvent(evt, elem, listener)
+    listener.onBrowserEvent(evt) if listener
     # FIXME
     #UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
     #if (handler != null) {
@@ -1146,6 +1147,13 @@ class DOM
     #} else {
     #  dispatchEventImpl(evt, elem, listener);
     #}
+  end
+
+  def self.__init() `
+    // assign event dispatcher
+    window.#<attr:dispatchEvent> = function(evt) {
+      #<self>.#<m:dispatchEvent>(#<nil>, evt, this, this.#<attr:listener> || #<nil>);
+   };`
   end
 
 end # class DOM
