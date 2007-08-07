@@ -22,7 +22,6 @@
 # Missing methods:
 #
 #   * addEventPreview
-#   * compare
 #   * eventCancelBubble(evt, cancel)
 #   * insertListItem
 #   * releaseCapture
@@ -46,6 +45,7 @@
 #
 #   * setIntStyleAttribute removed. use setStyleAttribute instead
 #   * toString -> elementToString
+#   * compare -> compareElement
 #
 # Added/New methods:
 #
@@ -72,6 +72,20 @@ class DOM
   #
   def self.appendChild(parent, child)
     `#<parent>.appendChild(#<child>); return #<nil>`
+  end
+
+  # 
+  # Compares two elements for equality (note that reference equality is not
+  # sufficient to determine equality among elements on most browsers).
+  # 
+  # elem1::  the first element to be compared
+  # elem2::  the second element to be compared
+  # return:: +true+ if they are in fact the same element
+  #
+  # See #isOrHasChild.
+  # 
+  def self.compareElement(elem1, elem2) 
+    `return (#<elem1> == #<elem2>)`
   end
 
   #
@@ -453,7 +467,7 @@ class DOM
   # return:: The velocity of the mouse wheel.
   #
   def self.eventGetMouseWheelVelocityY(evt)
-    # FIXME
+    raise # FIXME
   end
 
   #
