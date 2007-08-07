@@ -349,6 +349,15 @@ module RubyJS; module Environment
       self
     end
 
+    def strip
+      `return #<self>.replace(/^\s+/, '').replace(/\s+$/, '')`
+    end
+
+    def length
+      `return #<self>.length`
+    end
+
+    alias size length
   end
 
   class Number
