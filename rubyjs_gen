@@ -19,6 +19,7 @@ if __FILE__ == $0
   options.output = nil
   options.main = nil
   options.code = nil
+  options.append = "" 
 
   opts = OptionParser.new do |opts|
     opts.banner = "Usage: rubyjs_gen [options] [file, [file, ...]]"
@@ -40,6 +41,11 @@ if __FILE__ == $0
       raise "only one code allowed" if options.code
       options.code = code
     end
+    opts.on("-a", "--append JSCODE", "Append Javascript code") do |append|
+      options.append << append
+      options.append << "\n"
+    end
+
     opts.on("-o", "--output FILE", "Filename to write output to") do |out|
       raise "only one output allowed" if options.output
       options.output = out
@@ -53,12 +59,6 @@ if __FILE__ == $0
   args = ARGV.dup
   opts.parse!(args)
 
-  if args.empty? and !options.code 
-    puts opts
-    puts "ERROR: Either code or file required"
-    exit 1
-  end
-
   $RUBYJS__LOAD_PATH = options.load_path.map {|i| File.expand_path(i)}  
   $RUBYJS__PLATFORM = options.platform
   $RUBYJS = true    # to distinguish between Ruby and RubyJS
@@ -70,7 +70,7 @@ if __FILE__ == $0
       require lib 
     end
 
-    eval.call(options.code || "")
+    eval.call(options.code) if options.code
 
     args.each do |file|
       eval.call(File.read(file))
@@ -83,11 +83,8 @@ if __FILE__ == $0
   gen = CodeGenerator.new
 
   out << gen.generate()
-
-  if options.main
-    out << gen.encode("function main() { #<#{options.main}>.#<m:main>() }")
-    out << "main();"
-  end
+  out << gen.encode("function main() { #<#{options.main}>.#<m:main>() }") if options.main
+  out << options.append
 
   out.close if options.output and options.output != '-'
 end

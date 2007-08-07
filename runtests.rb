@@ -14,7 +14,7 @@ tests.each_with_index do |file, i|
   expected = `ruby -I./test -rcommon -e 'load "#{file}"; #{klassname}.main'`
 
   # run rubyjs
-  result = `./rubyjs_gen -I./test -rcommon -m #{klassname} #{file} | sh utils/run_js.sh`
+  result = `./rubyjs_gen -I./test -rcommon -m #{klassname} -a "main()" #{file} | sh utils/run_js.sh`
 
   if expected == result
     puts "OK"
