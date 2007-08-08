@@ -45,7 +45,11 @@ function #<globalattr:masgn_iter>(a)
 //
 function #<globalattr:supercall>(o, m, i, a) 
 {
-  return o.#<attr:_class>.#<attr:superclass>.#<attr:object_constructor>.prototype[m].apply(o, [i].concat(a));
+  var r = o[m]; // method in current class
+  var c = o.#<attr:_class>.#<attr:superclass>;
+  while (r === c.#<attr:object_constructor>.prototype[m])
+    c = c.#<attr:superclass>;
+  return c.#<attr:object_constructor>.prototype[m].apply(o, [i].concat(a));
 }
 
 function #<globalattr:rebuild_classes>(c)
@@ -233,8 +237,9 @@ module RubyJS; module Environment
       end
     end
 
-    # TODO
-    def raise
+    # FIXME
+    def raise(*args)
+      p(*args)
     end
   end
 

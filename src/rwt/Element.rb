@@ -904,4 +904,24 @@ class Element
     `#<elem>.style.display = #<visible> ? '' : 'none'; return #<nil>`
   end
 
+  #
+  # Changes a DOM element's positioning to static.
+  # 
+  # elem:: the DOM element 
+  #
+  def self.changeToStaticPositioning(elem)
+    setStyleAttribute(elem, "left", "");
+    setStyleAttribute(elem, "top", "");
+    setStyleAttribute(elem, "position", "static");
+  end
+
+  #
+  # TODO: write documentation 
+  #
+  def self.setAbsolutePixelPosition(elem, left, top)
+    setStyleAttribute(elem, "position", "absolute");
+    setStyleAttribute(elem, "left", left + "px");
+    setStyleAttribute(elem, "top", top + "px");
+  end
+
 end

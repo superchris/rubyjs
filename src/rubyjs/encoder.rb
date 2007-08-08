@@ -5,7 +5,12 @@
 # All rights reserved.
 #
 
-require 'rubyjs/name_generator'
+if $RUBYJS__DEBUG
+  require 'rubyjs/debug_name_generator'
+  NameGenerator = DebugNameGenerator
+else
+  require 'rubyjs/name_generator'
+end
 
 class Encoder
   def initialize

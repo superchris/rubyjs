@@ -31,8 +31,16 @@ class CodeGenerator
     str
   end
 
+  def compact_code(str)
+    if $RUBYJS__DEBUG
+      str
+    else
+      @world.strip_ws_from_js_code(str)
+    end
+  end
+
   def encode(code)
-    return @world.strip_ws_from_js_code(ipol(code))
+    return compact_code(ipol(code))
   end
   
   def generate
@@ -90,7 +98,7 @@ class CodeGenerator
     end
     str << @world.encode_globalattr('rebuild_classes') + "([" + klasses.join(",") + "]);"
 
-    return @world.strip_ws_from_js_code(str)
+    return compact_code(str)
   end
 
   def b_methods(kind, model, h)

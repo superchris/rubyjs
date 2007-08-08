@@ -4,11 +4,6 @@ require 'optparse'
 require 'ostruct'
 require 'rubygems'
 
-$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), "src"))
-
-require 'rubyjs/code_generator'
-require 'rubyjs/core'
-require 'rubyjs/eval_into'
 
 if __FILE__ == $0
 
@@ -20,6 +15,8 @@ if __FILE__ == $0
   options.main = nil
   options.code = nil
   options.append = "" 
+  options.debug = false
+  options.opts = [] 
 
   opts = OptionParser.new do |opts|
     opts.banner = "Usage: rubyjs_gen [options] [file, [file, ...]]"
@@ -45,10 +42,20 @@ if __FILE__ == $0
       options.append << append
       options.append << "\n"
     end
-
     opts.on("-o", "--output FILE", "Filename to write output to") do |out|
       raise "only one output allowed" if options.output
       options.output = out
+    end
+    opts.on("-O", "--opt OPTION", "Set a specific compiler option") do |out|
+      options.opts << out
+    end
+    opts.on("--show-options", "--show-options", "Show all compiler options") do |out|
+      puts "Compiler Options:"
+      puts "  --opt NoArgumentArityChecks:: Disable generation of arity checking code"
+      exit
+    end
+    opts.on("-d", "--debug", "Turn on debug mode") do |out|
+      options.debug = true
     end
     opts.on_tail("-h", "--help", "Show this message") do
       puts opts
@@ -67,6 +74,14 @@ if __FILE__ == $0
   $RUBYJS__LOAD_PATH = options.load_path.map {|i| File.expand_path(i)}  
   $RUBYJS__PLATFORM = options.platform
   $RUBYJS = true    # to distinguish between Ruby and RubyJS
+  $RUBYJS__DEBUG = options.debug
+  $RUBYJS__OPTS = options.opts
+
+  # load RubyJS
+  $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), "src"))
+  require 'rubyjs/code_generator'
+  require 'rubyjs/core'
+  require 'rubyjs/eval_into'
 
   # process requires
 

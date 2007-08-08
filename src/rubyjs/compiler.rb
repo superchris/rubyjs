@@ -394,10 +394,11 @@ class MethodCompiler < SexpProcessor
       end
     end
 
-    # prepend
-    # TODO: option to disable argument arity checks
-    str = str2 + str
-
+    # NoArgumentArityChecks disable argument arity checks
+    unless $RUBYJS__OPTS.include?('NoArgumentArityChecks')
+      # prepend
+      str = str2 + str
+    end
 
     if @argument_splat
       # construct the code to initialize the splat argument. 

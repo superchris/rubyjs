@@ -1,25 +1,27 @@
 require 'rwt/Event'
 require 'rwt/Element'
+require 'rwt/UIObject'
+require 'rwt/Widget'
+require 'rwt/Panel'
+require 'rwt/AbsolutePanel'
+require 'rwt/RootPanel'
 
-class Listener
+class MyWidget < Widget
+  def initialize
+    setElement(Element.createDiv)
+    sinkEvents(Event::ONCLICK)
+    setTitle('test')
+    Element.setInnerText(getElement(), 'click me')
+  end
+
   def onBrowserEvent(ev)
-    elem = Element.createDiv
-    Element.setInnerText(elem, Event.getTypeString(ev))
-    Element.appendChild(Element.getById('root'), elem)
+    `alert('okay')`
   end
 end
 
 class Main
   def self.main
     Event.__init
-
-    div = Element.createDiv
-    Element.setInnerText(div, 'click')
-
-    Element.sinkEvents(div, Event::MOUSEEVENTS)
-    Element.setEventListener(div, Listener.new)
-    Element.setAttribute(div, 'title', 'heyja') 
-
-    Element.appendChild(Element.getById('root'), div)
+    RootPanel.get.add(MyWidget.new)
   end
 end
