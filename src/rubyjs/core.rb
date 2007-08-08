@@ -350,7 +350,7 @@ module RubyJS; module Environment
     end
 
     def strip
-      `return #<self>.replace(/^\s+/, '').replace(/\s+$/, '')`
+      `return #<self>.replace(/^\\s+/, '').replace(/\\s+$/, '')`
     end
 
     def length
