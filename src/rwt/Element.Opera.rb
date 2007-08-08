@@ -19,18 +19,7 @@
 #
 # Opera specific overrides.
 #
-class DOM
-
-  def self.eventGetButton(evt)
-    # Opera and IE disagree on what the button codes for left button should be.
-    # Translating to match IE standard.
-    `var button = #<evt>.button;
-    return (button == 0) ? 1 : button`
-  end
-
-  def self.eventGetMouseWheelVelocityY(evt)
-    `return #<evt>.detail * 4`
-  end
+class Element
 
   def self.getAbsoluteLeft(elem) `
     var left = 0;

@@ -1,25 +1,25 @@
 require 'rwt/Event'
-require 'rwt/DOM'
+require 'rwt/Element'
 
 class Listener
   def onBrowserEvent(ev)
-    elem = DOM.createDiv
-    DOM.setInnerText(elem, DOM.eventGetTypeString(ev))
-    DOM.appendChild(DOM.getElementById('root'), elem)
+    elem = Element.createDiv
+    Element.setInnerText(elem, Event.getTypeString(ev))
+    Element.appendChild(Element.getById('root'), elem)
   end
 end
 
 class Main
   def self.main
-    DOM.__init
+    Event.__init
 
-    div = DOM.createDiv
-    DOM.setInnerText(div, 'click')
+    div = Element.createDiv
+    Element.setInnerText(div, 'click')
 
-    DOM.sinkEvents(div, Event::MOUSEEVENTS)
-    DOM.setEventListener(div, Listener.new)
-    DOM.setElementAttribute(div, 'title', 'heyja') 
+    Element.sinkEvents(div, Event::MOUSEEVENTS)
+    Element.setEventListener(div, Listener.new)
+    Element.setAttribute(div, 'title', 'heyja') 
 
-    DOM.appendChild(DOM.getElementById('root'), div)
+    Element.appendChild(Element.getById('root'), div)
   end
 end

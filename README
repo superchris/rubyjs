@@ -85,6 +85,9 @@ LIMITATIONS
     // this "neither"
     // whereas this will work
 
+  Also, inside Regexp's (/.../) spaces are still moved. Better use 
+  "new Regexp" instead for now.
+
   --
   Module's are mapped to Classes for now.
 

@@ -17,6 +17,11 @@
 #++
 
 class Event
+
+  #-------------------------------------------------------------------
+  # Constants
+  #-------------------------------------------------------------------
+ 
   #
   # The left mouse button
   #
@@ -138,4 +143,287 @@ class Event
   # not click, dblclick, or wheel events.
   #
   MOUSEEVENTS = ONMOUSEDOWN | ONMOUSEUP | ONMOUSEMOVE | ONMOUSEOVER | ONMOUSEOUT
+
+  #-------------------------------------------------------------------
+  # Keyboard related
+  #-------------------------------------------------------------------
+ 
+  #
+  # Gets whether the ALT key was depressed when the given event occurred.
+  #
+  # evt::    the event to be tested
+  # return:: +true+ if ALT was depressed when the event occurred
+  #
+  def self.getAltKey(evt)
+    `return #<evt>.altKey`
+  end
+
+  #
+  # Gets whether the CTRL key was depressed when the given event occurred.
+  #
+  # evt::    the event to be tested
+  # return:: +true+ if CTRL was depressed when the event occurred
+  #
+  def self.getCtrlKey(evt)
+    `return #<evt>.ctrlKey`
+  end
+
+  #
+  # Gets whether the META key was depressed when the given event occurred.
+  #
+  # evt::    the event to be tested
+  # return:: +true+ if META was depressed when the event occurred
+  #
+  def self.getMetaKey(evt)
+    `return !!#<evt>.getMetaKey`
+  end
+
+  #
+  # Gets whether the shift key was depressed when the given event occurred.
+  #
+  # evt::    the event to be tested
+  # return:: +true+ if shift was depressed when the event occurred
+  #
+  def self.getShiftKey(evt)
+    `return #<evt>.shiftKey`
+  end
+
+  #
+  # Gets the key code associated with this event.
+  #
+  # For +Event::ONKEYPRESS+, this method returns the Unicode value of the
+  # character generated. For +Event::ONKEYDOWN+ and +Event::ONKEYUP+,
+  # it returns the code associated with the physical key.
+  #
+  # evt::    the event to be tested
+  # return:: the Unicode character or key code.
+  #
+  def self.getKeyCode(evt) 
+    # 'which' gives the right key value, except when it doesnt -- in which
+    # case, keyCode gives the right value on all browsers.
+    `return #<evt>.which || #<evt>.keyCode`
+  end
+
+  #
+  # Gets the key-repeat state of this event.
+  #
+  # evt::    the event to be tested
+  # return:: +true+ if this key event was an auto-repeat
+  #
+  def self.getRepeat(evt)
+    `return #<evt>.repeat`
+  end
+
+  #
+  # Sets the key code associated with the given keyboard event.
+  #
+  # evt:: the event whose key code is to be set
+  # key:: the new key code
+  #
+  def self.setKeyCode(evt, key)
+    `#<evt>.keyCode = #<key>; return #<nil>`
+  end
+
+  #-------------------------------------------------------------------
+  # Mouse related
+  #-------------------------------------------------------------------
+  
+  #
+  # Gets the mouse buttons that were depressed when the given event occurred.
+  #
+  # evt::    the event to be tested
+  # return:: a bit-field, defined by +Event::BUTTON_LEFT+,
+  #          +Event::BUTTON_MIDDLE+ and +Event::BUTTON_RIGHT+
+  #
+  def self.getButton(evt)
+    `return #<evt>.button`
+  end
+
+  #
+  # Gets the mouse x-position within the browser window's client area.
+  #
+  # evt::    the event to be tested
+  # return:: the mouse x-position
+  #
+  def self.getClientX(evt)
+    `return #<evt>.clientX`
+  end
+
+  #
+  # Gets the mouse y-position within the browser window's client area.
+  #
+  # evt::    the event to be tested
+  # return:: the mouse y-position
+  #
+  def self.getClientY(evt)
+    `return #<evt>.clientY`
+  end
+
+  #
+  # Gets the mouse x-position on the user's display.
+  #
+  # evt::    the event to be tested
+  # return:: the mouse x-position
+  #
+  def self.getScreenX(evt)
+    `return #<evt>.screenX`
+  end
+
+  #
+  # Gets the mouse y-position on the user's display.
+  #
+  # evt::    the event to be tested
+  # return:: the mouse y-position
+  #
+  def self.getScreenY(evt)
+    `return #<evt>.screenY`
+  end
+
+  #
+  # Gets the velocity of the mouse wheel associated with the event along the
+  # Y axis.
+  #
+  # The velocity of the event is an artifical measurement for relative
+  # comparisons of wheel activity.  It is affected by some non-browser
+  # factors, including choice of input hardware and mouse acceleration
+  # settings.  The sign of the velocity measurement agrees with the screen
+  # coordinate system; negative values are towards the origin and positive
+  # values are away from the origin.  Standard scrolling speed is approximately
+  # ten units per event.
+  #
+  # evt::    the event to be examined.
+  # return:: The velocity of the mouse wheel.
+  #
+  def self.getMouseWheelVelocityY(evt)
+    raise # FIXME
+  end
+
+  #-------------------------------------------------------------------
+  # Misc
+  #-------------------------------------------------------------------
+
+  #
+  # Returns the element that was the actual target of the given event.
+  #
+  # evt::    the event to be tested
+  # return:: the target element
+  #
+  def self.getTarget(evt)
+    `return #<evt>.target || #<nil>`
+  end
+
+  #
+  # Gets the element from which the mouse pointer was moved (only valid for
+  # +Event::ONMOUSEOVER+).
+  #
+  # evt::    the event to be tested
+  # return:: the element from which the mouse pointer was moved
+  #
+  def self.getFromElement(evt)
+    # Standard browsers use relatedTarget rather than fromElement.
+    `return #<evt>.relatedTarget || #<nil>`
+  end
+
+  #
+  # Gets the element to which the mouse pointer was moved (only valid for
+  # +Event::ONMOUSEOUT+).
+  #
+  # evt::    the event to be tested
+  # return:: the element to which the mouse pointer was moved
+  #
+  def self.getToElement(evt)
+    # Standard browsers use relatedTarget rather than toElement.
+    `return #<evt>.relatedTarget || #<nil>`
+  end
+
+  #
+  # Gets the enumerated type of this event (as defined in +Event+).
+  #
+  # evt::    the event to be tested
+  # return:: the event's enumerated type
+  #
+  def self.getType(evt) `
+    switch (#<evt>.type) {
+      case "blur": return 0x01000;
+      case "change": return 0x00400;
+      case "click": return 0x00001;
+      case "dblclick": return 0x00002;
+      case "focus": return 0x00800;
+      case "keydown": return 0x00080;
+      case "keypress": return 0x00100;
+      case "keyup": return 0x00200;
+      case "load": return 0x08000;
+      case "losecapture": return 0x02000;
+      case "mousedown": return 0x00004;
+      case "mousemove": return 0x00040;
+      case "mouseout": return 0x00020;
+      case "mouseover": return 0x00010;
+      case "mouseup": return 0x00008;
+      case "scroll": return 0x04000;
+      case "error": return 0x10000;
+      case "mousewheel": return 0x20000;
+      case "DOMMouseScroll": return 0x20000;
+    }`
+  end
+
+  #
+  # Gets the type of the given event as a string.
+  #
+  # evt::    the event to be tested
+  # return:: the event's type name
+  #
+  def self.getTypeString(evt)
+    `return #<evt>.type`
+  end
+
+  #
+  # Prevents the browser from taking its default action for the given event.
+  #
+  # evt:: the event whose default action is to be prevented
+  #
+  def self.preventDefault(evt)
+    `#<evt>.preventDefault(); return #<nil>`
+  end
+
+  #
+  # Returns a stringized version of the event. This string is for debugging
+  # purposes and will NOT be consistent on different browsers.
+  #
+  # evt::    the event to stringize
+  # return:: a string form of the event
+  #
+  def self.toString(evt)
+    `return #<evt>.toString()`
+  end
+
+  #-------------------------------------------------------------------
+  # Setup
+  #-------------------------------------------------------------------
+
+  #
+  # This method is called directly by native code when any event is fired.
+  #
+  # evt::      the handle to the event being fired.
+  # elem::     the handle to the element that received the event.
+  # listener:: the listener associated with the element that received the
+  #            event.
+  #
+  def self.dispatch(evt, elem, listener)
+    listener.onBrowserEvent(evt) if listener
+    # FIXME
+    #UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
+    #if (handler != null) {
+    #  dispatchEventAndCatch(evt, elem, listener, handler);
+    #} else {
+    #  dispatchEventImpl(evt, elem, listener);
+    #}
+  end
+
+  def self.__init() `
+    // assign event dispatcher
+    window.#<attr:dispatch> = function(evt) {
+      #<self>.#<m:dispatch>(#<nil>, evt, this, this.#<attr:listener> || #<nil>);
+   };`
+  end
+
 end
