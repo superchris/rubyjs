@@ -357,6 +357,24 @@ module RubyJS; module Environment
       `return #<self>.length`
     end
 
+    def index(substring, offset=0) `
+      var i = #<self>.indexOf(#<substring>, #<offset>);
+      return (i == -1) ? #<nil> : i` 
+    end
+
+    def [](index, len=nil)
+      if len.nil?
+        # single character access
+        # FIXME: returns a string and not a Fixnum!
+        # But: Ruby 1.9+ has this behaviour!!!
+        `return #<self>.charAt(#<index>) || #<nil>`
+      else
+        # substring access
+        return nil if len < 0
+        `return #<self>.substring(#<index>, #<index>+#<len>)`
+      end
+    end
+
     alias size length
   end
 
@@ -376,6 +394,8 @@ module RubyJS; module Environment
 
     def +(x)  `return #<self> + #<x>` end
     def -(x)  `return #<self> - #<x>` end
+    def -@()  `return -#<self>` end
+    def +@()  `return #<self>` end
     def *(x)  `return #<self> * #<x>` end
     def /(x)  `return #<self> / #<x>` end
     def <(x)  `return #<self> < #<x>` end
@@ -387,6 +407,7 @@ module RubyJS; module Environment
     def |(x)  `return #<self> | #<x>` end
     def &(x)  `return #<self> & #<x>` end
     def ^(x)  `return #<self> ^ #<x>` end
+    def ~()   `return ~#<self>` end
 
     def times
       i = 0
@@ -480,9 +501,13 @@ module RubyJS; module Environment
   
     alias size length
 
+    def first
+      `var v = #<self>[0]; return ((v === undefined || v === null) ? #<nil> : v)`
+    end
+
     # TODO: check arrary bounds
     def [](i)
-      `var val = #<self>[#<i>]; return ((val === undefined || val === null) ? #<nil> : val)`
+      `var v = #<self>[#<i>]; return ((v === undefined || v === null) ? #<nil> : v)`
     end
 
     def []=(i, val)

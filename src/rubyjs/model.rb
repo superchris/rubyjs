@@ -82,6 +82,20 @@ class Model < Encoder
     seen.add(model[:for])
   end 
 
+  alias old_encode_constant encode_constant
+
+  def encode_constant(name)
+    if name == 'Class'
+      return old_encode_constant(name)
+    end
+
+    if @current_model
+      lookup_constant(name)
+    else
+      old_encode_constant(name)
+    end
+  end
+
   #
   # Compile time constant lookup.
   #
@@ -174,7 +188,7 @@ class Model < Encoder
     if value.is_a?(::Class) or value.is_a?(::Module)
       # A class or module
       model = @models[value] || raise("unrecognized class/module referenced by constant")
-      return encode_constant(model[:name])
+      return old_encode_constant(model[:name])
     else
       # A value
       if value.is_a?(Fixnum)
@@ -183,6 +197,9 @@ class Model < Encoder
         # As we can't easily decide whether it's a receiver of a method
         # call, we simply surround every constant Fixnum with parens.
         return "(" + value.inspect + ")"
+      elsif value.is_a?(String)
+        # FIXME: Generate a reference instead?
+        return value.inspect
       else
         raise
       end

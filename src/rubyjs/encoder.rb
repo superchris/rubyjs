@@ -155,8 +155,9 @@ class Encoder
     arr = []
     loop do 
       if str =~ /(["'])/
-        arr << $~.pre_match
+        pre = $~.pre_match
         post = $~.post_match
+        arr << pre
         s = $1
         if post =~ /^(([^#{s}]|\\.)*#{s})/
           str = $~.post_match

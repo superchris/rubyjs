@@ -358,7 +358,21 @@ class Element
   def self.removeChild(parent, child)
     `#<parent>.removeChild(#<child>); return #<nil>`
   end
-  
+
+  #
+  # Replaces +elem+ in the DOM tree with element +newElem+. 
+  #
+  # elem::    the element to be replaced
+  # newElem:: the element that is used to replace +elem+ with.
+  #
+  def self.replace(elem, newElem) `
+    var p = #<elem>.parentNode;
+    if (!p) return;
+    p.insertBefore(#<newElem>, #<elem>);
+    p.removeChild(#<elem>);
+    return #<nil>`
+  end
+
   #-------------------------------------------------------------------
   # DOM navigation
   #-------------------------------------------------------------------
@@ -867,6 +881,27 @@ class Element
   #
   def self.toString(elem)
     `return #<elem>.outerHTML`
+  end
+
+  #
+  # Checks whether the element is visible or not.
+  #
+  # elem::   the element to check for visibility
+  # return:: +true+ if element is visible, +false+ otherwise
+  #
+  def self.isVisible(elem)
+    `return (#<elem>.style.display != 'none')`
+  end
+
+  #
+  # Shows or hides an element.
+  #
+  # elem::    the element to show/hide
+  # visible:: if +true+ (default), show element, otherwise hide it
+  #
+
+  def self.setVisible(elem, visible=true)
+    `#<elem>.style.display = #<visible> ? '' : 'none'; return #<nil>`
   end
 
 end
