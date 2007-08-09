@@ -62,6 +62,24 @@ function #<globalattr:rebuild_class>(c)
 {
   var k,i;
 
+  //
+  // include modules
+  //
+  // do that before, because when assigning instance methods of 
+  // the super class, a check for === undefined prevents from
+  // this method being overwritten.
+  //
+  for (i=0; i<c.#<attr:modules>.length; i++)
+  {
+    for (k in c.#<attr:modules>[i].#<attr:object_constructor>.prototype)
+    {
+      if (c.#<attr:object_constructor>.prototype[k]===undefined)
+      {
+        c.#<attr:object_constructor>.prototype[k] = c.#<attr:modules>[i].#<attr:object_constructor>.prototype[k];
+      }
+    }
+  }
+
   // instance methods
   if (c.#<attr:superclass> != #<nil>)
   {
@@ -70,18 +88,6 @@ function #<globalattr:rebuild_class>(c)
       if (c.#<attr:object_constructor>.prototype[k]===undefined)
       {
         c.#<attr:object_constructor>.prototype[k] = c.#<attr:superclass>.#<attr:object_constructor>.prototype[k];
-      }
-    }
-  }
-
-  // include modules
-  for (i=0; i<c.#<attr:modules>.length; i++)
-  {
-    for (k in c.#<attr:modules>[i].#<attr:object_constructor>.prototype)
-    {
-      if (c.#<attr:object_constructor>.prototype[k]===undefined)
-      {
-        c.#<attr:object_constructor>.prototype[k] = c.#<attr:modules>[i].#<attr:object_constructor>.prototype[k];
       }
     }
   }
@@ -358,6 +364,10 @@ module RubyJS; module Environment
       `return #<self>.replace(/^\\s+/, '').replace(/\\s+$/, '')`
     end
 
+    def split(str)
+      `return #<self>.split(#<str>)`
+    end
+
     def length
       `return #<self>.length`
     end
@@ -533,6 +543,21 @@ module RubyJS; module Environment
 
     def shift
       `return #<self>.shift()`
+    end
+
+    def delete(obj) `
+      var del = false;
+      for (var i=0; i < #<self>.length; i++)
+      {
+        if (#<obj>.#<m:eql?>(#<nil>, #<self>[i]))
+        {
+          #<self>.splice(i,1);
+          del = true;
+          // stay at the current index unless we are at the last element!
+          if (i < #<self>.length-1) --i; 
+        }
+      }
+      return del ? #<obj> : #<nil>`
     end
    
     def unshift(*args)

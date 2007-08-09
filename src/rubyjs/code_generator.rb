@@ -104,10 +104,8 @@ class CodeGenerator
   def b_methods(kind, model, h)
     m = {}
     model[kind].each_pair do |name, pt|
-      @world.with_current_model(model) do
-        @world.with_local do 
-          m[name] = MethodCompiler.new(@world, @world.encode_method(name)).compile_method(pt)
-        end
+      @world.with_local do 
+        m[name] = MethodCompiler.new(@world, @world.encode_method(name)).compile_method(pt)
       end
     end
     unless m.empty?

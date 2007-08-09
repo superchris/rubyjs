@@ -78,17 +78,15 @@ class Model < Encoder
       iterate_rec(@models[m], seen, &block)
     end
 
-    block.call(model)
+    with_current_model(model) do 
+      block.call(model)
+    end
     seen.add(model[:for])
   end 
 
   alias old_encode_constant encode_constant
 
   def encode_constant(name)
-    if name == 'Class'
-      return old_encode_constant(name)
-    end
-
     if @current_model
       lookup_constant(name)
     else
@@ -120,10 +118,9 @@ class Model < Encoder
     else
 
       # 1. Current class
-      begin
+      if model[:for].constants.include?(prefix)
         start_lookup_at = model[:for].const_get(prefix)
         done = true
-      rescue NameError
       end
 
       # 2. Super classes except object 
@@ -131,11 +128,11 @@ class Model < Encoder
         m = model
         loop do
           if m[:superclass] and m[:superclass] != RubyJS::Environment::Object
-            begin
+            if m[:superclass].constants.include?(prefix)
               start_lookup_at = m[:superclass].const_get(prefix)
               done = true
               break
-            rescue NameError
+            else
               m = @models[m[:superclass]]
             end
           else
