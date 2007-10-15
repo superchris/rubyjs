@@ -55,6 +55,7 @@ public class RunScript {
             // Read script from stdio into s 
             String s = "";
             String line;
+            s += "function println(o) { out.println(o); };\n";
             BufferedReader in = new BufferedReader(new InputStreamReader(System.in));  
             while ( (line = in.readLine()) != null ) s += line;
 
