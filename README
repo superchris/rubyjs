@@ -16,7 +16,7 @@ ABOUT
 
 REQUIREMENTS
 
-  * ParseTree 1.7.1 (with patches)
+  * ParseTree 1.7.1 (with patches) -> included in vendor/
 
 MAPPING
 
@@ -46,11 +46,6 @@ TODO
   is used. The reason behind this warning is that, due to efficience
   reasons, Ruby strings (which are mutable) are mapped to immutable
   Javascript strings.
-
-  --
-  Command-line switch that avoids generation of arity checking in the
-  functions. Makes execution of RubyJS generated Javascript code much
-  faster.
 
   --
   Command-line switch that doesn't call methods for some operators.
