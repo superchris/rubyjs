@@ -79,9 +79,7 @@ if __FILE__ == $0
 
   # load RubyJS
   $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), "src"))
-  require 'rubyjs/code_generator'
-  require 'rubyjs/core'
-  require 'rubyjs/eval_into'
+  require 'rubyjs'
 
   # process requires
 
