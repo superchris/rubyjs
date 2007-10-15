@@ -461,7 +461,16 @@ again_no_block:
         && node->nd_var != NULL) {
       add_to_parse_tree(current, node->nd_var, newlines, locals);
     } else {
-      rb_ary_push(current, Qnil);
+      if (node->nd_var == NULL)
+      {
+        // e.g. proc {} 
+        rb_ary_push(current, Qnil);
+      }
+      else
+      {
+        // e.g. proc {||}
+        rb_ary_push(current, ID2SYM(rb_intern("zero_arguments")));
+      }
     }
     add_to_parse_tree(current, node->nd_body, newlines, locals);
     break;
