@@ -748,7 +748,18 @@ class MethodCompiler < SexpProcessor
   #
   # STATEMENT/EXPRESSION
   #
-  # unless is converted by the Ruby parser into an "if"
+  # unless is converted by the Ruby parser into an "if":
+  #
+  # unless X
+  #   block
+  # end
+  #
+  # =>
+  #
+  # if X
+  # else
+  #   block
+  # end
   #
   def process_if(exp)
     cond = exp.shift
@@ -767,17 +778,40 @@ class MethodCompiler < SexpProcessor
                         nil
                       end
 
+    negate = false
+
+    if _then_processed.nil?
+      # no "then" block as in
+      #
+      # if X
+      # else
+      #   block
+      # end
+      #
+      # => convert into
+      #
+      # if not X
+      #   block
+      # end
+      #
+      # by swapping then and else blocks
+      # and negating the condition
+
+      _then_processed = _else_processed
+      _else_processed = nil
+      negate = true
+    end
+
     cond_processed = without_result do
-      conditionalize(cond)
+      conditionalize(cond, negate)
     end
 
     str = ""
 
     if @want_expression
-      str << "(#{cond_processed}?#{_then_processed || resultify(@model.encode_nil)}"
-      str << ":"
-      str << (_else_processed || resultify('nil'))
-      str << ")"
+      _then_processed ||= resultify(@model.encode_nil)
+      _else_processes ||= resultify(@model.encode_nil)
+      str << "(#{cond_processed}?#{_then_processed}:#{_else_processed})"
     else
       str << "if(#{cond_processed}){"
       str << (_then_processed || (@want_result ? resultify(@model.encode_nil) : ''))

@@ -43,10 +43,6 @@ BUGS
 TODO
 
   --
-  Improve "if"/"unless". If the "then" block is empty, negate and
-  don't use the "else" block.
-
-  --
   Issue a warning whenever a destructive Ruby string method like gsub!
   is used. The reason behind this warning is that, due to efficience
   reasons, Ruby strings (which are mutable) are mapped to immutable
