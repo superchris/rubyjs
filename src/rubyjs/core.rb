@@ -256,6 +256,8 @@ module RubyJS; module Environment
       `return (#<self>.constructor == #<other>.constructor && #<self> == #<other>)`
     end
 
+    alias === eql?
+
     def kind_of?(klass)
       # TODO
     end

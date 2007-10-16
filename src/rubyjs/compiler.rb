@@ -830,6 +830,100 @@ class MethodCompiler < SexpProcessor
   end
 
   #
+  # STATEMENT/EXPRESSION
+  #
+  # case obj
+  # when c1
+  #   block1
+  # when c2, c3
+  #   block23
+  # else
+  #   blockelse
+  # end
+  #
+  # [:case,
+  #  obj,
+  #  [:when, [:array, c1], block1],
+  #  [:when, [:array, c2, c3], block23],
+  #  blockelse or nil
+  # ]
+  #
+  # We are transforming the "case" into "if".
+  #
+  # _tmp = obj; 
+  # if _tmp === c1
+  #   block1
+  # else 
+  #   if _tmp === c2 or _tmp === c3 then
+  #     block23
+  #   else
+  #     blockelse
+  #   end
+  # end
+  #
+  def process_case(exp)
+    obj = exp.shift  
+    
+    with_temporary_variable do |tmp|
+      @local_variables_need_no_initialization.add(tmp)
+      asgn = want_expression do
+        "#{tmp}=#{process(obj)}"
+      end
+
+      
+      new_exp = current_exp = []
+
+      while not exp.empty?
+        _when = exp.shift
+        if _when.nil? or _when.first != :when
+          # last element
+          raise exp.inspect unless exp.empty?
+          current_exp << _when
+        else
+          conds = _when[1]
+          block = _when[2]
+          raise unless conds.first == :array
+
+          cond = multi_or(conds[1..-1].map {|c| [:call, [:special_inline_js_value, tmp], :===, [:array, c]] })
+
+          my_exp = [:if, cond, block]
+
+          current_exp << my_exp
+          current_exp = my_exp
+        end
+      end
+
+      if_code = process(new_exp.first)
+
+      code = 
+      if @want_expression 
+        "(#{asgn}, #{if_code})"
+      else
+        "#{asgn}; #{if_code}" 
+      end
+
+      code
+    end
+  end
+
+  def multi_or(exprs)
+    case exprs.size
+    when 0
+      raise
+    when 1
+      # multi_or([1]) => 1
+      exprs[0]
+    when 2
+      # multi_or([1, 2]) => [:or, 1, 2]
+      [:or, exprs[0], exprs[1]]
+    else
+      # multi_or([1, 2, 3]) => [:or, 1, multi_or([2,3])] == [:or, 1, [:or, 2, 3]]
+      [:or, exprs[0], multi_or(exprs[1..-1])]
+    end
+  end
+
+
+  #
   # STATEMENT
   #
   def process_return(exp)
