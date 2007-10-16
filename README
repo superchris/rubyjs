@@ -132,5 +132,5 @@ LIMITATIONS
 
   A loop break cannot occur as expression. This could be accomplished
   by using a throw instead of break and surrounding the loop by a catch.
-  
 
+  The same applies for +next+!

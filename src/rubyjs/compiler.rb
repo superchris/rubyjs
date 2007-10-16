@@ -891,6 +891,24 @@ class MethodCompiler < SexpProcessor
   end
 
   #
+  # STATEMENT
+  #
+  def process_next(exp)
+    case @block_whileloop_stack.last
+    when :while
+      raise "next with arguments inside while not yet supported" unless exp.empty?
+      raise if @want_expression
+      "continue"
+    when :block
+      raise
+    when nil
+      raise("next not in loop/block scope")
+    else
+      raise "FATAL"
+    end
+  end
+
+  #
   # UNDEFINED
   #
   # Backtick strings: `inline javascript`

@@ -62,7 +62,7 @@ class TestYield
     i = 0 
     while true
       i += 1
-      #next if i % 2 == 1 
+      next if i % 2 == 1 
       p i
       break if i > 8
     end
