@@ -4,7 +4,7 @@ else
   tests = Dir["test/test_{" + ARGV.join(',') + "}.rb"] 
 end
 
-RUN_JS = "sh utils/run_jsc.sh"
+RUN_JS = ENV['RUN_JS'] || 'run_js'
 
 tests.each_with_index do |file, i|
   klassname = File.basename(file)[0..-4].gsub(/(^|_)./) {|m| m[-1,1].upcase}
@@ -16,7 +16,7 @@ tests.each_with_index do |file, i|
   expected = `ruby -I./test -rcommon -e 'load "#{file}"; #{klassname}.main'`
 
   # run rubyjs
-  result = `./rubyjs_gen -I./test -rcommon -m #{klassname} -a "main()" #{file} | #{RUN_JS}`
+  result = `./rubyjs_gen -I./test -rcommon -m #{klassname} -a "main()" #{file} | sh utils/#{RUN_JS}.sh`
 
   if expected == result
     puts "OK"

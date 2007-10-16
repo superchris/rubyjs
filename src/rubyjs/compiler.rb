@@ -122,6 +122,14 @@ class MethodCompiler < SexpProcessor
     # The name of the variable that contains the return value.
     #
     @result_name = nil
+
+    #
+    # For implementing +break+ and +next+ we
+    # have to keep track whether the +break+
+    # or +next+ statement occurs inside a
+    # +while+ loop or inside of a block. 
+    #
+    @block_whileloop_stack = []
   end
 
   def compile_method(pt)
@@ -812,10 +820,15 @@ class MethodCompiler < SexpProcessor
     cond = exp.shift
     block = exp.shift
     flag = exp.shift
-    raise unless flag == true
+    raise unless flag == true # FIXME: document
 
     str = without_result do
-      "while(#{conditionalize(cond)}){#{process(block)}}" 
+      c = conditionalize(cond)
+      @block_whileloop_stack.push(:while)
+      b = process(block)
+      @block_whileloop_stack.pop || raise
+
+      "while(#{c}){#{b}}" 
     end
 
     if @want_result
@@ -825,6 +838,23 @@ class MethodCompiler < SexpProcessor
     return str
   end
 
+  #
+  # STATEMENT
+  #
+  def process_break(exp)
+    case @block_whileloop_stack.last
+    when :while
+      raise "break with arguments inside while not yet supported" unless exp.empty?
+      raise if @want_expression
+      "break"
+    when :block
+      raise
+    when nil
+      raise("break not in loop/block scope")
+    else
+      raise "FATAL"
+    end
+  end
 
   #
   # UNDEFINED

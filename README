@@ -32,6 +32,14 @@ MAPPING
   {hash}        -> Javascript Hash object (unboxed, but indirect)
   Proc/iterator -> function (unboxed) 
 
+BUGS
+
+  --
+  Debug mode sometimes generates code that does not run!  
+
+  --
+  Spidermonkey doesn't run all tests.
+
 TODO
 
   --
@@ -116,3 +124,20 @@ LIMITATIONS
   or a reference is generated (i.e. a variable holding it's value + a name).
   References are only generated on demand, i.e. only when a constant is
   accessed. 
+
+  --
+  +break+ inside of loops cannot have arguments in RubyJS:
+
+    # RubyJS
+    while true
+      break 1  # => CompileTime Error
+    end
+
+  This could be accomplished, by introducing a "return loop"
+  variable for each while loop, and setting this variable
+  in "break".
+
+  A loop break cannot occur as expression. This could be accomplished
+  by using a throw instead of break and surrounding the loop by a catch.
+  
+
