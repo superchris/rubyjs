@@ -11,7 +11,7 @@ if __FILE__ == $0
   options.load_path = []
   options.library = []
   options.platform = []
-  options.output = nil
+  options.outputs = []
   options.main = nil
   options.code = nil
   options.append = "" 
@@ -43,8 +43,7 @@ if __FILE__ == $0
       options.append << "\n"
     end
     opts.on("-o", "--output FILE", "Filename to write output to") do |out|
-      raise "only one output allowed" if options.output
-      options.output = out
+      options.outputs << out
     end
     opts.on("-O", "--opt OPTION", "Set a specific compiler option") do |out|
       options.opts << out
@@ -65,6 +64,11 @@ if __FILE__ == $0
 
   args = ARGV.dup
   opts.parse!(args)
+
+  # output to STDOUT by default
+  if options.outputs.empty?
+    options.outputs << "-"
+  end
 
   if args.empty? and !options.code
     puts opts
@@ -99,14 +103,18 @@ if __FILE__ == $0
     end
   end
 
-  out = STDOUT
-  out = File.open(options.output, 'w+') if options.output and options.output != '-'
-
   gen = CodeGenerator.new
+  str = "" 
+  str << gen.generate()
+  str << gen.encode("function main() { #<#{options.main}>.#<m:main>() }") if options.main
+  str << options.append
 
-  out << gen.generate()
-  out << gen.encode("function main() { #<#{options.main}>.#<m:main>() }") if options.main
-  out << options.append
-
-  out.close if options.output and options.output != '-'
+  options.outputs.each do |outname| 
+    if outname == "-"
+      STDOUT << str
+      STDOUT.flush
+    else
+      File.open(outname, 'w+') {|f| f << str }
+    end
+  end
 end
