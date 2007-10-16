@@ -1499,6 +1499,14 @@ class MethodCompiler < SexpProcessor
   end
 
   def conditionalize(exp, negate=false)
+    # Optimize literals
+    case exp.first
+    when :true, :lit, :self, :str   # evaluate to true
+      return (negate ? "false" : "true")
+    when :false, :nil         # evaluate to false
+      return (negate ? "true" : "false")
+    end
+
     want_expression do
       with_temporary_variable do |tmp|
         @local_variables_need_no_initialization.add(tmp)
