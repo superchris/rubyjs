@@ -47,9 +47,6 @@ TODO
   don't use the "else" block.
 
   --
-  Short cut conditionalize if "true", "false" or "nil" is the condition.
-
-  --
   Issue a warning whenever a destructive Ruby string method like gsub!
   is used. The reason behind this warning is that, due to efficience
   reasons, Ruby strings (which are mutable) are mapped to immutable
