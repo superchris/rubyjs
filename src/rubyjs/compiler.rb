@@ -243,8 +243,22 @@ class MethodCompiler < SexpProcessor
       str << "if(#{@model.encode_self}.#{iv}===undefined)#{@model.encode_self}.#{iv}=#{@model.encode_nil};"
     end
 
-    str << method_body
-    str << ";return #{@result_name}" if @result_name
+    method_body << ";return #{@result_name}" if @result_name
+
+    str << "try{" if @iterators_used
+    str << method_body 
+    if @iterators_used
+      #
+      # Declare variable x?
+      # No, catch introduced a new scope, so we don't have to
+      # use a local or temporary variable here! 
+      #
+      iter_break = @model.encode_attr("iter_break")
+      str << "}catch(x){"
+      str << "if(x.#{iter_break}!==undefined)return x.#{iter_break};"
+      str << "throw(x)}"
+    end
+
     str << "}"
 
     return str
@@ -982,7 +996,15 @@ class MethodCompiler < SexpProcessor
       raise if @want_expression
       "break"
     when :iter
-      raise
+      iter_break = @model.encode_globalattr('iter_break')
+      if param = exp.shift
+        str = without_result do
+          process(param)
+        end
+        "#{iter_break}(#{str})"
+      else
+        "#{iter_break}(#{@model.encode_nil})"
+      end
     when nil
       raise("break not in loop/block scope")
     else
@@ -1651,6 +1673,7 @@ class MethodCompiler < SexpProcessor
   def block_name
     @block_name ||= @model.encode_fresh_local_variable()
     @argument_variables.add(@block_name)
+    @iterators_used = true
     @block_name
   end
 
@@ -1696,9 +1719,6 @@ class MethodCompiler < SexpProcessor
 
   def get_iter
     res = @iter
-    if res
-      @iterators_used = true
-    end
     @iter = nil
     res
   end

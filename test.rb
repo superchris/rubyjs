@@ -12,8 +12,11 @@ def compare(expected, result)
   end
 end
 
+tee_js = ""
+#tee_js = "-o /tmp/gen.js"
+
 expected = `ruby gen_test_suite.rb #{tests} | ruby -I./test`
-result = `ruby gen_test_suite.rb #{tests} | ./rubyjs_gen -I./test -m TestSuite -a "main()" - | sh utils/#{RUN_JS}.sh`
+result = `ruby gen_test_suite.rb #{tests} | ./rubyjs_gen -I./test -o - #{tee_js} -m TestSuite -a "main()" - | sh utils/#{RUN_JS}.sh`
 
 compare(expected, result)
 

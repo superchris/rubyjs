@@ -13,6 +13,13 @@ function NilClass() {}
 NilClass.prototype.toString = function() { return "nil"; };
 #<nil> = new NilClass();
 
+function #<globalattr:iter_break>(a)
+{
+  var x = new Object();
+  x.#<attr:iter_break> = a; 
+  throw(x);
+}
+
 function #<globalattr:to_splat>(a)
 {
   // TODO

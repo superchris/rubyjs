@@ -51,25 +51,45 @@ class TestYield
     }
   end
 
-=begin
   def loop
     while true
       yield
     end
+    p "not reached"
+  end
+
+  def loop2(&block)
+    while true
+      block.call
+    end
+    p "not reached"
   end
 
   def test_loop
     puts "loop"
     i = 0 
-    loop do
+    res = loop do 
       i += 1
       next if i % 2 == 1 
       p i
-      break if i > 8
-    end
+      break "out", i if i > 8
+    end 
+    p res
     puts "--"
   end
-=end
+
+  def test_loop2
+    puts "loop2"
+    i = 0 
+    res = loop do 
+      i += 1
+      next if i % 2 == 1 
+      p i
+      break "out", i if i > 8
+    end 
+    p res
+    puts "--"
+  end
 
   def test_while_loop
     puts "while-loop"
@@ -93,7 +113,8 @@ class TestYield
     test_three_times_block
     test_three_times_indirect
     test_three_times_yield2
-    #test_loop
+    test_loop
+    test_loop2
     test_while_loop
   end
 
