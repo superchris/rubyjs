@@ -12,8 +12,8 @@ def compare(expected, result)
   end
 end
 
-expected = `ruby gen_suite.rb #{tests} | ruby -I./test`
-result = `ruby gen_suite.rb #{tests} | ./rubyjs_gen -I./test -m TestAll -a "main()" - | sh utils/#{RUN_JS}.sh`
+expected = `ruby gen_test_suite.rb #{tests} | ruby -I./test`
+result = `ruby gen_test_suite.rb #{tests} | ./rubyjs_gen -I./test -m TestSuite -a "main()" - | sh utils/#{RUN_JS}.sh`
 
 compare(expected, result)
 
