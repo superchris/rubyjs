@@ -11,6 +11,9 @@ class TestString
     p "hallo"[0,1]
     p "hallo"[0,2]
     p "hallo"[0,5]
+
+    # string interpolation
+    p "abc #{ 1 + 2 } def"
   end
 
   def self.main

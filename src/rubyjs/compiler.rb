@@ -1054,6 +1054,26 @@ class MethodCompiler < SexpProcessor
   #
   # EXPRESSION
   #
+  # String interpolation
+  #
+  def process_dstr(exp)
+    pre_str = exp.shift
+    res = without_result do
+      want_expression do
+        # NOTE:
+        # We use +to_s+, and the + operator to
+        # build the interpolated string.
+        to_s = @model.encode_method("to_s") 
+        "(" + ([pre_str.inspect] + exp.map {|e| "(" + process(e) + ").#{to_s}()"}).join(" + ") + ")"
+      end
+    end
+    exp.clear
+    res
+  end
+
+  #
+  # EXPRESSION
+  #
   # Process literals
   #
   def process_lit(exp)
