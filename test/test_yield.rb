@@ -34,15 +34,30 @@ class TestYield
     puts "--"
   end
 
+  def three_times_yield2
+    p yield(1)
+    p yield(2)
+    p yield(3)
+  end
+
+  def test_three_times_yield2
+    puts "three_times_yield2"
+    three_times_yield2 {|i|
+      if i == 1
+        i
+      else
+        next i+1
+      end
+    }
+  end
+
 =begin
   def loop
     while true
       yield
     end
   end
-=end
 
-=begin
   def test_loop
     puts "loop"
     i = 0 
@@ -54,7 +69,6 @@ class TestYield
     end
     puts "--"
   end
-
 =end
 
   def test_while_loop
@@ -78,6 +92,7 @@ class TestYield
     test_three_times_yield
     test_three_times_block
     test_three_times_indirect
+    test_three_times_yield2
     #test_loop
     test_while_loop
   end

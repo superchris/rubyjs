@@ -130,6 +130,12 @@ class MethodCompiler < SexpProcessor
     # +while+ loop or inside of a block. 
     #
     @block_whileloop_stack = []
+
+    #
+    # Whether the method body contains any code that
+    # makes use of iterators (e.g. yield, &block).
+    #
+    @iterators_used = false
   end
 
   def compile_method(pt)
@@ -975,7 +981,7 @@ class MethodCompiler < SexpProcessor
       raise "break with arguments inside while not yet supported" unless exp.empty?
       raise if @want_expression
       "break"
-    when :block
+    when :iter
       raise
     when nil
       raise("break not in loop/block scope")
@@ -993,8 +999,10 @@ class MethodCompiler < SexpProcessor
       raise "next with arguments inside while not yet supported" unless exp.empty?
       raise if @want_expression
       "continue"
-    when :block
-      raise
+    when :iter
+      # next inside a code-block is the same as a return
+      exp.unshift :return
+      process(exp)
     when nil
       raise("next not in loop/block scope")
     else
@@ -1478,6 +1486,7 @@ class MethodCompiler < SexpProcessor
 
     old_iter_dvars = @current_iter_dvars
     @current_iter_dvars = Set.new 
+    @block_whileloop_stack.push(:iter)
     
     # Get an argument name for the iterator function signature.
     arg_name = @model.encode_fresh_local_variable()
@@ -1561,6 +1570,7 @@ class MethodCompiler < SexpProcessor
 
     @result_name = old_result_name
     @current_iter_dvars = old_iter_dvars
+    @block_whileloop_stack.pop || raise
 
     return process(call)
   end
@@ -1686,6 +1696,9 @@ class MethodCompiler < SexpProcessor
 
   def get_iter
     res = @iter
+    if res
+      @iterators_used = true
+    end
     @iter = nil
     res
   end
