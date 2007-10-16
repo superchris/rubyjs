@@ -43,6 +43,9 @@ BUGS
 TODO
 
   --
+  String interpolation
+
+  --
   Issue a warning whenever a destructive Ruby string method like gsub!
   is used. The reason behind this warning is that, due to efficience
   reasons, Ruby strings (which are mutable) are mapped to immutable
@@ -134,3 +137,6 @@ LIMITATIONS
   by using a throw instead of break and surrounding the loop by a catch.
 
   The same applies for +next+!
+
+  --
+  +return+ inside of blocks are not supported yet.
