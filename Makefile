@@ -1,4 +1,5 @@
+PASSING_TESTS=args eql if massign new simple_output splat lebewesen hash string array yield
+FAILING_TESTS=kind_of exception
+
 run_passing_tests:
-	ruby runtests.rb args eql if massign new simple_output splat lebewesen hash string array yield
-#kind_of
-#exception 
+	ruby test.rb ${PASSING_TESTS}

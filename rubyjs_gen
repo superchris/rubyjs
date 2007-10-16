@@ -91,7 +91,11 @@ if __FILE__ == $0
     eval.call(options.code) if options.code
 
     args.each do |file|
-      eval.call(File.read(file))
+      if file == '-'
+        eval.call(STDIN.read)
+      else
+        eval.call(File.read(file))
+      end
     end
   end
 
