@@ -871,10 +871,10 @@ class MethodCompiler < SexpProcessor
   # We are transforming the "case" into "if".
   #
   # _tmp = obj; 
-  # if _tmp === c1
+  # if c1 ===  _tmp
   #   block1
   # else 
-  #   if _tmp === c2 or _tmp === c3 then
+  #   if c2 === _tmp or c3 === _tmp then
   #     block23
   #   else
   #     blockelse
@@ -890,7 +890,6 @@ class MethodCompiler < SexpProcessor
         "#{tmp}=#{process(obj)}"
       end
 
-      
       new_exp = current_exp = []
 
       while not exp.empty?
@@ -904,7 +903,7 @@ class MethodCompiler < SexpProcessor
           block = _when[2]
           raise unless conds.first == :array
 
-          cond = multi_or(conds[1..-1].map {|c| [:call, [:special_inline_js_value, tmp], :===, [:array, c]] })
+          cond = multi_or(conds[1..-1].map {|c| [:call, c, :===, [:array, [:special_inline_js_value, tmp]]] })
 
           my_exp = [:if, cond, block]
 

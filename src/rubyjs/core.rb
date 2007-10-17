@@ -136,6 +136,9 @@ function #<globalattr:rebuild_class>(c)
       }
     }
   }
+
+  // set class for instanciated objects
+  c.#<attr:object_constructor>.prototype.#<attr:_class> = c;
 }
 
 function #<globalattr:def_class>(h)
@@ -258,8 +261,8 @@ module RubyJS; module Environment
   class Class
     def allocate
       `var o = new #<self>.#<attr:object_constructor>();
-       o.#<attr:_class> = #<self>;
        return o;`
+       #o.#<attr:_class> = #<self>;
     end
 
     def new(*args, &block)
@@ -271,6 +274,8 @@ module RubyJS; module Environment
     def name
       `return #<self>.#<attr:classname>;`
     end
+
+    alias inspect name
 
     def self.new(superclass, classname, object_constructor=nil)
       unless object_constructor
@@ -315,7 +320,9 @@ module RubyJS; module Environment
       `return (#<self>.constructor == #<other>.constructor && #<self> == #<other>)`
     end
 
-    alias === eql?
+    def ===(other)
+      eql?(other) or kind_of?(other)
+    end
 
     def instance_of?(klass)
       `return (#<self>.#<attr:_class> === #<klass>)`  
@@ -488,7 +495,6 @@ module RubyJS; module Environment
 
   end
 
-=begin
   class Exception
     attr_reader :message
     def initialize(message)
@@ -501,7 +507,6 @@ module RubyJS; module Environment
   class NoMethodError < NameError; end
   class RuntimeError < StandardError; end
   class ArgumentError < StandardError; end
-=end
 
   #
   # NOTE: Strings in RubyJS are immutable!!!
@@ -688,6 +693,11 @@ module RubyJS; module Environment
     end
 
   end
+
+  # for compatibility
+  class Fixnum < Number; end
+  class Bignum < Number; end
+  class Float < Number; end
 
   class Array
     OBJECT_CONSTRUCTOR__ = "Array"

@@ -37,6 +37,17 @@ class TestClass
     p C.new.kind_of?(Kernel) # => true
     p C.new.kind_of?(Class) # => false
 
+    p ("hallo".class.name)
+    p (nil.class.name)
+    p (nil.instance_of?(NilClass))
+    p ("hallo".instance_of?(String))
+    p ("hallo".class)
+    p A
+    p B
+    p C
+    p D
+    p X
+
     p X.name
     p A.name
     p B.name

@@ -8,6 +8,22 @@ class TestCase
     else
       puts "NOT OKAY"
     end
+
+    case 1
+    when Fixnum 
+      puts "OK"
+    when 1
+      puts "OK"
+    end
+
+    case 4
+    when 0..3
+      puts "NOT OKAY"
+    when 1...4
+      puts "NOT OKAY"
+    when 2..4
+      puts "OKAY"
+    end
   end
 
   def self.main
