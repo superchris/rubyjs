@@ -25,7 +25,12 @@ end
 script << %{
   class TestSuite
     def self.main
-      #{body}
+      begin
+        #{body}
+      rescue Exception
+        p "unhandled exception"
+        p a
+      end
     end
   end
   TestSuite.main unless $RUBYJS

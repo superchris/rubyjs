@@ -141,6 +141,11 @@ class MethodCompiler < SexpProcessor
     # Used in a zsuper call (super without arguments)
     #
     @arguments_name = nil
+
+    #
+    # Used in catch statements
+    #
+    @exception_name = nil
   end
 
   def compile_method(pt)
@@ -265,10 +270,11 @@ class MethodCompiler < SexpProcessor
       # No, catch introduced a new scope, so we don't have to
       # use a local or temporary variable here! 
       #
+      x = exception_name()
       iter_break = @model.encode_attr("iter_break")
-      str << "}catch(x){"
-      str << "if(x.#{iter_break}!==undefined)return x.#{iter_break};"
-      str << "throw(x)}"
+      str << "}catch(#{x}){"
+      str << "if(#{x}.#{iter_break}!==undefined)return #{x}.#{iter_break};"
+      str << "throw(#{x})}"
     end
 
     str << "}"
@@ -968,7 +974,82 @@ class MethodCompiler < SexpProcessor
       [:or, exprs[0], multi_or(exprs[1..-1])]
     end
   end
+  
+  #
+  # STATEMENT
+  #
+  def process_begin(exp)
+    raise if @want_expression
+    block = exp.shift
+    process(block)
+  end
+  
+  #
+  # STATEMENT
+  #
+  def process_rescue(exp)
+    raise if @want_expression
+    block = exp.shift
+    handler = exp.shift
+    else_handler = exp.shift
+    raise unless handler.first == :resbody
 
+    x = exception_name() 
+
+    code = [:block, block] 
+    code << else_handler if else_handler
+
+    str = ""
+    str << "try{#{process(code)}}"
+    str << "catch(#{x}){"
+
+    # check whether it's an iterator break. if yes, pass it on
+    iter_break = @model.encode_attr("iter_break")
+    str << "if(#{x}.#{iter_break}!==undefined)throw(#{x});"
+    str << "#{process(handler)}"
+    str << "}"
+
+    str
+  end
+  
+  #
+  # STATEMENT
+  #
+  def process_resbody(exp)
+    raise if @want_expression
+    condition = exp.shift
+    if_body = exp.shift
+    else_body = exp.shift
+
+    x = exception_name()
+
+    # if only "rescue" is used (and not e.g. "rescue Exception")
+    condition ||= [:array, [:const, :StandardError]]
+    raise unless condition.first == :array
+
+    # if this is the last resbody (else_body is nil) then
+    # the exception couldn't be catched and we rethrow it! 
+    else_body ||= [:special_inline_js_value, "throw(#{x})"]
+
+    # build condition expression 
+    cond = 
+    multi_or(condition[1..-1].map do |c|
+      [:call, c, :===, [:array, [:special_inline_js_value, x]]]
+    end)
+
+    process([:if, cond, if_body, else_body])
+  end
+    
+  #
+  # STATEMENT
+  #
+  def process_ensure(exp)
+    raise if @want_expression
+    try_body = process(exp.shift)
+    ensure_body = without_result { process(exp.shift) }
+
+    "try{#{try_body}}finally{#{ensure_body}}"
+  end
 
   #
   # STATEMENT
@@ -1307,7 +1388,14 @@ class MethodCompiler < SexpProcessor
   #
   def process_gvar(exp)
     gvar = exp.shift
-    gvar_name = @model.encode_global_variable(gvar)
+
+    gvar_name = 
+      if gvar.to_s == "$!"
+        # this is a special variable which holds the current exception 
+        exception_name()  
+      else
+        @model.encode_global_variable(gvar)
+      end
     resultify("(typeof(#{gvar_name})=='undefined'?#{@model.encode_nil}:#{gvar_name})")
   end
 
@@ -1737,6 +1825,10 @@ class MethodCompiler < SexpProcessor
 
   def arguments_name()
     @arguments_name ||= @model.encode_fresh_local_variable()
+  end
+
+  def exception_name()
+    @exception_name ||= @model.encode_fresh_local_variable()
   end
 
   def conditionalize(exp, negate=false)

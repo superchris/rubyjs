@@ -1,10 +1,26 @@
-tests = ARGV.join(" ")
-
-expected = `ruby gen_test_suite.rb #{tests} | ruby -I./test`.gsub("\n", "<br/>")
+expected = `ruby gen_test_suite.rb | ruby -I./test`.chomp.  # remove last newline
+  gsub("&", "&amp;").
+  gsub("<", "&lt;").
+  gsub(">", "&gt;")
 
 puts '<html><head><script>'
-puts `ruby gen_test_suite.rb #{tests} | ./rubyjs_gen -I./test -P Browser -m TestSuite -`
+puts `ruby gen_test_suite.rb | ./rubyjs_gen -I./test -P Browser -m TestSuite -`
 puts %{
+
+var STDOUT = [];
+
+function flush()
+{
+  document.getElementById('out').innerHTML = 
+    STDOUT.join("\\n").replace(/[&]/g, "&amp;").replace(/[<]/g, "&lt;").replace(/[>]/g, "&gt;");
+}
+
+function start()
+{
+  main(); flush();
+  compare();
+}
+
 function compare()
 {
   var out = document.getElementById('out');
@@ -22,7 +38,7 @@ function compare()
 <style>
   #expected { background: #ccc; }
 </style>
-<body onload="main(); compare();">
+<body onload="start();">
   <table cellspacing="5" cellpadding="5">
   <thead>
     <tr>
@@ -32,11 +48,11 @@ function compare()
   </thead>
   <tbody>
   <tr>
-    <td width="50%">
-      <div id="out"></div>
+    <td valign="top" width="50%">
+      <pre id="out"></pre>
     </td>
-    <td width="50%">
-      <div id="expected">#{expected}</div>
+    <td valign="top" width="50%">
+      <pre id="expected">#{expected}</pre>
     </td>
   </tr>
   </tbody>

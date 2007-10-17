@@ -9,6 +9,9 @@ class TestCase
       puts "NOT OKAY"
     end
 
+    p (Array === [])
+    p (RuntimeError === RuntimeError.new)
+
     case 1
     when Fixnum 
       puts "OK"

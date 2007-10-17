@@ -280,6 +280,10 @@ module RubyJS; module Environment
       obj
     end
 
+    def ===(other)
+      eql?(other) or other.kind_of?(self)
+    end
+
     def name
       `return #<self>.#<attr:classname>;`
     end
@@ -336,9 +340,32 @@ module RubyJS; module Environment
       return (m !== undefined && #<self>[m] !== undefined)`
     end
 
-    # FIXME
     def raise(*args)
-      p(*args)
+      ex = 
+      if args.empty?
+        RuntimeError.new("")
+      else
+        first = args.shift
+        if first.kind_of?(Class) # FIXME: subclass of Exception
+          first.new(*args)
+        elsif first.instance_of?(Exception) 
+          if args.empty?
+            first
+          else
+            ArgumentError.new("to many arguments given to raise")
+          end
+        elsif first.instance_of?(String)
+          if args.empty?
+            RuntimeError.new(first)
+          else
+            ArgumentError.new("to many arguments given to raise")
+          end
+        else
+          TypeError.new("exception class/object expected")
+        end
+      end
+
+      `throw(#<ex>)`
     end
   end
 
@@ -524,8 +551,17 @@ module RubyJS; module Environment
 
   class Exception
     attr_reader :message
-    def initialize(message)
-      @message = message
+    def initialize(message=nil)
+      if message.nil?
+        @message = self.class.name
+      else
+        @message = message
+      end
+    end
+    alias to_s message
+
+    def inspect
+      "#<#{self.class.name}: #{@message}>"
     end
   end
 
@@ -534,6 +570,7 @@ module RubyJS; module Environment
   class NoMethodError < NameError; end
   class RuntimeError < StandardError; end
   class ArgumentError < StandardError; end
+  class TypeError < StandardError; end
 
   #
   # NOTE: Strings in RubyJS are immutable!!!
@@ -550,7 +587,7 @@ module RubyJS; module Environment
     end
   
     def rjust(len, pad=" ")
-      raise if pad.empty? # ArgumentError, "zero width padding"
+      raise ArgumentError, "zero width padding" if pad.empty?
 
       n = len - self.length
       return self if n <= 0 
@@ -562,7 +599,7 @@ module RubyJS; module Environment
     end
 
     def ljust(len, pad=" ")
-      raise if pad.empty? # ArgumentError, "zero width padding"
+      raise ArgumentError, "zero width padding" if pad.empty?
 
       n = len - self.length
       return self if n <= 0 

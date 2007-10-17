@@ -1,6 +1,26 @@
 class TestException
   def self.main
 
+    p "before block"
+    begin
+      p "in block"
+    end
+    p "after block"
+
+    ###
+    begin
+      p "block"
+    rescue
+      p "rescue"
+    rescue Exception => a
+      p "another rescue"
+      p a
+    else
+      p "else"
+    end
+
+    p RuntimeError.new("test")
+
     puts "before begin"
     begin
       puts "before raise"
@@ -8,7 +28,8 @@ class TestException
       puts "after raise"
     rescue
       puts "noooo"
-    rescue Exception
+    rescue Exception => a
+      p a
       puts "yes"
     ensure
       puts "ensure"
@@ -18,9 +39,10 @@ class TestException
     puts "--"
 
     begin
-      puts "a"
+      puts "abc"
       raise "r"
     rescue
+      p $!
       puts "b"
     ensure
       puts "e"
