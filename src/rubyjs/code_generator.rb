@@ -103,7 +103,6 @@ class CodeGenerator
     # TODO: if OPTS
     #
     mm_stubs = ""
-
     mm_stubs << "// method map\n"
     mm_stubs << "var #<globalattr:mm> = {" 
     i = []
@@ -113,16 +112,6 @@ class CodeGenerator
     mm_stubs << i.join(",")
     mm_stubs << "};\n"
 
-=begin
-    mm_stubs << %{
-      for (var p in #<globalattr:mm>) {
-        Object.prototype[p] = function() { 
-          this.#<m:method_missing>(arguments[0]
-        };
-      }
-    }
-=end
-  
     return compact_code(ipol(mm_stubs) + str)
   end
 
