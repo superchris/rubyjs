@@ -43,6 +43,8 @@ class Model < Encoder
   attr_accessor :models
   attr_accessor :current_model
 
+  attr_reader :method_calls
+
   def initialize
     super()
 

@@ -59,6 +59,15 @@ function #<globalattr:supercall>(o, m, i, a)
   return c.#<attr:object_constructor>.prototype[m].apply(o, [i].concat(a));
 }
 
+function #<globalattr:zsupercall>(o, m, a) 
+{
+  var r = o[m]; // method in current class
+  var c = o.#<attr:_class>.#<attr:superclass>;
+  while (r === c.#<attr:object_constructor>.prototype[m])
+    c = c.#<attr:superclass>;
+  return c.#<attr:object_constructor>.prototype[m].apply(o, a);
+}
+
 //
 // Whether o.kind_of?(c)
 //
@@ -305,6 +314,11 @@ module RubyJS; module Environment
       args.each do |arg|
         puts arg.inspect
       end
+      nil
+    end
+
+    def method_missing(id, *args, &block)
+      raise "NoMethodError: undefined method `#{id}' for #{self.inspect}" 
     end
 
     # FIXME
@@ -340,8 +354,14 @@ module RubyJS; module Environment
     end
 
     def __invoke(id, args, &block)
-      `return #<self>[#<id>].apply(#<self>, [#<block>].concat(#<args>));`
+      `return #<self>[#<id>].apply(#<self>, [#<block>].concat(#<args>))`
     end
+
+    # NOTE: In Ruby __send is __send__
+    def __send(id, *args, &block)
+      `return #<self>[#<globalattr:mm>[#<id>]].apply(#<self>, [#<block>].concat(#<args>))`
+    end
+    alias send __send
 
     def initialize
     end

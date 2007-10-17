@@ -61,4 +61,11 @@ class NameGenerator
     @cache[name] ||= self.fresh
   end
 
+  def reverse_lookup(encoded_name)
+    @cache.index(encoded_name)
+  end
+
+  def cache
+    @cache
+  end
 end

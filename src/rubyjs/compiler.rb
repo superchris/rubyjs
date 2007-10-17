@@ -136,6 +136,11 @@ class MethodCompiler < SexpProcessor
     # makes use of iterators (e.g. yield, &block).
     #
     @iterators_used = false
+
+    # 
+    # Used in a zsuper call (super without arguments)
+    #
+    @arguments_name = nil
   end
 
   def compile_method(pt)
@@ -241,6 +246,13 @@ class MethodCompiler < SexpProcessor
     #
     @read_instance_variables.each do |iv|
       str << "if(#{@model.encode_self}.#{iv}===undefined)#{@model.encode_self}.#{iv}=#{@model.encode_nil};"
+    end
+
+    # 
+    # Used in a zsuper call to refer to the methods "arguments"
+    # "arguments" itself does not work due to iterators using functions.
+    if @arguments_name
+      str << "var #{@arguments_name}=arguments;"
     end
 
     method_body << ";return #{@result_name}" if @result_name
@@ -528,6 +540,22 @@ class MethodCompiler < SexpProcessor
   def process_super(exp)
     args = exp.shift
     generate_super_call(get_iter(), args)
+  end
+
+  # 
+  # EXPRESSION
+  #
+  # Super call without arguments "super"
+  #
+  # We need to introduce a new variable instead of
+  # using "arguments" because "arguments" is not 
+  # available when called within an iterator, because
+  # an iterator introduces a new function.
+  #
+  def process_zsuper(exp)
+    @model.add_method_call(@method_name)
+    sc = @model.encode_globalattr('zsupercall')
+    "#{sc}(#{@model.encode_self},'#{@method_name}',#{arguments_name()})"
   end
 
   #
@@ -1077,30 +1105,21 @@ class MethodCompiler < SexpProcessor
   #
   def process_lit(exp)
     lit = exp.shift
-    str = lit.inspect
-    res = case str[0,1]
-    when '"'
-      str
-    when '/'
-      str
-    else
+    res = case lit
+    when Fixnum, Bignum, Float
+      lit.to_s
+    when String
+      lit.inspect
+    when Symbol
+      lit.to_s.inspect
+    when Regexp
+      lit.inspect
+    when Range
       range = @model.lookup_constant('::Range') 
-      a, b = str.split("...", 2) 
-      if b
-        # range excluding end
-        @model.add_method_call(m = @model.encode_method("new"))
-        "#{range}.#{m}(#{@model.encode_nil},#{a},#{b},true)"
-      else
-        a, b = str.split("..", 2)
-        if b
-          # range including end
-          @model.add_method_call(m = @model.encode_method("new"))
-          "#{range}.#{m}(#{@model.encode_nil},#{a},#{b},false)"
-        else
-          # no range
-          str
-        end
-      end
+      @model.add_method_call(m = @model.encode_method("new"))
+      "#{range}.#{m}(#{@model.encode_nil},#{lit.first},#{lit.last},#{lit.exclude_end?})"
+    else
+      raise
     end
 
     resultify(res)
@@ -1108,11 +1127,13 @@ class MethodCompiler < SexpProcessor
 
   def is_numeric_literal(exp)
     type = exp[0]
-    str = exp[1].inspect
-
-    return true if type == :lit and str.index("..").nil? and 
-      (str =~ /^-?\d+/ or str == "Infinity" or str == "-Infinity")
-    return false
+    return false if exp[0] != :lit
+    case exp[1]
+    when Fixnum, Bignum, Float 
+      true
+    else
+      false
+    end
   end
 
   #
@@ -1708,8 +1729,14 @@ class MethodCompiler < SexpProcessor
   def block_name
     @block_name ||= @model.encode_fresh_local_variable()
     @argument_variables.add(@block_name)
-    @iterators_used = true
+    @iterators_used = true 
+    # FIXME: not true. passing an interator &block does not
+    # mean that iterators are used!
     @block_name
+  end
+
+  def arguments_name()
+    @arguments_name ||= @model.encode_fresh_local_variable()
   end
 
   def conditionalize(exp, negate=false)

@@ -100,6 +100,17 @@ class Encoder
     "$" + @method_and_ivar_name_generator.get(name.to_s)
   end
 
+  def reverse_lookup_method_name(encoded_name)
+    raise unless encoded_name[0,1] == "$"
+    @method_and_ivar_name_generator.reverse_lookup(encoded_name[1..-1])
+  end
+
+  def all_method_names
+    @method_and_ivar_name_generator.cache.each_pair do |k,v|
+      yield(k, "$" + v) if k[0,1] != '@'
+    end
+  end
+
   def encode_instance_variable(name)
     raise unless name.to_s[0,1] == '@'
     "$" + @method_and_ivar_name_generator.get(name.to_s)

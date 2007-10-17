@@ -98,7 +98,32 @@ class CodeGenerator
     end
     str << @world.encode_globalattr('rebuild_classes') + "([" + klasses.join(",") + "]);"
 
-    return compact_code(str)
+    #
+    # now prepend MethodMissing stubs
+    # TODO: if OPTS
+    #
+    mm_stubs = ""
+
+    mm_stubs << "// method map\n"
+    mm_stubs << "var #<globalattr:mm> = {" 
+    i = []
+    @world.all_method_names do |k,v|
+      i << "#{k.inspect}:#{v.inspect}" 
+    end
+    mm_stubs << i.join(",")
+    mm_stubs << "};\n"
+
+=begin
+    mm_stubs << %{
+      for (var p in #<globalattr:mm>) {
+        Object.prototype[p] = function() { 
+          this.#<m:method_missing>(arguments[0]
+        };
+      }
+    }
+=end
+  
+    return compact_code(ipol(mm_stubs) + str)
   end
 
   def b_methods(kind, model, h)
