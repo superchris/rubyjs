@@ -1,5 +1,5 @@
-PASSING_TESTS=args eql if massign new simple_output splat lebewesen hash string array yield case range
-FAILING_TESTS=kind_of exception
+PASSING_TESTS=args eql if massign new simple_output splat lebewesen hash string array yield case range class
+FAILING_TESTS=exception
 
 all: run_tests gen_browser_test
 

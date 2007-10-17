@@ -59,6 +59,32 @@ function #<globalattr:supercall>(o, m, i, a)
   return c.#<attr:object_constructor>.prototype[m].apply(o, [i].concat(a));
 }
 
+//
+// Whether o.kind_of?(c)
+//
+function #<globalattr:kind_of>(o, c)
+{
+  var k,i,m;
+
+  k = o.#<attr:_class>;
+
+  while (k != #<nil>)
+  {
+    if (k === c) return true;
+
+    // check included modules
+    m = k.#<attr:modules>;
+    for (i=0; i<m.length; i++)
+    {
+      if (m[i] === c) return true;
+    }
+
+    k = k.#<attr:superclass>; 
+  }
+
+  return false;
+}
+
 function #<globalattr:rebuild_classes>(c)
 {
   for (var i=0; i<c.length; i++)
@@ -183,6 +209,12 @@ module RubyJS; module Environment
       `return (#<self> == #<obj>)`
     end
 
+=begin
+    def &(other)
+      `return (#<self> == true ? (#<other>!==#<nil> ...`
+    end
+=end
+
     alias inspect to_s
   end
 
@@ -200,6 +232,22 @@ module RubyJS; module Environment
 
     def to_s
       ""
+    end
+
+    def to_i
+      0
+    end
+
+    def to_f
+      0.0
+    end
+
+    def to_a
+      []
+    end
+
+    def to_splat
+      []
     end
 
     def inspect
@@ -269,8 +317,19 @@ module RubyJS; module Environment
 
     alias === eql?
 
+    def instance_of?(klass)
+      `return (#<self>.#<attr:_class> === #<klass>)`  
+    end
+
     def kind_of?(klass)
-      # TODO
+      `return #<globalattr:kind_of>(#<self>, #<klass>)`
+    end
+    alias is_a? kind_of?
+
+    # Ruby 1.9
+    def tap
+      yield self
+      self
     end
 
     def __invoke(id, args, &block)

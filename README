@@ -138,3 +138,6 @@ LIMITATIONS
 
   --
   +return+ inside of blocks are not supported yet.
+
+  -- 
+  Methods can be called regardless of their privacy (private, protected)
