@@ -179,6 +179,10 @@ module RubyJS; module Environment
       `return (#<self> == true ? 'true' : 'false')` 
     end
 
+    def ==(obj)
+      `return (#<self> == #<obj>)`
+    end
+
     alias inspect to_s
   end
 
@@ -331,6 +335,100 @@ module RubyJS; module Environment
     end
   end
 
+  class Range
+    def initialize(first, last, exclude_last=false)
+      @first, @last = first, last
+      @exclude_last = exclude_last ? true : false
+    end
+
+    def exclude_end?
+      @exclude_last
+    end
+
+    def first
+      @first
+    end
+    alias begin first
+
+    def last
+      @last
+    end
+    alias end last
+
+    def ==(obj)
+      `if (#<self>.constructor != #<obj>.constructor) return false;`
+      @first == obj.first and @last == obj.last and @exclude_last == obj.exclude_end?
+    end
+
+    def eql?(obj)
+      `if (#<self>.constructor != #<obj>.constructor) return false;`
+      @first.eql?(obj.first) and @last.eql?(obj.last) and @exclude_last == obj.exclude_end? 
+    end
+
+    def include?(obj)
+      return false if obj < @first
+      if @exclude_last
+        obj < @last 
+      else
+        obj <= @last
+      end
+    end
+
+    alias member? include?
+    alias === include?
+
+    def each
+      current = @first
+      return if @first > @last
+      if @exclude_last
+        while current < @last
+          yield current
+          current = current.succ
+        end
+      else
+        while current <= @last
+          yield current
+          current = current.succ
+        end
+      end
+    end
+
+    def to_a
+      arr = []
+      return arr if @first > @last
+      current = @first
+      if @exclude_last
+        while current < @last
+          arr << current
+          current = current.succ
+        end
+      else
+        while current <= @last
+          arr << current
+          current = current.succ
+        end
+      end
+      return arr
+    end
+
+    def to_s
+      if @exclude_last
+        "#{@first}...#{@last}"
+      else
+        "#{@first}..#{@last}"
+      end
+    end
+
+    def inspect
+      if @exclude_last
+        "#{@first.inspect}...#{@last.inspect}"
+      else
+        "#{@first.inspect}..#{@last.inspect}"
+      end
+    end
+
+  end
+
 =begin
   class Exception
     attr_reader :message
@@ -360,9 +458,48 @@ module RubyJS; module Environment
       `return(#<self> === "")`
     end
   
-    # FIXME: escape special characters
+    def rjust(len, pad=" ")
+      raise if pad.empty? # ArgumentError, "zero width padding"
+
+      n = len - self.length
+      return self if n <= 0 
+
+      fillstr = ""
+      `while(#<fillstr>.length < #<n>) #<fillstr> += #<pad>;`
+
+      return fillstr[0,n] + self
+    end
+
+    def ljust(len, pad=" ")
+      raise if pad.empty? # ArgumentError, "zero width padding"
+
+      n = len - self.length
+      return self if n <= 0 
+
+      fillstr = ""
+      `while(#<fillstr>.length < #<n>) #<fillstr> += #<pad>;`
+
+      return self + fillstr[0,n]
+    end
+
     def inspect
-      `return('"' + #<self> + '"')`
+      # prototype.js
+      specialChar = `{
+        '\\b': '\\\\b',
+        '\\t': '\\\\t',
+        '\\n': '\\\\n',
+        '\\f': '\\\\f',
+        '\\r': '\\\\r',
+        '\\\\': '\\\\\\\\'
+      };`
+
+      escapedString = self.gsub(/[\x00-\x1f\\]/) {|match| 
+        character = `#<specialChar>[#<match>]` 
+       `return #<character> ? #<character> : 
+          '\\\\u00' + ("0" + #<match>.charCodeAt().toString(16)).substring(0,2);`
+      }
+
+      `return ('"' + #<escapedString>.replace(/"/g, '\\\\"') + '"');`
     end
 
     def to_s
@@ -380,10 +517,39 @@ module RubyJS; module Environment
     def length
       `return #<self>.length`
     end
+    alias size length
 
     def index(substring, offset=0) `
       var i = #<self>.indexOf(#<substring>, #<offset>);
       return (i == -1) ? #<nil> : i` 
+    end
+
+    def match(pattern) `
+      var i = #<self>.match(#<pattern>);
+      return (i === null) ? #<nil> : i`
+    end
+
+    def gsub(pattern, replacement=nil)
+      # from prototype.js
+      result, source, match = "", self, nil
+     `while(#<source>.length > 0) {
+        if (#<match> = #<source>.match(#<pattern>)) {
+          #<result> += #<source>.slice(0, #<match>.index);` 
+          if replacement
+            result += replacement 
+          else
+            result += yield(match.first).to_s
+          end
+         `#<source> = #<source>.slice(#<match>.index + #<match>[0].length);
+        } else {
+          #<result> += #<source>; #<source> = '';
+        }
+      } return #<result>`
+    end
+
+    def sub(pattern, replacement)
+      # FIXME: block
+      `#<self>.replace(pattern, replacement)`
     end
 
     def [](index, len=nil)
@@ -398,8 +564,6 @@ module RubyJS; module Environment
         `return #<self>.substring(#<index>, #<index>+#<len>)`
       end
     end
-
-    alias size length
   end
 
   class Number
@@ -410,11 +574,13 @@ module RubyJS; module Environment
       undef_method :allocate 
     end
 
-    def to_s
-      `return #<self>.toString()`
+    def to_s(base=10)
+      `return #<self>.toString(#<base>)`
     end
 
-    alias inspect to_s
+    def inspect
+      `return #<self>.toString()`
+    end
 
     def +(x)  `return #<self> + #<x>` end
     def -(x)  `return #<self> - #<x>` end
@@ -432,6 +598,8 @@ module RubyJS; module Environment
     def &(x)  `return #<self> & #<x>` end
     def ^(x)  `return #<self> ^ #<x>` end
     def ~()   `return ~#<self>` end
+
+    def succ() `return #<self>+1` end
 
     def times
       i = 0

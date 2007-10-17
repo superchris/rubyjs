@@ -32,10 +32,10 @@ class CodeGenerator
   end
 
   def compact_code(str)
-    if $RUBYJS__DEBUG
-      str
-    else
+    if $RUBYJS__OPTS.include?('CompactCode')
       @world.strip_ws_from_js_code(str)
+    else
+      str
     end
   end
 

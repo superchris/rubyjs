@@ -1063,12 +1063,12 @@ class MethodCompiler < SexpProcessor
         # NOTE:
         # We use +to_s+, and the + operator to
         # build the interpolated string.
-        to_s = @model.encode_method("to_s") 
+        @model.add_method_call(to_s = @model.encode_method("to_s"))
         "(" + ([pre_str.inspect] + exp.map {|e| "(" + process(e) + ").#{to_s}()"}).join(" + ") + ")"
       end
     end
     exp.clear
-    res
+    resultify(res)
   end
 
   #
@@ -1085,8 +1085,23 @@ class MethodCompiler < SexpProcessor
     when '/'
       str
     else
-      raise if str.include?("..") # FIXME: Range
-      str
+      range = @model.lookup_constant('::Range') 
+      a, b = str.split("...", 2) 
+      if b
+        # range excluding end
+        @model.add_method_call(m = @model.encode_method("new"))
+        "#{range}.#{m}(#{@model.encode_nil},#{a},#{b},true)"
+      else
+        a, b = str.split("..", 2)
+        if b
+          # range including end
+          @model.add_method_call(m = @model.encode_method("new"))
+          "#{range}.#{m}(#{@model.encode_nil},#{a},#{b},false)"
+        else
+          # no range
+          str
+        end
+      end
     end
 
     resultify(res)
@@ -1096,7 +1111,8 @@ class MethodCompiler < SexpProcessor
     type = exp[0]
     str = exp[1].inspect
 
-    return true if type == :lit and (str =~ /^-?\d+/ or str == "Infinity" or str == "-Infinity")
+    return true if type == :lit and str.index("..").nil? and 
+      (str =~ /^-?\d+/ or str == "Infinity" or str == "-Infinity")
     return false
   end
 

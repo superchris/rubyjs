@@ -31,6 +31,7 @@ MAPPING
   [array]       -> [array] (unboxed)
   {hash}        -> Javascript Hash object (unboxed, but indirect)
   Proc/iterator -> function (unboxed) 
+  1..2          -> custom Range object
 
 BUGS
 
