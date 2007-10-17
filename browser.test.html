@@ -1,0 +1,743 @@
+<html><head><script>
+// method map
+var a$k = {"test":"$R","end":"$7","sub":"$aD","each":"$v","m":"$aW","loop":"$x","to_f":"$T","%":"$ai","collect":"$C","member?":"$_","test_three_times_indirect":"$au","&":"$al","new_from_key_value_list":"$Q","test_loop2":"$as","three_times_yield":"$aC","===":"$g","three_times_block":"$ar","==":"$W","reverse":"$aO","three_times_indirect":"$av","map":"$G","downto":"$ae","to_i":"$U","times":"$ak","include?":"$4","p":"$t","allocate":"$d","keys":"$K","reject":"$I","three_times_yield2":"$ay","size":"$aE","*":"$aq","+":"$O","delete":"$aN","values":"$N","unshift":"$aT","upto":"$ad","dup":"$aV","rjust":"$aF","-":"$ag","nil?":"$r","new":"$a","test_while_loop":"$at","/":"$ah","call":"$E","message":"$ab","push":"$aS","is_a?":"$y","split":"$aI","main":"$B","name":"$b","empty?":"$m","to_splat":"$V","jage":"$aa","raise":"$k","length":"$aG","to_s":"$p",">=":"$af","|":"$aj","kind_of?":"$i","find_all":"$F","~":"$am","loop2":"$aw","[]":"$L","strip":"$aJ","test_three_times_yield2":"$ax","-@":"$ao","[]=":"$M","succ":"$9","hash":"$A","class":"$c","inspect":"$j","reverse!":"$aU","^":"$an","test_three_times_block":"$az","test_three_times_yield":"$aB","__send":"$q","eql?":"$h","pop":"$aQ","<":"$5","wau":"$$","first":"$Y","begin":"$3","<<":"$D","ljust":"$aH","__invoke":"$f",">":"$8","<=":"$6","initialize":"$e","send":"$w","respond_to?":"$s","a_method":"$aX","test_loop":"$aA","shift":"$l","exclude_end?":"$2","+@":"$ap","miau":"$aZ","select":"$J","to_a":"$H","method_missing":"$o","index":"$aK","join":"$P","each_with_index":"$aP","tap":"$z","last":"$0","instance_of?":"$n","gsub":"$aL","puts":"$u","match":"$aM","to_ary":"$aR"};
+// declare nil
+function NilClass() {}
+
+// FIXME: remove
+NilClass.prototype.toString = function() { return "nil"; };
+nil = new NilClass();
+
+function a$a(a)
+{
+  var x = new Object();
+  x.a$a = a; 
+  throw(x);
+}
+
+function a$b(a)
+{
+  // TODO
+  return a;
+}
+
+// 
+// helper function for multiple assignment in 
+// iterator parameters.
+// 
+//   undefined -> []
+//   1         -> [1]
+//   [1]       -> [[1]]
+//   []        -> [[]]
+//   [1,2]     -> [1,2]
+// 
+function a$c(a)
+{
+  if (a===undefined) return [];
+  if (a.constructor!=Array || a.length<2) return [a];
+  return a;
+}
+
+//
+// Call the method in the superclass.
+//
+// As super is used quite rarely, we dont optimize for it.
+// 
+// object, method, iterator, arguments
+//
+function a$d(o, m, i, a) 
+{
+  var r = o[m]; // method in current class
+  var c = o.a$b.a$c;
+  while (r === c.a$d.prototype[m])
+    c = c.a$c;
+  return c.a$d.prototype[m].apply(o, [i].concat(a));
+}
+
+function a$e(o, m, a) 
+{
+  var r = o[m]; // method in current class
+  var c = o.a$b.a$c;
+  while (r === c.a$d.prototype[m])
+    c = c.a$c;
+  return c.a$d.prototype[m].apply(o, a);
+}
+
+//
+// Whether o.kind_of?(c)
+//
+function a$f(o, c)
+{
+  var k,i,m;
+
+  k = o.a$b;
+
+  while (k != nil)
+  {
+    if (k === c) return true;
+
+    // check included modules
+    m = k.a$e;
+    for (i=0; i<m.length; i++)
+    {
+      if (m[i] === c) return true;
+    }
+
+    k = k.a$c; 
+  }
+
+  return false;
+}
+
+function a$g(c)
+{
+  for (var i=0; i<c.length; i++)
+    a$h(c[i]);
+}
+
+function a$h(c)
+{
+  var k,i;
+
+  //
+  // include modules
+  //
+  // do that before, because when assigning instance methods of 
+  // the super class, a check for === undefined prevents from
+  // this method being overwritten.
+  //
+  for (i=0; i<c.a$e.length; i++)
+  {
+    for (k in c.a$e[i].a$d.prototype)
+    {
+      if (c.a$d.prototype[k]===undefined)
+      {
+        c.a$d.prototype[k] = c.a$e[i].a$d.prototype[k];
+      }
+    }
+  }
+
+  // instance methods
+  if (c.a$c != nil)
+  {
+    for (k in c.a$c.a$d.prototype)
+    {
+      if (c.a$d.prototype[k]===undefined)
+      {
+        c.a$d.prototype[k] = c.a$c.a$d.prototype[k];
+      }
+    }
+  }
+
+  // inherit class methods from superclass
+  if (c.a$c != nil)
+  {
+    for (k in c.a$c)
+    {
+      if (c[k]===undefined)
+      {
+        c[k] = c.a$c[k];
+      }
+    }
+  }
+
+  // set class for instanciated objects
+  c.a$d.prototype.a$b = c;
+}
+
+function a$i(h)
+{
+  var c,k,i;
+  c = h.a$b || $a.$a(nil, h.a$c, h.a$f, h.a$d);
+
+  if (h.a$g)
+  {
+    for (k in h.a$g)
+    {
+      c.a$d.prototype[k] = h.a$g[k];
+    }
+  }
+
+  if (h.a$h)
+  {
+    for (k in h.a$h) c[k] = h.a$h[k];
+  }
+
+  if (h.a$e)
+  {
+    for (i=0; i<h.a$e.length; i++)
+    {
+      c.a$e.push(h.a$e[i]);
+    }
+  }
+
+  return c;
+}
+
+function a$j(_a, _b, _c, _d) 
+{
+  this.a$c = _b;
+  this.a$f = _c;
+  this.a$d = _d;
+  this.a$e = [];
+  this.a$b = _a;
+  return this;
+}
+
+a$j.$b = function() { return "MetaClass"; };
+a$j.$c = function() { return this; };
+$a = a$i({a$c: nil,a$h: {$a: function(_e,_a,_b,_c){var self,_d;self=this;try{if(arguments.length<3)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 2)'));if(arguments.length>4)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 3)'));if(_c===undefined)_c=nil;;if((_d=_c,_d===false||_d===nil)){_c=(function() {})};return new self.a$d($a, _a, _b, _c);}catch(_f){if(_f.a$a!==undefined)return _f.a$a;throw(_f)}}},a$f: "Class",a$b: new a$j(a$j, nil, "Class", a$j),a$g: {$b: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self.a$f;},$a: function(_c){var self,_a,_b,_d,_e,_f;_e=_f=nil;self=this;_d=_c===undefined?nil:_c;try{_a=[];for(_b=1;_b<arguments.length;_b++)_a.push(arguments[_b]);;_e=self.$d();_e.$f(_d,'$e',a$b(_a));_f=_e;return _f}catch(_g){if(_g.a$a!==undefined)return _g.a$a;throw(_g)}},$g: function(_d,_a){var self,_b,_c;_c=nil;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;_c=(_b=self.$h(nil,_a), (_b!==false&&_b!==nil) ? _b : (_a.$i(nil,self)));return _c}catch(_e){if(_e.a$a!==undefined)return _e.a$a;throw(_e)}},$d: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;var o = new self.a$d();
+       return o;},$j: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self.a$f;}}});a$h($a);$g = a$i({a$e: [],a$c: nil,a$f: "Kernel",a$g: {$q: function(_d,_a){var self,_b,_c,_e;self=this;_e=_d===undefined?nil:_d;try{if(arguments.length<2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));_b=[];for(_c=2;_c<arguments.length;_c++)_b.push(arguments[_c]);;return self[a$k[_a]].apply(self, [_e].concat(_b))}catch(_f){if(_f.a$a!==undefined)return _f.a$a;throw(_f)}},$o: function(_d,_a){var self,_b,_c,_e,_f;_f=nil;self=this;_e=_d===undefined?nil:_d;try{if(arguments.length<2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));_b=[];for(_c=2;_c<arguments.length;_c++)_b.push(arguments[_c]);;_f=self.$k(nil,("NoMethodError: undefined method `" + (_a).$p() + ("' for ").$p() + (self.$j()).$p()));return _f}catch(_g){if(_g.a$a!==undefined)return _g.a$a;throw(_g)}},$k: function(){var self,_a,_b,_c,_d;_c=_d=nil;self=this;_a=[];for(_b=1;_b<arguments.length;_b++)_a.push(arguments[_b]);;_c=((_b=_a.$m(),_b!==false&&_b!==nil)?$c.$a(nil,""):(_d=_a.$l(),((_b=_d.$i(nil,$a),_b!==false&&_b!==nil)?_d.$f(nil,'$a',a$b(_a)):((_b=_d.$n(nil,$f),_b!==false&&_b!==nil)?((_b=_a.$m(),_b!==false&&_b!==nil)?_d:$b.$a(nil,"to many arguments given to raise")):((_b=_d.$n(nil,$e),_b!==false&&_b!==nil)?((_b=_a.$m(),_b!==false&&_b!==nil)?$c.$a(nil,_d):$b.$a(nil,"to many arguments given to raise")):$d.$a(nil,"exception class/object expected"))))));throw(_c)},$r: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=false;return _a},$s: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;
+      var m = a$k[_a]; 
+      return (m !== undefined && self[m] !== undefined)}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$t: function(){var self,_a,_b,_f;_f=nil;self=this;_a=[];for(_b=1;_b<arguments.length;_b++)_a.push(arguments[_b]);;_a.$v(function(_c){var _d;var _e=nil;_d=_c===undefined?nil:_c;_e=self.$u(nil,_d.$j());return _e});_f=nil;return _f},$f: function(_c,_a,_b){var self,_d;self=this;_d=_c===undefined?nil:_c;try{if(arguments.length!=3)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 2)'));;return self[_a].apply(self, [_d].concat(_b))}catch(_e){if(_e.a$a!==undefined)return _e.a$a;throw(_e)}},$x: function(_a){var self,_b;_b=nil;self=this;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;while(true){_a()};_b=nil;;return _b}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$u: function(_b,_a){var self;self=this;try{if(arguments.length>2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));if(_a===undefined)_a="";;_a=_a.$p();STDOUT.push(_a)}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$w: function(_d,_a){var self,_b,_c,_e;self=this;_e=_d===undefined?nil:_d;try{if(arguments.length<2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));_b=[];for(_c=2;_c<arguments.length;_c++)_b.push(arguments[_c]);;return self[a$k[_a]].apply(self, [_e].concat(_b))}catch(_f){if(_f.a$a!==undefined)return _f.a$a;throw(_f)}}}});$h = a$i({a$e: [$g],a$c: nil,a$f: "Object",a$g: {$i: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return a$f(self, _a)}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$y: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return a$f(self, _a)}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$c: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self.a$b},$h: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return (self.constructor == _a.constructor && self == _a)}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$A: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self.toString()},$z: function(_a){var self,_b;_b=nil;self=this;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a(self);_b=self;return _b}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$p: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self.toString()},$e: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=nil;return _a},$g: function(_d,_a){var self,_b,_c;_c=nil;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;_c=(_b=self.$h(nil,_a), (_b!==false&&_b!==nil) ? _b : (self.$i(nil,_a)));return _c}catch(_e){if(_e.a$a!==undefined)return _e.a$a;throw(_e)}},$n: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return (self.a$b === _a)}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$j: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self.toString()}}});$i = a$i({a$e: [],a$c: $h,a$f: "D"});$A = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_c,_d,_b;_c=_b=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;try{self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test splat");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");$j.$B();self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test simple output");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");$k.$B();self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test new");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");$l.$B();self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test massign");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");$m.$B();self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test send");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");$n.$B();self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test if");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");$o.$B();self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test hash");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");$p.$B();self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test exception");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");$q.$B();self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test eql");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");$r.$B();self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test args");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");$s.$B();self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test yield");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");$t.$B();self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test string");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");$u.$B();self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test array");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");$v.$B();self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test lebewesen");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");$w.$B();self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test class");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");$x.$B();self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test case");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");$y.$B();self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");self.$u(nil,"Test range");self.$u(nil,"~~~~~~~~~~~~~~~~~~~~");_b=$z.$B()}catch(_a){if(_a.a$a!==undefined)throw(_a);if((_d=$f.$g(nil,_a),_d!==false&&_d!==nil)){_c=(typeof(_a)=='undefined'?nil:_a);self.$t(nil,"unhandled exception");_b=self.$t(nil,_c)}else{throw(_a)}};return _b}},a$f: "TestSuite"});$B = a$i({a$e: [],a$c: nil,a$f: "Enumerable",a$g: {$C: function(_a){var self,_b,_c,_g,_h;_c=_h=nil;self=this;_b=_a===undefined?nil:_a;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_c=[];self.$v(function(_d){var _e;var _f=nil;_e=_d===undefined?nil:_d;if((_g=_b,_g!==false&&_g!==nil)){_f=_c.$D(nil,_b.$E(nil,_e))}else{_f=_c.$D(nil,_e)};return _f});_h=_c;return _h}catch(_i){if(_i.a$a!==undefined)return _i.a$a;throw(_i)}},$F: function(_f){var self,_a,_e,_g;_a=_g=nil;self=this;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=[];self.$v(function(_b){var _c;var _d=nil;_c=_b===undefined?nil:_b;if((_e=_f(_c),_e!==false&&_e!==nil)){_d=_a.$D(nil,_c)}else{_d=nil};return _d});_g=_a;return _g}catch(_h){if(_h.a$a!==undefined)return _h.a$a;throw(_h)}},$G: function(_a){var self,_b,_c,_g,_h;_c=_h=nil;self=this;_b=_a===undefined?nil:_a;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_c=[];self.$v(function(_d){var _e;var _f=nil;_e=_d===undefined?nil:_d;if((_g=_b,_g!==false&&_g!==nil)){_f=_c.$D(nil,_b.$E(nil,_e))}else{_f=_c.$D(nil,_e)};return _f});_h=_c;return _h}catch(_i){if(_i.a$a!==undefined)return _i.a$a;throw(_i)}},$H: function(){var self,_a,_e;_a=_e=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=[];self.$v(function(_b){var _c;var _d=nil;_c=_b===undefined?nil:_b;_d=_a.$D(nil,_c);return _d});_e=_a;return _e},$I: function(_f){var self,_a,_e,_g;_a=_g=nil;self=this;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=[];self.$v(function(_b){var _c;var _d=nil;_c=_b===undefined?nil:_b;if((_e=_f(_c),_e===false||_e===nil)){_d=_a.$D(nil,_c)}else{_d=nil};return _d});_g=_a;return _g}catch(_h){if(_h.a$a!==undefined)return _h.a$a;throw(_h)}},$J: function(_f){var self,_a,_e,_g;_a=_g=nil;self=this;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=[];self.$v(function(_b){var _c;var _d=nil;_c=_b===undefined?nil:_b;if((_e=_f(_c),_e!==false&&_e!==nil)){_d=_a.$D(nil,_c)}else{_d=nil};return _d});_g=_a;return _g}catch(_h){if(_h.a$a!==undefined)return _h.a$a;throw(_h)}}}});$C = a$i({a$e: [$B],a$c: $h,a$h: {$Q: function(){var self,_a,_b,_c;_c=nil;self=this;_a=[];for(_b=1;_b<arguments.length;_b++)_a.push(arguments[_b]);;_c=self.$d();
+      if (_a.length % 2 != 0) throw('ArgumentError');
+
+      // 
+      // we use an associate array to store the items. But unlike
+      // Javascript, the entries are arrays which contain the collisions.
+      // NOTE that we have to prefix the hash code with a prefix so that
+      // there are no collisions with methods etc.   
+      // I prefix it for now with 1.
+      //
+      var items = {};
+      var hashed_key, current_key, current_val;
+     
+      for (var i = 0; i < _a.length; i += 2)
+      {
+        current_key = _a[i];
+        hashed_key = "1" + current_key.$A();
+        current_val = _a[i+1];
+
+        if (items[hashed_key] === undefined)
+        {
+          // 
+          // create new bucket
+          // a bucket stores all the elements with key collisions.
+          //
+          items[hashed_key] = [];
+        }
+
+        items[hashed_key].push(current_key, current_val);
+      }
+
+      _c.a$i = items; 
+      _c.a$j = nil;
+      return _c;
+      }},a$f: "Hash",a$g: {$L: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;
+      var hashed_key = "1" + _a.$A();
+      var bucket = self.a$i[hashed_key];
+
+      if (bucket !== undefined)
+      {
+        //
+        // find the matching element inside the bucket
+        //
+
+        for (var i = 0; i < bucket.length; i += 2)
+        {
+          if (bucket[i].$h(nil,_a))
+            return bucket[i+1];
+        }
+      }
+
+      // no matching key found -> return default value
+      return self.a$j;
+      }catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$K: function(){var self,_b,_f;_b=_f=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_f=self.$G(function(_a){var _c,_d;var _e=nil;(_b=a$c(_a),_c=_b[0]===undefined?nil:_b[0],_d=_b[1]===undefined?nil:_b[1],_b);_e=_c;return _e});return _f},$M: function(_c,_a,_b){var self;self=this;try{if(arguments.length!=3)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 2)'));;
+      var hashed_key = "1" + _a.$A();
+      var bucket = self.a$i[hashed_key];
+
+      if (bucket !== undefined)
+      {
+        //
+        // find the matching element inside the bucket
+        //
+
+        for (var i = 0; i < bucket.length; i += 2)
+        {
+          if (bucket[i].$h(nil,_a))
+          {
+            // overwrite value
+            bucket[i+1] = _b;
+            return _b;
+          }
+        }
+        // key not found in this bucket. append key, value pair to bucket
+        bucket.push(_a, _b);
+        return _b;
+      }
+      else 
+      {
+        //
+        // create new bucket
+        //
+        self.a$i[hashed_key] = [_a, _b];
+        return _b;
+      }
+      }catch(_d){if(_d.a$a!==undefined)return _d.a$a;throw(_d)}},$v: function(_a){var self;self=this;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;
+      var key, bucket, i;
+      for (key in self.a$i)
+      {
+        if (key[0] == "1")
+        {
+          bucket = self.a$i[key];
+          for (i=0; i<bucket.length; i+=2)
+          {;_a([bucket[i],bucket[i+1]]);
+          }
+        }
+      }
+      }catch(_b){if(_b.a$a!==undefined)return _b.a$a;throw(_b)}},$e: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;
+      self.a$i = {}; 
+      self.a$j = nil;
+      },$N: function(){var self,_b,_f;_b=_f=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_f=self.$G(function(_a){var _c,_d;var _e=nil;(_b=a$c(_a),_c=_b[0]===undefined?nil:_b[0],_d=_b[1]===undefined?nil:_b[1],_b);_e=_d;return _e});return _f},$j: function(){var self,_a,_c,_g;_a=_c=_g=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a="{";_a=_a.$O(nil,self.$G(function(_b){var _d,_e;var _f=nil;(_c=a$c(_b),_d=_c[0]===undefined?nil:_c[0],_e=_c[1]===undefined?nil:_c[1],_c);_f=_d.$j().$O(nil," => ").$O(nil,_e.$j());return _f}).$P(nil,", "));_a=_a.$O(nil,"}");_g=_a;return _g}}});$l = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$a().$R();return _a}},a$f: "TestNew",a$g: {$e: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=nil;return _a},$R: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$u(nil,"test");return _a}}});$p = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_a,_b;_a=_b=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=$C.$Q(nil,"a",6,"b",7,"1",1,1,2,"1,2","hello",[1,2],"good");self.$t(nil,_a.$L(nil,"a"));self.$t(nil,_a.$L(nil,"b"));self.$t(nil,_a.$L(nil,"1"));self.$t(nil,_a.$L(nil,1));self.$t(nil,_a.$L(nil,"1,2"));_b=self.$t(nil,_a.$L(nil,[1,2]));return _b}},a$f: "TestHash"});$D = a$i({a$e: [],a$c: $h,a$f: "Lebewesen",a$g: {$e: function(_c,_a){var self,_b;_b=nil;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;_b=self.$S=_a;return _b}catch(_d){if(_d.a$a!==undefined)return _d.a$a;throw(_d)}}}});$E = a$i({a$e: [],a$c: $h,a$f: "NilClass",a$d: NilClass,a$g: {$T: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=0.0;return _a},$r: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=true;return _a},$p: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a="";return _a},$U: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=0;return _a},$H: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=[];return _a},$V: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=[];return _a},$j: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a="nil";return _a}}});$F = a$i({a$e: [],a$c: $h,a$f: "Range",a$g: {$W: function(_e,_a){var self,_b,_c,_d;_d=nil;self=this;if(self.$Z===undefined)self.$Z=nil;if(self.$1===undefined)self.$1=nil;if(self.$X===undefined)self.$X=nil;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;if (self.constructor != _a.constructor) return false;;_d=(_b=self.$X.$W(nil,_a.$Y()), (_b!==false&&_b!==nil) ? ((_c=self.$Z.$W(nil,_a.$0()), (_c!==false&&_c!==nil) ? (self.$1.$W(nil,_a.$2())) : _c)) : _b);return _d}catch(_f){if(_f.a$a!==undefined)return _f.a$a;throw(_f)}},$3: function(){var self,_a;_a=nil;self=this;if(self.$X===undefined)self.$X=nil;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$X;return _a},$h: function(_e,_a){var self,_b,_c,_d;_d=nil;self=this;if(self.$Z===undefined)self.$Z=nil;if(self.$1===undefined)self.$1=nil;if(self.$X===undefined)self.$X=nil;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;if (self.constructor != _a.constructor) return false;;_d=(_b=self.$X.$h(nil,_a.$Y()), (_b!==false&&_b!==nil) ? ((_c=self.$Z.$h(nil,_a.$0()), (_c!==false&&_c!==nil) ? (self.$1.$W(nil,_a.$2())) : _c)) : _b);return _d}catch(_f){if(_f.a$a!==undefined)return _f.a$a;throw(_f)}},$2: function(){var self,_a;_a=nil;self=this;if(self.$1===undefined)self.$1=nil;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$1;return _a},$0: function(){var self,_a;_a=nil;self=this;if(self.$Z===undefined)self.$Z=nil;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$Z;return _a},$p: function(){var self,_b,_a;_a=nil;self=this;if(self.$Z===undefined)self.$Z=nil;if(self.$1===undefined)self.$1=nil;if(self.$X===undefined)self.$X=nil;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;if((_b=self.$1,_b!==false&&_b!==nil)){_a=("" + (self.$X).$p() + ("...").$p() + (self.$Z).$p())}else{_a=("" + (self.$X).$p() + ("..").$p() + (self.$Z).$p())};return _a},$v: function(_c){var self,_a,_b,_d;_a=_d=nil;self=this;if(self.$Z===undefined)self.$Z=nil;if(self.$1===undefined)self.$1=nil;if(self.$X===undefined)self.$X=nil;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$X;if((_b=self.$X.$8(nil,self.$Z),_b!==false&&_b!==nil)){return nil};if((_b=self.$1,_b!==false&&_b!==nil)){while((_b=_a.$5(nil,self.$Z),_b!==false&&_b!==nil)){_c(_a);_a=_a.$9()};_d=nil;}else{while((_b=_a.$6(nil,self.$Z),_b!==false&&_b!==nil)){_c(_a);_a=_a.$9()};_d=nil;};return _d}catch(_e){if(_e.a$a!==undefined)return _e.a$a;throw(_e)}},$7: function(){var self,_a;_a=nil;self=this;if(self.$Z===undefined)self.$Z=nil;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$Z;return _a},$Y: function(){var self,_a;_a=nil;self=this;if(self.$X===undefined)self.$X=nil;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$X;return _a},$4: function(_d,_a){var self,_b,_c;_c=nil;self=this;if(self.$Z===undefined)self.$Z=nil;if(self.$1===undefined)self.$1=nil;if(self.$X===undefined)self.$X=nil;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;if((_b=_a.$5(nil,self.$X),_b!==false&&_b!==nil)){return false};if((_b=self.$1,_b!==false&&_b!==nil)){_c=_a.$5(nil,self.$Z)}else{_c=_a.$6(nil,self.$Z)};return _c}catch(_e){if(_e.a$a!==undefined)return _e.a$a;throw(_e)}},$e: function(_f,_a,_b,_c){var self,_d,_e;_e=nil;self=this;try{if(arguments.length<3)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 2)'));if(arguments.length>4)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 3)'));if(_c===undefined)_c=false;;(_d=[_a,_b],self.$X=_d[0]===undefined?nil:_d[0],self.$Z=_d[1]===undefined?nil:_d[1],_d);_e=self.$1=((_d=_c,_d!==false&&_d!==nil)?true:false);return _e}catch(_g){if(_g.a$a!==undefined)return _g.a$a;throw(_g)}},$g: function(_d,_a){var self,_b,_c;_c=nil;self=this;if(self.$Z===undefined)self.$Z=nil;if(self.$1===undefined)self.$1=nil;if(self.$X===undefined)self.$X=nil;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;if((_b=_a.$5(nil,self.$X),_b!==false&&_b!==nil)){return false};if((_b=self.$1,_b!==false&&_b!==nil)){_c=_a.$5(nil,self.$Z)}else{_c=_a.$6(nil,self.$Z)};return _c}catch(_e){if(_e.a$a!==undefined)return _e.a$a;throw(_e)}},$H: function(){var self,_a,_b,_c;_a=_c=nil;self=this;if(self.$Z===undefined)self.$Z=nil;if(self.$1===undefined)self.$1=nil;if(self.$X===undefined)self.$X=nil;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=[];if((_b=self.$X.$8(nil,self.$Z),_b!==false&&_b!==nil)){return _a};_c=self.$X;if((_b=self.$1,_b!==false&&_b!==nil)){while((_b=_c.$5(nil,self.$Z),_b!==false&&_b!==nil)){_a.$D(nil,_c);_c=_c.$9()}}else{while((_b=_c.$6(nil,self.$Z),_b!==false&&_b!==nil)){_a.$D(nil,_c);_c=_c.$9()}};return _a},$j: function(){var self,_b,_a;_a=nil;self=this;if(self.$Z===undefined)self.$Z=nil;if(self.$1===undefined)self.$1=nil;if(self.$X===undefined)self.$X=nil;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;if((_b=self.$1,_b!==false&&_b!==nil)){_a=("" + (self.$X.$j()).$p() + ("...").$p() + (self.$Z.$j()).$p())}else{_a=("" + (self.$X.$j()).$p() + ("..").$p() + (self.$Z.$j()).$p())};return _a},$_: function(_d,_a){var self,_b,_c;_c=nil;self=this;if(self.$Z===undefined)self.$Z=nil;if(self.$1===undefined)self.$1=nil;if(self.$X===undefined)self.$X=nil;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;if((_b=_a.$5(nil,self.$X),_b!==false&&_b!==nil)){return false};if((_b=self.$1,_b!==false&&_b!==nil)){_c=_a.$5(nil,self.$Z)}else{_c=_a.$6(nil,self.$Z)};return _c}catch(_e){if(_e.a$a!==undefined)return _e.a$a;throw(_e)}}}});$G = a$i({a$e: [],a$c: $D,a$f: "Hund",a$g: {$$: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$u(nil,"wau wau");return _a},$aa: function(_c,_a){var self,_b;_b=nil;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;_b=self.$u(nil,"ich jage ".$O(nil,_a.$b()));return _b}catch(_d){if(_d.a$a!==undefined)return _d.a$a;throw(_d)}}}});$H = a$i({a$e: [],a$c: nil,a$f: "X"});$f = a$i({a$e: [],a$c: $h,a$f: "Exception",a$g: {$ab: function(){var self,_a;_a=nil;self=this;if(self.$ac===undefined)self.$ac=nil;_a=self.$ac;return _a},$p: function(){var self,_a;_a=nil;self=this;if(self.$ac===undefined)self.$ac=nil;_a=self.$ac;return _a},$e: function(_d,_a){var self,_c,_b;_b=nil;self=this;try{if(arguments.length>2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));if(_a===undefined)_a=nil;;if((_c=_a.$r(),_c!==false&&_c!==nil)){_b=self.$ac=self.$c().$b()}else{_b=self.$ac=_a};return _b}catch(_e){if(_e.a$a!==undefined)return _e.a$a;throw(_e)}},$j: function(){var self,_a;_a=nil;self=this;if(self.$ac===undefined)self.$ac=nil;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=("#<" + (self.$c().$b()).$p() + (": ").$p() + (self.$ac).$p() + (">").$p());return _a}}});$I = a$i({a$e: [],a$c: $f,a$f: "StandardError"});$J = a$i({a$e: [],a$c: $I,a$f: "NameError"});$K = a$i({a$e: [],a$c: $J,a$f: "NoMethodError"});$L = a$i({a$e: [],a$c: $h,a$f: "Number",a$d: Number,a$g: {$O: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return self + _a}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$W: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return self == _a}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$ae: function(_d,_a){var self,_b,_c;_b=nil;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;_b=self;while((_c=_b.$af(nil,_a),_c!==false&&_c!==nil)){_d(_b);_b=_b.$ag(nil,1)};return self}catch(_e){if(_e.a$a!==undefined)return _e.a$a;throw(_e)}},$ad: function(_d,_a){var self,_b,_c;_b=nil;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;_b=self;while((_c=_b.$6(nil,_a),_c!==false&&_c!==nil)){_d(_b);_b=_b.$O(nil,1)};return self}catch(_e){if(_e.a$a!==undefined)return _e.a$a;throw(_e)}},$6: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return self <= _a}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$ag: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return self - _a}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$9: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self+1},$ah: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return self / _a}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$p: function(_b,_a){var self;self=this;try{if(arguments.length>2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));if(_a===undefined)_a=10;;return self.toString(_a)}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$ai: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return self % _a}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$al: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return self & _a}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$5: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return self < _a}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$ak: function(_c){var self,_a,_b;_a=nil;self=this;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=0;while((_b=_a.$5(nil,self),_b!==false&&_b!==nil)){_c(_a);_a=_a.$O(nil,1)};return self}catch(_d){if(_d.a$a!==undefined)return _d.a$a;throw(_d)}},$aj: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return self | _a}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$ao: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return -self},$8: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return self > _a}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$an: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return self ^ _a}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$am: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return ~self},$af: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return self >= _a}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$j: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self.toString()},$aq: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return self * _a}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$ap: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self}}});$M = a$i({a$e: [],a$c: $L,a$f: "Bignum",a$d: Number});$q = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_b,_c,_d;_b=_d=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;self.$t(nil,"before block");self.$t(nil,"in block");self.$t(nil,"after block");try{self.$t(nil,"block");self.$t(nil,"else")}catch(_a){if(_a.a$a!==undefined)throw(_a);if((_c=$I.$g(nil,_a),_c!==false&&_c!==nil)){self.$t(nil,"rescue")}else{if((_c=$f.$g(nil,_a),_c!==false&&_c!==nil)){_b=(typeof(_a)=='undefined'?nil:_a);self.$t(nil,"another rescue");self.$t(nil,_b)}else{throw(_a)}}};self.$t(nil,$c.$a(nil,"test"));self.$u(nil,"before begin");try{try{self.$u(nil,"before raise");self.$k(nil,$f,"blah");self.$u(nil,"after raise")}catch(_a){if(_a.a$a!==undefined)throw(_a);if((_c=$I.$g(nil,_a),_c!==false&&_c!==nil)){self.$u(nil,"noooo")}else{if((_c=$f.$g(nil,_a),_c!==false&&_c!==nil)){_b=(typeof(_a)=='undefined'?nil:_a);self.$t(nil,_b);self.$u(nil,"yes")}else{throw(_a)}}}}finally{self.$u(nil,"ensure")};self.$u(nil,"after begin");self.$u(nil,"--");try{try{self.$u(nil,"abc");self.$k(nil,"r")}catch(_a){if(_a.a$a!==undefined)throw(_a);if((_c=$I.$g(nil,_a),_c!==false&&_c!==nil)){self.$t(nil,(typeof(_a)=='undefined'?nil:_a));self.$u(nil,"b")}else{throw(_a)}}}finally{self.$u(nil,"e")};try{_d=self.$t(nil,"hallo".$p(nil,2))}catch(_a){if(_a.a$a!==undefined)throw(_a);if((_c=$b.$g(nil,_a),_c!==false&&_c!==nil)){_b=(typeof(_a)=='undefined'?nil:_a);_d=self.$t(nil,_b)}else{throw(_a)}};return _d}},a$f: "TestException"});$t = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$a().$R();return _a}},a$f: "TestYield",a$g: {$as: function(){var self,_a,_b,_d,_f;_a=_b=_f=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;self.$u(nil,"loop2");_a=0;_b=self.$x(function(){var _e=nil;;_a=_a.$O(nil,1);if((_d=_a.$ai(nil,2).$W(nil,1),_d!==false&&_d!==nil)){return nil};self.$t(nil,_a);if((_d=_a.$8(nil,8),_d!==false&&_d!==nil)){a$a(["out",_a])}else{_e=nil};return _e});self.$t(nil,_b);_f=self.$u(nil,"--");return _f},$ar: function(_a){var self,_b,_c;_c=nil;self=this;_b=_a===undefined?nil:_a;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_b.$E(nil,1);_b.$E(nil,2);_c=_b.$E(nil,3);return _c}catch(_d){if(_d.a$a!==undefined)return _d.a$a;throw(_d)}},$at: function(){var self,_a,_b,_c;_a=_c=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;self.$u(nil,"while-loop");_a=0;while(true){_a=_a.$O(nil,1);if((_b=_a.$ai(nil,2).$W(nil,1),_b!==false&&_b!==nil)){continue};self.$t(nil,_a);if((_b=_a.$8(nil,8),_b!==false&&_b!==nil)){break}};self.$u(nil,"----");while((_b=_a.$8(nil,0),_b!==false&&_b!==nil)){self.$t(nil,_a);_a=_a.$ag(nil,1)};_c=self.$u(nil,"--");return _c},$aw: function(_a){var self,_b,_c;_c=nil;self=this;_b=_a===undefined?nil:_a;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;while(true){_b.$E()};_c=self.$t(nil,"not reached");return _c}catch(_d){if(_d.a$a!==undefined)return _d.a$a;throw(_d)}},$au: function(){var self,_d;_d=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;self.$u(nil,"three_times_indirect");self.$av(function(_a){var _b;var _c=nil;_b=_a===undefined?nil:_a;_c=self.$t(nil,_b);return _c});_d=self.$u(nil,"--");return _d},$ax: function(){var self,_d,_e;_e=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;self.$u(nil,"three_times_yield2");_e=self.$ay(function(_a){var _b;var _c=nil;_b=_a===undefined?nil:_a;if((_d=_b.$W(nil,1),_d!==false&&_d!==nil)){_c=_b}else{return _b.$O(nil,1)};return _c});return _e},$aA: function(){var self,_a,_b,_d,_f;_a=_b=_f=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;self.$u(nil,"loop");_a=0;_b=self.$x(function(){var _e=nil;;_a=_a.$O(nil,1);if((_d=_a.$ai(nil,2).$W(nil,1),_d!==false&&_d!==nil)){return nil};self.$t(nil,_a);if((_d=_a.$8(nil,8),_d!==false&&_d!==nil)){a$a(["out",_a])}else{_e=nil};return _e});self.$t(nil,_b);_f=self.$u(nil,"--");return _f},$az: function(){var self,_d;_d=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;self.$u(nil,"three_times_block");self.$ar(function(_a){var _b;var _c=nil;_b=_a===undefined?nil:_a;_c=self.$t(nil,_b);return _c});_d=self.$u(nil,"--");return _d},$R: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;self.$aB();self.$az();self.$au();self.$ax();self.$aA();self.$as();_a=self.$at();return _a},$x: function(_a){var self,_b;_b=nil;self=this;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;while(true){_a()};_b=self.$t(nil,"not reached");return _b}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$av: function(_a){var self,_b,_c;_c=nil;self=this;_b=_a===undefined?nil:_a;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;self.$aC(_b);_c=self.$ar(_b);return _c}catch(_d){if(_d.a$a!==undefined)return _d.a$a;throw(_d)}},$aC: function(_a){var self,_b;_b=nil;self=this;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a(1);_a(2);_b=_a(3);return _b}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$ay: function(_a){var self,_b;_b=nil;self=this;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;self.$t(nil,_a(1));self.$t(nil,_a(2));_b=self.$t(nil,_a(3));return _b}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$aB: function(){var self,_d;_d=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;self.$u(nil,"three_times_yield");self.$aC(function(_a){var _b;var _c=nil;_b=_a===undefined?nil:_a;_c=self.$t(nil,_b);return _c});_d=self.$u(nil,"--");return _d}}});$N = a$i({a$e: [],a$c: $h,a$f: "Boolean",a$d: Boolean,a$g: {$W: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return (self == _a)}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$p: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return (self == true ? 'true' : 'false')},$j: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return (self == true ? 'true' : 'false')}}});$d = a$i({a$e: [],a$c: $I,a$f: "TypeError"});$e = a$i({a$e: [],a$c: $h,a$f: "String",a$d: String,a$g: {$O: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return(self + _a)}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$aD: function(_c,_a,_b){var self;self=this;try{if(arguments.length!=3)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 2)'));;self.replace(pattern, replacement)}catch(_d){if(_d.a$a!==undefined)return _d.a$a;throw(_d)}},$aF: function(_f,_a,_b){var self,_c,_d,_e;_d=_e=nil;self=this;try{if(arguments.length<2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));if(arguments.length>3)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 2)'));if(_b===undefined)_b=" ";;if((_c=_b.$m(),_c!==false&&_c!==nil)){self.$k(nil,$b,"zero width padding")};_d=_a.$ag(nil,self.$aG());if((_c=_d.$6(nil,0),_c!==false&&_c!==nil)){return self};_e="";while(_e.length < _d) _e += _b;;return _e.$L(nil,0,_d).$O(nil,self)}catch(_g){if(_g.a$a!==undefined)return _g.a$a;throw(_g)}},$aE: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self.length},$L: function(_d,_a,_b){var self,_c;self=this;try{if(arguments.length<2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));if(arguments.length>3)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 2)'));if(_b===undefined)_b=nil;;if((_c=_b.$r(),_c!==false&&_c!==nil)){return self.charAt(_a) || nil}else{if((_c=_b.$5(nil,0),_c!==false&&_c!==nil)){return nil};return self.substring(_a, _a+_b)}}catch(_e){if(_e.a$a!==undefined)return _e.a$a;throw(_e)}},$aH: function(_f,_a,_b){var self,_c,_d,_e;_d=_e=nil;self=this;try{if(arguments.length<2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));if(arguments.length>3)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 2)'));if(_b===undefined)_b=" ";;if((_c=_b.$m(),_c!==false&&_c!==nil)){self.$k(nil,$b,"zero width padding")};_d=_a.$ag(nil,self.$aG());if((_c=_d.$6(nil,0),_c!==false&&_c!==nil)){return self};_e="";while(_e.length < _d) _e += _b;;return self.$O(nil,_e.$L(nil,0,_d))}catch(_g){if(_g.a$a!==undefined)return _g.a$a;throw(_g)}},$aI: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return self.split(_a)}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$p: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self;return _a},$aG: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self.length},$aJ: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self.replace(/^\s+/, '').replace(/\s+$/, '')},$m: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return(self === "")},$aL: function(_g,_a,_b){var self,_c,_d,_e,_f;_d=_e=_f=nil;self=this;try{if(arguments.length<2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));if(arguments.length>3)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 2)'));if(_b===undefined)_b=nil;;(_c=["",self,nil],_d=_c[0]===undefined?nil:_c[0],_e=_c[1]===undefined?nil:_c[1],_f=_c[2]===undefined?nil:_c[2],_c);while(_e.length > 0) {
+        if (_f = _e.match(_a)) {
+          _d += _e.slice(0, _f.index);;if((_c=_b,_c!==false&&_c!==nil)){_d=_d.$O(nil,_b)}else{_d=_d.$O(nil,_g(_f.$Y()).$p())};_e = _e.slice(_f.index + _f[0].length);
+        } else {
+          _d += _e; _e = '';
+        }
+      } return _d}catch(_h){if(_h.a$a!==undefined)return _h.a$a;throw(_h)}},$aK: function(_c,_a,_b){var self;self=this;try{if(arguments.length<2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));if(arguments.length>3)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 2)'));if(_b===undefined)_b=0;;
+      var i = self.indexOf(_a, _b);
+      return (i == -1) ? nil : i}catch(_d){if(_d.a$a!==undefined)return _d.a$a;throw(_d)}},$j: function(){var self,_a,_b;_a=_b=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a={
+        '\b': '\\b',
+        '\t': '\\t',
+        '\n': '\\n',
+        '\f': '\\f',
+        '\r': '\\r',
+        '\\': '\\\\'
+      };;_b=self.$aL(function(_c){var _d,_e;_d=_c===undefined?nil:_c;_e=_a[_d];return _e ? _e : 
+          '\\u00' + ("0" + _d.charCodeAt().toString(16)).substring(0,2);},/[\x00-\x1f\\]/);return ('"' + _b.replace(/"/g, '\\"') + '"');},$aM: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;
+      var i = self.match(_a);
+      return (i === null) ? nil : i}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}}}});$O = a$i({a$e: [$B],a$c: $h,a$h: {$a: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return []}},a$f: "Array",a$d: Array,a$g: {$O: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;return self.concat(_a)}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$D: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;self.push(_a); return self}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$aN: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;
+      var del = false;
+      for (var i=0; i < self.length; i++)
+      {
+        if (_a.$h(nil, self[i]))
+        {
+          self.splice(i,1);
+          del = true;
+          // stay at the current index unless we are at the last element!
+          if (i < self.length-1) --i; 
+        }
+      }
+      return del ? _a : nil}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$aE: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self.length},$L: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;var v = self[_a]; return ((v === undefined || v === null) ? nil : v)}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$h: function(_b,_a){var self;self=this;try{if(arguments.length!=2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));;
+      if (!(_a instanceof Array)) return false;
+      if (self.length != _a.length) return false;  
+ 
+      //
+      // compare element-wise
+      //
+      for (var i = 0; i < self.length; i++) 
+      {
+        if (! self[i].$h(nil, _a[i]))
+        {
+          // 
+          // at least for one element #eql? holds not true
+          //
+          return false;
+        }
+      }
+      
+      return true;
+      }catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$aO: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self.concat().reverse()},$p: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return('[' + self.toString() + ']');},$M: function(_c,_a,_b){var self;self=this;try{if(arguments.length!=3)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 2)'));;return (self[_a] = _b)}catch(_d){if(_d.a$a!==undefined)return _d.a$a;throw(_d)}},$v: function(_a){var self,_b;_b=nil;self=this;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;for (var i=0; i < self.length; i++) {;_a(self[i]);};_b=self;return _b}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$aP: function(_a){var self,_b;_b=nil;self=this;try{if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;for (var i=0; i < self.length; i++) {;_a([self[i],i]);};_b=self;return _b}catch(_c){if(_c.a$a!==undefined)return _c.a$a;throw(_c)}},$Y: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;var v = self[0]; return ((v === undefined || v === null) ? nil : v)},$aG: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self.length},$aQ: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self.pop()},$l: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self.shift()},$m: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return (self.length == 0)},$H: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self;return _a},$aS: function(){var self,_a,_b;self=this;_a=[];for(_b=1;_b<arguments.length;_b++)_a.push(arguments[_b]);;self.push.apply(self, _a); return self},$aR: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self;return _a},$aV: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;return self.concat()},$j: function(){var self,_a,_e;_a=_e=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a="[";_a=_a.$O(nil,self.$G(function(_b){var _c;var _d=nil;_c=_b===undefined?nil:_b;_d=_c.$j();return _d}).$P(nil,", "));_a=_a.$O(nil,"]");_e=_a;return _e},$aU: function(){var self;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;self.reverse(); return self},$aT: function(){var self,_a,_b;self=this;_a=[];for(_b=1;_b<arguments.length;_b++)_a.push(arguments[_b]);;self.unshift.apply(self, _a); return self},$P: function(_i,_a){var self,_b,_d,_h;_b=_h=nil;self=this;try{if(arguments.length>2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));if(_a===undefined)_a="";;_b="";self.$aP(function(_c){var _e,_f;var _g=nil;(_d=a$c(_c),_e=_d[0]===undefined?nil:_d[0],_f=_d[1]===undefined?nil:_d[1],_d);_b=_b.$O(nil,_e.$p());if((_d=_f.$W(nil,self.$aG().$ag(nil,1)),_d===false||_d===nil)){_g=_b=_b.$O(nil,_a)}else{_g=nil};return _g});_h=_b;return _h}catch(_j){if(_j.a$a!==undefined)return _j.a$a;throw(_j)}}}});$j = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_a,_b;_a=_b=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$a();_a.$aW();_a.$f(nil,'$aW',a$b([]));_a.$aW(nil,1);_a.$f(nil,'$aW',a$b([1]));_a.$f(nil,'$aW',[1].concat(a$b([])));_a.$aW(nil,1,2);_a.$f(nil,'$aW',a$b([1,2]));_a.$f(nil,'$aW',[1].concat(a$b([2])));_b=_a.$f(nil,'$aW',[1].concat(a$b([1,2])));return _b}},a$f: "TestSplat",a$g: {$aW: function(){var self,_a,_b,_c;_c=nil;self=this;_a=[];for(_b=1;_b<arguments.length;_b++)_a.push(arguments[_b]);;_c=self.$t(nil,_a);return _c}}});$P = a$i({a$e: [$H],a$c: $h,a$f: "A",a$g: {$aX: function(_d,_a,_b){var self,_c;_c=nil;self=this;try{if(arguments.length!=3)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 2)'));;_c=self.$t(nil,_a,_b);return _c}catch(_e){if(_e.a$a!==undefined)return _e.a$a;throw(_e)}}}});$Q = a$i({a$e: [],a$c: $P,a$f: "B",a$g: {$aX: function(_d,_a,_b){var self;self=this;var _c=arguments;try{if(arguments.length!=3)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 2)'));;self.$t(nil,"in B");a$e(self,'$aX',_c)}catch(_e){if(_e.a$a!==undefined)return _e.a$a;throw(_e)}}}});$R = a$i({a$e: [],a$c: $Q,a$f: "C"});$x = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;self.$t(nil,$P.$a().$n(nil,$P));self.$t(nil,$P.$a().$n(nil,$Q));self.$t(nil,$Q.$a().$n(nil,$P));self.$t(nil,$P.$a().$n(nil,$H));self.$t(nil,$Q.$a().$n(nil,$H));self.$t(nil,$P.$a().$i(nil,$P));self.$t(nil,$P.$a().$i(nil,$Q));self.$t(nil,$Q.$a().$i(nil,$P));self.$t(nil,$P.$a().$i(nil,$H));self.$t(nil,$Q.$a().$i(nil,$H));self.$t(nil,$R.$a().$i(nil,$H));self.$t(nil,$R.$a().$i(nil,$P));self.$t(nil,$R.$a().$i(nil,$Q));self.$t(nil,$R.$a().$i(nil,$R));self.$t(nil,$R.$a().$i(nil,$i));self.$t(nil,$R.$a().$i(nil,$h));self.$t(nil,$R.$a().$i(nil,$g));self.$t(nil,$R.$a().$i(nil,$a));self.$t(nil,"hallo".$c().$b());self.$t(nil,nil.$c().$b());self.$t(nil,nil.$n(nil,$E));self.$t(nil,"hallo".$n(nil,$e));self.$t(nil,"hallo".$c());self.$t(nil,$P);self.$t(nil,$Q);self.$t(nil,$R);self.$t(nil,$i);self.$t(nil,$H);self.$t(nil,$H.$b());self.$t(nil,$P.$b());_a=self.$t(nil,$Q.$b());return _a}},a$f: "TestClass"});$S = a$i({a$e: [],a$c: $h,a$f: "Proc",a$d: Function,a$g: {$E: function(){var self,_a,_b;self=this;_a=[];for(_b=1;_b<arguments.length;_b++)_a.push(arguments[_b]);;if (_a.length == 0) return self();
+       else if (_a.length == 1) return self(_a[0]);
+       else return self(_a);}}});$T = a$i({a$e: [],a$c: $L,a$f: "Fixnum",a$d: Number});$k = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$u(nil,"Hello World from RubyJS");return _a}},a$f: "TestSimpleOutput"});$r = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;self.$t(nil,"a".$h(nil,"a"));self.$t(nil,"a".$h(nil,1));self.$t(nil,"1".$h(nil,1));self.$t(nil,[1,2].$h(nil,[1,2]));_a=self.$t(nil,(1).$h(nil,"1"));return _a}},a$f: "TestEql"});a$i({a$e: [],a$b: $a});$s = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_a,_b;_a=_b=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$a();_a.$aW(nil,0);self.$u(nil,"--");_a.$aW(nil,1,2);self.$u(nil,"--");_a.$aW(nil,1,2,9);self.$u(nil,"--");_a.$aW(nil,1,2,9,5);self.$u(nil,"--");_a.$aW(nil,1,2,9,5,6);self.$u(nil,"--");_b=_a.$aW(nil,1,2,9,5,6,7,8,9,10,11,12);return _b}},a$f: "TestArgs",a$g: {$aW: function(_g,_a,_b,_c){var self,_d,_e,_f;_f=nil;self=this;try{if(arguments.length<2)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 1)'));if(_b===undefined)_b=1;if(_c===undefined)_c="hallo";_d=[];for(_e=4;_e<arguments.length;_e++)_d.push(arguments[_e]);;self.$t(nil,_a);self.$t(nil,_b);self.$t(nil,_c);_f=self.$t(nil,_d);return _f}catch(_h){if(_h.a$a!==undefined)return _h.a$a;throw(_h)}}}});$v = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$a().$R();return _a}},a$f: "TestArray",a$g: {$R: function(){var self,_a,_b;_a=_b=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=["a","b","b","b","c"];self.$t(nil,_a.$aN(nil,"b"));self.$t(nil,_a);_b=self.$t(nil,_a.$aN(nil,"z"));return _b}}});$y = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$a().$R();return _a}},a$f: "TestCase",a$g: {$R: function(){var self,_a,_b,_c,_d;_d=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=(1).$O(nil,1); if((_b=(_c=(1).$g(nil,_a), (_c!==false&&_c!==nil) ? _c : ((3).$g(nil,_a))),_b!==false&&_b!==nil)){self.$u(nil,"NOT OKAY")}else{if((_b=(2).$g(nil,_a),_b!==false&&_b!==nil)){self.$u(nil,"OKAY")}else{self.$u(nil,"NOT OKAY")}};self.$t(nil,$O.$g(nil,[]));self.$t(nil,$c.$g(nil,$c.$a()));_a=1; if((_b=$T.$g(nil,_a),_b!==false&&_b!==nil)){self.$u(nil,"OK")}else{if((_b=(1).$g(nil,_a),_b!==false&&_b!==nil)){self.$u(nil,"OK")}};_a=_d=4; if((_b=$F.$a(nil,0,3,false).$g(nil,_a),_b!==false&&_b!==nil)){_d=self.$u(nil,"NOT OKAY")}else{if((_b=$F.$a(nil,1,4,true).$g(nil,_a),_b!==false&&_b!==nil)){_d=self.$u(nil,"NOT OKAY")}else{if((_b=$F.$a(nil,2,4,false).$g(nil,_a),_b!==false&&_b!==nil)){_d=self.$u(nil,"OKAY")}else{_d=nil}}};return _d}}});$U = a$i({a$e: [],a$c: $D,a$f: "Katze",a$g: {$b: function(){var self,_a;_a=nil;self=this;if(self.$aY===undefined)self.$aY=nil;_a=self.$aY;return _a},$e: function(_d,_a,_b){var self,_c;_c=nil;self=this;try{if(arguments.length!=3)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 2)'));;a$d(self,'$e',nil,[_a]);_c=self.$aY=_b;return _c}catch(_e){if(_e.a$a!==undefined)return _e.a$a;throw(_e)}},$aZ: function(){var self,_a;_a=nil;self=this;if(self.$aY===undefined)self.$aY=nil;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$u(nil,"miau, ich bin ".$O(nil,self.$aY));return _a}}});$u = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$a().$R();return _a}},a$f: "TestString",a$g: {$R: function(){var self,_a,_i;_a=_i=nil;self=this;if(self.$a0===undefined)self.$a0=nil;if(self.$a1===undefined)self.$a1=nil;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;self.$t(nil,"hello");self.$t(nil,"hallo\b\t\n");self.$t(nil,"hallo\\leute");self.$t(nil,"\"super\"");self.$t(nil,"hello".$aK(nil,"e"));self.$t(nil,"hello".$aK(nil,"lo"));self.$t(nil,"hello".$aK(nil,"a"));self.$t(nil,"hello hello".$aK(nil,"ll"));self.$t(nil,"hello hello".$aK(nil,"ll",3));self.$t(nil,"hallo".$L(nil,0,1));self.$t(nil,"hallo".$L(nil,0,2));self.$t(nil,"hallo".$L(nil,0,5));self.$t(nil,"10".$aF(nil,10,"0"));self.$t(nil,"10".$aF(nil,1,"blah"));self.$t(nil,"x".$aF(nil,4,"()"));self.$t(nil,"10".$aH(nil,10,"0"));self.$t(nil,"10".$aH(nil,1,"blah"));self.$t(nil,"x".$aH(nil,4,"()"));self.$t(nil,("abc " + ((1).$O(nil,2)).$p() + (" def").$p()));self.$a0="hallo".$j();self.$a1=4.5;self.$t(nil,("" + (self.$a0).$p() + (",").$p() + (self.$a1).$p()));_a="hallo".$aL(nil,"l","r");self.$t(nil,_a);_a="hallo".$aL(nil,/ll/,"rr");self.$t(nil,_a);_a="hallo".$aL(function(){var _c=nil;;_c="r";return _c},/l/);self.$t(nil,_a);_a="hallo".$aL(function(){var _e=nil;;_e="blah blah";return _e},/ll/);self.$t(nil,_a);_i="hallllllo".$aL(function(_f){var _g;var _h=nil;_g=_f===undefined?nil:_f;_h=self.$t(nil,_g);return _h},/(l)l/);return _i}}});$z = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$a().$R();return _a}},a$f: "TestRange",a$g: {$R: function(){var self,_a,_i,_j;_a=_i=_j=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=$F.$a(nil,0,2);self.$t(nil,_a.$Y());self.$t(nil,_a.$0());self.$t(nil,_a);self.$t(nil,$F.$a(nil,0,2,false).$p());self.$t(nil,$F.$a(nil,0,2,true).$p());$F.$a(nil,0,4,false).$v(function(_b){var _c;var _d=nil;_c=_b===undefined?nil:_b;_d=self.$t(nil,_c);return _d});$F.$a(nil,0,4,true).$v(function(_e){var _c;var _f=nil;_c=_e===undefined?nil:_e;_f=self.$t(nil,_c);return _f});$F.$a(nil,-1,-4,false).$v(function(_g){var _c;var _h=nil;_c=_g===undefined?nil:_g;_h=self.$t(nil,_c);return _h});self.$t(nil,$F.$a(nil,0,4,false).$4(nil,4));self.$t(nil,$F.$a(nil,0,4,false).$4(nil,5));self.$t(nil,$F.$a(nil,0,4,true).$4(nil,5));self.$t(nil,$F.$a(nil,0,4,true).$4(nil,4));self.$t(nil,$F.$a(nil,0,4,true).$4(nil,3));self.$t(nil,$F.$a(nil,0,4,true).$4(nil,0));self.$t(nil,$F.$a(nil,0,4,true).$4(nil,-1));self.$t(nil,$F.$a(nil,-1,-5,false).$H());self.$t(nil,$F.$a(nil,-5,-1,false).$H());_i=$F.$a(nil,0,4);self.$t(nil,_i.$Y());self.$t(nil,_i.$3());self.$t(nil,_i.$0());self.$t(nil,_i.$7());self.$t(nil,_i.$2());_i=$F.$a(nil,1,5,true);self.$t(nil,_i.$Y());self.$t(nil,_i.$3());self.$t(nil,_i.$0());self.$t(nil,_i.$7());self.$t(nil,_i.$2());self.$t(nil,false.$W(nil,false));self.$t(nil,false.$W(nil,true));self.$t(nil,true.$W(nil,false));self.$t(nil,true.$W(nil,true));self.$t(nil,$F.$a(nil,0,2,false).$W(nil,$F.$a(nil,0,2,false)));self.$t(nil,$F.$a(nil,0,2,false).$W(nil,$F.$a(nil,0,2)));_j=self.$t(nil,$F.$a(nil,0,2,false).$W(nil,$F.$a(nil,0,2,true)));return _j}}});$V = a$i({a$e: [],a$c: $L,a$f: "Float",a$d: Number});$W = a$i({a$e: [],a$c: $h,a$f: "Regexp",a$d: RegExp});$m = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_a,_b,_c,_d,_e,_f;_a=_b=_c=_d=_e=_f=nil;self=this;if(self.$a0===undefined)self.$a0=nil;if(self.$a2===undefined)self.$a2=nil;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;(_a=[1,2],_b=_a[0]===undefined?nil:_a[0],_c=_a[1]===undefined?nil:_a[1],_a);self.$t(nil,_b);self.$t(nil,_c);self.$u(nil,"--");(_a=[1,2,3],_b=_a[0]===undefined?nil:_a[0],_c=_a[1]===undefined?nil:_a[1],_a);self.$t(nil,_b);self.$t(nil,_c);self.$u(nil,"--");_d=5;(_a=[1,2],_b=_a[0]===undefined?nil:_a[0],_c=_a[1]===undefined?nil:_a[1],_d=_a[2]===undefined?nil:_a[2],_a);self.$t(nil,_b);self.$t(nil,_c);self.$t(nil,_d);self.$u(nil,"--");(_a=[1,2,3],self.$a0=_a[0]===undefined?nil:_a[0],_c=_a[1]===undefined?nil:_a[1],self.$a2=_a[2]===undefined?nil:_a[2],_a);self.$t(nil,self.$a0);self.$t(nil,_c);self.$t(nil,self.$a2);self.$u(nil,"--");self.$u(nil,"swap");(_a=[1,2],_b=_a[0]===undefined?nil:_a[0],_c=_a[1]===undefined?nil:_a[1],_a);self.$t(nil,_b);self.$t(nil,_c);(_a=[_c,_b],_b=_a[0]===undefined?nil:_a[0],_c=_a[1]===undefined?nil:_a[1],_a);self.$t(nil,_b);self.$t(nil,_c);self.$u(nil,"--");self.$u(nil,"splat1");(_a=[1,2],_b=_a[0]===undefined?nil:_a[0],_c=_a[1]===undefined?nil:_a[1],_d=_a[2]===undefined?nil:_a[2],_e=_a.slice(3),_a);self.$t(nil,_b);self.$t(nil,_c);self.$t(nil,_d);self.$t(nil,_e);self.$u(nil,"--");self.$u(nil,"splat2");(_a=[1,2],_b=_a[0]===undefined?nil:_a[0],_c=_a.slice(1),_a);self.$t(nil,_b);self.$t(nil,_c);self.$u(nil,"--");self.$u(nil,"splat3");(_a=[1,2,3,4,5],_b=_a[0]===undefined?nil:_a[0],_c=_a.slice(1),_a);self.$t(nil,_b);self.$t(nil,_c);self.$u(nil,"--");self.$u(nil,"splat with globals");self.$t(nil,(typeof($X)=='undefined'?nil:$X));self.$t(nil,(typeof($Y)=='undefined'?nil:$Y));(_a=[1,2],$X=_a[0]===undefined?nil:_a[0],$Y=_a[1]===undefined?nil:_a[1],_a);self.$t(nil,(typeof($X)=='undefined'?nil:$X));self.$t(nil,(typeof($Y)=='undefined'?nil:$Y));_f=self.$u(nil,"--");return _f}},a$f: "TestMassign"});$o = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=self.$a().$R();return _a}},a$f: "TestIf",a$g: {$R: function(){var self,_a,_b,_c,_d,_e,_f;_f=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;if(true){self.$u(nil,"OK")};if(false){self.$u(nil,"NOT OK")};if(true){self.$u(nil,"OK")};if(false){self.$u(nil,"NOT OK")};if((_a=(_b=true, (_b!==false&&_b!==nil) ? ((_c=true, (_c!==false&&_c!==nil) ? ((_d=(_e=true, (_e!==false&&_e!==nil) ? _e : (false)), (_d!==false&&_d!==nil) ? (true) : _d)) : _c)) : _b),_a!==false&&_a!==nil)){self.$u(nil,"OK")};if((_a=(_b=(5).$5(nil,6), (_b!==false&&_b!==nil) ? ((6).$5(nil,7)) : _b),_a!==false&&_a!==nil)){self.$u(nil,"OK")};self.$t(nil,(_a=false, (_a!==false&&_a!==nil) ? _a : ("a")));self.$t(nil,(_a=nil, (_a!==false&&_a!==nil) ? _a : ("a")));self.$t(nil,(_a=true, (_a!==false&&_a!==nil) ? _a : ("a")));self.$t(nil,(_a="b", (_a!==false&&_a!==nil) ? _a : ("a")));self.$t(nil,(_a=false, (_a!==false&&_a!==nil) ? ("a") : _a));self.$t(nil,(_a=nil, (_a!==false&&_a!==nil) ? ("a") : _a));self.$t(nil,(_a=true, (_a!==false&&_a!==nil) ? ("a") : _a));_f=self.$t(nil,(_a="b", (_a!==false&&_a!==nil) ? ("a") : _a));return _f}}});$w = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_a,_b,_c,_d;_a=_b=_c=_d=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;_a=$U.$a(nil,"AA-BB","Leni");_b=$U.$a(nil,"AC-DC","Flocki");_c=$G.$a(nil,"AA-ZZ");_a.$aZ();_c.$$();_d=_c.$aa(nil,_a);return _d}},a$f: "TestLebewesen"});$c = a$i({a$e: [],a$c: $I,a$f: "RuntimeError"});$b = a$i({a$e: [],a$c: $I,a$f: "ArgumentError"});$n = a$i({a$e: [],a$c: $h,a$h: {$B: function(){var self,_a;_a=nil;self=this;if(arguments.length>1)throw($b.$a(nil,'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for 0)'));;self.$t(nil,$P.$a().$w(nil,"a_method",1,2));self.$t(nil,$Q.$a().$w(nil,"a_method",1,2));self.$t(nil,$P.$a().$s(nil,"a_method"));self.$t(nil,$P.$a().$s(nil,"to_s"));self.$t(nil,$P.$a().$s(nil,"inspect"));_a=self.$t(nil,$P.$a().$s(nil,"b_method"));return _a}},a$f: "TestSend"});      $a.a$c = $h;
+a$g([$g,$h,$i,$A,$B,$C,$l,$p,$D,$E,$F,$G,$H,$f,$I,$J,$K,$L,$M,$q,$t,$N,$d,$e,$O,$j,$P,$Q,$R,$x,$S,$T,$k,$r,$a,$s,$v,$y,$U,$u,$z,$V,$W,$m,$o,$w,$c,$b,$n]);function main() { $A.$B() }
+
+
+var STDOUT = [];
+
+function flush()
+{
+  document.getElementById('out').innerHTML = 
+    STDOUT.join("\n").replace(/[&]/g, "&amp;").replace(/[<]/g, "&lt;").replace(/[>]/g, "&gt;");
+}
+
+function start()
+{
+  main(); flush();
+  compare();
+}
+
+function compare()
+{
+  var out = document.getElementById('out');
+  var expected = document.getElementById('expected');
+  if (out.innerHTML == expected.innerHTML)
+  {
+    out.style.background = "green";
+  }
+  else
+  {
+    out.style.background = "red";
+  }
+}
+</script>
+<style>
+  #expected { background: #ccc; }
+</style>
+<body onload="start();">
+  <table cellspacing="5" cellpadding="5">
+  <thead>
+    <tr>
+      <td width="50%"><b>Output</b></td>
+      <td width="50%"><b>Expected</b></td>
+    </tr>
+  </thead>
+  <tbody>
+  <tr>
+    <td valign="top" width="50%">
+      <pre id="out"></pre>
+    </td>
+    <td valign="top" width="50%">
+      <pre id="expected">~~~~~~~~~~~~~~~~~~~~
+Test splat
+~~~~~~~~~~~~~~~~~~~~
+[]
+[]
+[1]
+[1]
+[1]
+[1, 2]
+[1, 2]
+[1, 2]
+[1, 1, 2]
+~~~~~~~~~~~~~~~~~~~~
+Test simple output
+~~~~~~~~~~~~~~~~~~~~
+Hello World from RubyJS
+~~~~~~~~~~~~~~~~~~~~
+Test new
+~~~~~~~~~~~~~~~~~~~~
+test
+~~~~~~~~~~~~~~~~~~~~
+Test massign
+~~~~~~~~~~~~~~~~~~~~
+1
+2
+--
+1
+2
+--
+1
+2
+nil
+--
+1
+2
+3
+--
+swap
+1
+2
+2
+1
+--
+splat1
+1
+2
+nil
+[]
+--
+splat2
+1
+[2]
+--
+splat3
+1
+[2, 3, 4, 5]
+--
+splat with globals
+nil
+nil
+1
+2
+--
+~~~~~~~~~~~~~~~~~~~~
+Test send
+~~~~~~~~~~~~~~~~~~~~
+1
+2
+nil
+"in B"
+1
+2
+nil
+true
+true
+true
+false
+~~~~~~~~~~~~~~~~~~~~
+Test if
+~~~~~~~~~~~~~~~~~~~~
+OK
+OK
+OK
+OK
+"a"
+"a"
+true
+"b"
+false
+nil
+"a"
+"a"
+~~~~~~~~~~~~~~~~~~~~
+Test hash
+~~~~~~~~~~~~~~~~~~~~
+6
+7
+1
+2
+"hello"
+"good"
+~~~~~~~~~~~~~~~~~~~~
+Test exception
+~~~~~~~~~~~~~~~~~~~~
+"before block"
+"in block"
+"after block"
+"block"
+"else"
+#&lt;RuntimeError: test&gt;
+before begin
+before raise
+#&lt;Exception: blah&gt;
+yes
+ensure
+after begin
+--
+abc
+#&lt;RuntimeError: r&gt;
+b
+e
+#&lt;ArgumentError: wrong number of arguments (1 for 0)&gt;
+~~~~~~~~~~~~~~~~~~~~
+Test eql
+~~~~~~~~~~~~~~~~~~~~
+true
+false
+false
+true
+false
+~~~~~~~~~~~~~~~~~~~~
+Test args
+~~~~~~~~~~~~~~~~~~~~
+0
+1
+"hallo"
+[]
+--
+1
+2
+"hallo"
+[]
+--
+1
+2
+9
+[]
+--
+1
+2
+9
+[5]
+--
+1
+2
+9
+[5, 6]
+--
+1
+2
+9
+[5, 6, 7, 8, 9, 10, 11, 12]
+~~~~~~~~~~~~~~~~~~~~
+Test yield
+~~~~~~~~~~~~~~~~~~~~
+three_times_yield
+1
+2
+3
+--
+three_times_block
+1
+2
+3
+--
+three_times_indirect
+1
+2
+3
+1
+2
+3
+--
+three_times_yield2
+1
+3
+4
+loop
+2
+4
+6
+8
+10
+["out", 10]
+--
+loop2
+2
+4
+6
+8
+10
+["out", 10]
+--
+while-loop
+2
+4
+6
+8
+10
+----
+10
+9
+8
+7
+6
+5
+4
+3
+2
+1
+--
+~~~~~~~~~~~~~~~~~~~~
+Test string
+~~~~~~~~~~~~~~~~~~~~
+"hello"
+"hallo\b\t\n"
+"hallo\\leute"
+"\"super\""
+1
+3
+nil
+2
+8
+"h"
+"ha"
+"hallo"
+"0000000010"
+"10"
+"()(x"
+"1000000000"
+"10"
+"x()("
+"abc 3 def"
+"\"hallo\",4.5"
+"harro"
+"harro"
+"harro"
+"hablah blaho"
+"ll"
+"ll"
+"ll"
+~~~~~~~~~~~~~~~~~~~~
+Test array
+~~~~~~~~~~~~~~~~~~~~
+"b"
+["a", "c"]
+nil
+~~~~~~~~~~~~~~~~~~~~
+Test lebewesen
+~~~~~~~~~~~~~~~~~~~~
+miau, ich bin Leni
+wau wau
+ich jage Leni
+~~~~~~~~~~~~~~~~~~~~
+Test class
+~~~~~~~~~~~~~~~~~~~~
+true
+false
+false
+false
+false
+true
+false
+true
+true
+true
+true
+true
+true
+true
+false
+true
+true
+false
+"String"
+"NilClass"
+true
+true
+String
+A
+B
+C
+D
+X
+"X"
+"A"
+"B"
+~~~~~~~~~~~~~~~~~~~~
+Test case
+~~~~~~~~~~~~~~~~~~~~
+OKAY
+true
+true
+OK
+OKAY
+~~~~~~~~~~~~~~~~~~~~
+Test range
+~~~~~~~~~~~~~~~~~~~~
+0
+2
+0..2
+"0..2"
+"0...2"
+0
+1
+2
+3
+4
+0
+1
+2
+3
+true
+false
+false
+false
+true
+true
+false
+[]
+[-5, -4, -3, -2, -1]
+0
+0
+4
+4
+false
+1
+1
+5
+5
+true
+true
+false
+false
+true
+true
+true
+false</pre>
+    </td>
+  </tr>
+  </tbody>
+  </table>
+</body></html>
