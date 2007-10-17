@@ -316,9 +316,24 @@ module RubyJS; module Environment
       end
       nil
     end
-
+    
     def method_missing(id, *args, &block)
       raise "NoMethodError: undefined method `#{id}' for #{self.inspect}" 
+    end
+
+    def __invoke(id, args, &block)
+      `return #<self>[#<id>].apply(#<self>, [#<block>].concat(#<args>))`
+    end
+    
+    # NOTE: In Ruby __send is __send__
+    def __send(id, *args, &block)
+      `return #<self>[#<globalattr:mm>[#<id>]].apply(#<self>, [#<block>].concat(#<args>))`
+    end
+    alias send __send
+
+    def respond_to?(id) `
+      var m = #<globalattr:mm>[#<id>]; 
+      return (m !== undefined && #<self>[m] !== undefined)`
     end
 
     # FIXME
@@ -353,16 +368,6 @@ module RubyJS; module Environment
       self
     end
 
-    def __invoke(id, args, &block)
-      `return #<self>[#<id>].apply(#<self>, [#<block>].concat(#<args>))`
-    end
-
-    # NOTE: In Ruby __send is __send__
-    def __send(id, *args, &block)
-      `return #<self>[#<globalattr:mm>[#<id>]].apply(#<self>, [#<block>].concat(#<args>))`
-    end
-    alias send __send
-
     def initialize
     end
 
@@ -373,6 +378,8 @@ module RubyJS; module Environment
     def inspect
       `return #<self>.toString()`
     end
+
+    alias to_s inspect
 
     def hash
       `return #<self>.toString()`
