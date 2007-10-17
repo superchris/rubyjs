@@ -27,7 +27,7 @@ script << %{
     def self.main
       begin
         #{body}
-      rescue Exception
+      rescue Exception => a
         p "unhandled exception"
         p a
       end

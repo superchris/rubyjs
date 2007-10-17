@@ -47,5 +47,15 @@ class TestException
     ensure
       puts "e"
     end
+
+    #
+    # Test arity checks
+    #
+
+    begin
+      p("hallo".to_s(2))
+    rescue ArgumentError => a
+      p a
+    end
   end
 end

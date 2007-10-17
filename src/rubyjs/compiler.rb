@@ -346,6 +346,13 @@ class MethodCompiler < SexpProcessor
     process(call)
   end
 
+  def throw_argument_error(n)
+    @model.add_method_call(m = @model.encode_method("new"))
+    "throw(" + @model.lookup_constant('::ArgumentError') + 
+    #".#{m}(#{@model.encode_nil},'wrong number of arguments ('+arguments.length.toString()+' for )')"
+    ".#{m}(#{@model.encode_nil},'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for #{n})'))"
+  end
+
   #
   # STATEMENT
   #
@@ -426,22 +433,25 @@ class MethodCompiler < SexpProcessor
         # min_arity == infinity as well => we need no check
       else
         # +1 because we have a block argument anyway.
-        str2 << "if(arguments.length<#{min_arity+1})throw('ArgumentError');"
+        str2 << "if(arguments.length<#{min_arity+1})#{throw_argument_error(min_arity)};"
       end
     else
       if min_arity == 0
         # can't be less than 0 arguments anyway! => no check
+        str2 << "if(arguments.length>#{max_arity+1})#{throw_argument_error(max_arity)};"
       else
         if min_arity == max_arity
-          str2 << "if(arguments.length!=#{min_arity+1})throw('ArgumentError');"
+          str2 << "if(arguments.length!=#{min_arity+1})#{throw_argument_error(min_arity)};"
         else
-          str2 << "if(arguments.length<#{min_arity+1}||arguments.length>#{max_arity+1})throw('ArgumentError');"
+          str2 << "if(arguments.length<#{min_arity+1})#{throw_argument_error(min_arity)};"
+          str2 << "if(arguments.length>#{max_arity+1})#{throw_argument_error(max_arity)};"
         end
       end
     end
 
     # NoArgumentArityChecks disable argument arity checks
-    unless $RUBYJS__OPTS.include?('NoArgumentArityChecks')
+    if $RUBYJS__OPTS.include?('NoArgumentArityChecks')
+    else
       # prepend
       str = str2 + str
     end
