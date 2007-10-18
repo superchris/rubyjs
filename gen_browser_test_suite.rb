@@ -40,29 +40,9 @@ def gen_test_suite(tests)
   return script
 end
 
-if ARGV.empty?
-  tests = Dir['test/test_*.rb']
-else
-  tests = Dir["test/test_{" + ARGV.join(',') + "}.rb"] 
-end
-
-rubycode = Tempfile.new('rubyjs')
-script = gen_test_suite(tests)
-rubycode.write(script)
-rubycode.close(false)
-html_script = script.gsub("&", "&amp;").
-  gsub("<", "&lt;").
-  gsub(">", "&gt;").gsub("\n", "<br/>")
-
-expected = `ruby -I./test < #{rubycode.path}`.chomp.  # remove last newline
-  gsub("&", "&amp;").
-  gsub("<", "&lt;").
-  gsub(">", "&gt;").gsub("\n", "<br/>")
-
-puts '<html><head><script>'
-puts `./rubyjs_gen -I./test -P Browser -m TestSuite #{rubycode.path}`
-puts %{
-
+def ruby2js(rubycode_path)
+  jscode = `./rubyjs_gen -I./test -P Browser -m TestSuite #{rubycode_path}`
+  jscode << %{
 var STDOUT = [];
 
 function flush()
@@ -90,12 +70,41 @@ function compare()
     out.style.background = "red";
   }
 }
-</script>
+}
+
+  return jscode
+end
+
+if ARGV.empty?
+  tests = Dir['test/test_*.rb']
+else
+  tests = Dir["test/test_{" + ARGV.join(',') + "}.rb"] 
+end
+
+rubycode = Tempfile.new('rubyjs')
+script = gen_test_suite(tests)
+rubycode.write(script)
+rubycode.close(false)
+
+jscode = ruby2js(rubycode.path)
+File.open('browser.test.js', 'w+') {|f| f << jscode}
+
+html_script = script.gsub("&", "&amp;").
+  gsub("<", "&lt;").
+  gsub(">", "&gt;").gsub("\n", "<br/>")
+
+expected = `ruby -I./test < #{rubycode.path}`.chomp.  # remove last newline
+  gsub("&", "&amp;").
+  gsub("<", "&lt;").
+  gsub(">", "&gt;").gsub("\n", "<br/>")
+
+puts %{<html><head><script language="javascript" src="browser.test.js"></script>
 <style>
   #expected { background: #ccc; }
 </style>
 <body onload="start();">
-  <a href="#source">View Ruby source code</a><br/>
+  <a href="#source">View Ruby source code</a>&nbsp;|&nbsp;
+  <a href="browser.test.js">View Javascript source code</a><br/>
   <table cellspacing="5" cellpadding="5">
   <thead>
     <tr>
