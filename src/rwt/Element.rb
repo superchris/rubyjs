@@ -786,6 +786,7 @@ class Element
   # elem::   the element whose HTML is to be retrieved
   # return:: the HTML representation of the element's children
   #
+  # FIXME: null?
   def self.getInnerHTML(elem) `
     var ret = #<elem>.innerHTML;
     return (ret == null) ? #<nil> : ret`

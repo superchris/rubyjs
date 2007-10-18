@@ -77,18 +77,6 @@ TODO
 LIMITATIONS
 
   --
-  In inline Javascript strings or in general everywhere interpolation or
-  stripping is used, dont use strings (or ' and " characters) in
-  comments. For example:
-
-    // this won't work
-    // this "neither"
-    // whereas this will work
-
-  Also, inside Regexp's (/.../) spaces are still moved. Better use 
-  "new Regexp" instead for now.
-
-  --
   Module's are mapped to Classes for now.
 
   --
@@ -138,9 +126,6 @@ LIMITATIONS
   by using a throw instead of break and surrounding the loop by a catch.
 
   The same applies for +next+!
-
-  --
-  +return+ inside of blocks are not supported yet.
 
   -- 
   Methods can be called regardless of their privacy (private, protected)

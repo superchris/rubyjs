@@ -13,12 +13,24 @@ function NilClass() {}
 NilClass.prototype.toString = function() { return "nil"; };
 #<nil> = new NilClass();
 
-function #<globalattr:iter_break>(a)
+//
+// r: return value
+// s: scope (method scope)
+//
+function #<globalattr:iter_jump>(r,s)
 {
-  var x = new Object();
-  x.#<attr:iter_break> = a; 
-  throw(x);
+  this.#<attr:return_value> = r;
+  this.#<attr:scope> = s; 
+  return this;
 }
+
+//
+// Throw in Javascript is a statement.
+//
+// This function can be used to overcome
+// that limitation.
+//
+function #<globalattr:throw_expr>(x) { throw(x); }
 
 function #<globalattr:to_splat>(a)
 {

@@ -108,6 +108,18 @@ class TestYield
     puts "--"
   end
 
+  def return_in_block(&block)
+    p "return_in_block before"
+    block.call
+    p "return_in_block after"
+  end
+
+  def test_return_in_block
+    p "before"
+    return_in_block { return 4 }
+    p "after (NOT)"
+  end
+
   def test
     test_three_times_yield
     test_three_times_block
@@ -116,6 +128,8 @@ class TestYield
     test_loop
     test_loop2
     test_while_loop
+
+    p test_return_in_block
   end
 
   def self.main

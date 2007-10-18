@@ -146,6 +146,16 @@ class MethodCompiler < SexpProcessor
     # Used in catch statements
     #
     @exception_name = nil
+
+
+
+    #
+    # Each method has a unique id assigned to it (a simple integer).
+    # This is used for returns that occur inside a code-block, which
+    # have to return the method in which the code-block is declared and
+    # NOT the method in which it is called". 
+    #
+    @unique_method_scope = nil
   end
 
   def compile_method(pt)
@@ -271,15 +281,24 @@ class MethodCompiler < SexpProcessor
       # use a local or temporary variable here! 
       #
       x = exception_name()
-      iter_break = @model.encode_attr("iter_break")
+      iter_jump = @model.encode_globalattr("iter_jump")
+      return_value = @model.encode_attr("return_value")
+      scope = @model.encode_attr("scope")
+      uid = unique_method_scope()
+
       str << "}catch(#{x}){"
-      str << "if(#{x}.#{iter_break}!==undefined)return #{x}.#{iter_break};"
+      # scope == null or scope == uid
+      str << "if(#{x} instanceof #{iter_jump} && (!#{x}.#{scope} || #{x}.#{scope}==#{uid}))return #{x}.#{return_value};"
       str << "throw(#{x})}"
     end
 
     str << "}"
 
     return str
+  end
+
+  def unique_method_scope
+    @unique_method_scope ||= @model.next_unique_scope_id
   end
 
   def process_scope(exp)
@@ -349,7 +368,6 @@ class MethodCompiler < SexpProcessor
   def throw_argument_error(n)
     @model.add_method_call(m = @model.encode_method("new"))
     "throw(" + @model.lookup_constant('::ArgumentError') + 
-    #".#{m}(#{@model.encode_nil},'wrong number of arguments ('+arguments.length.toString()+' for )')"
     ".#{m}(#{@model.encode_nil},'wrong number of arguments ('+Math.max(0,arguments.length-1).toString()+' for #{n})'))"
   end
 
@@ -1014,8 +1032,8 @@ class MethodCompiler < SexpProcessor
     str << "catch(#{x}){"
 
     # check whether it's an iterator break. if yes, pass it on
-    iter_break = @model.encode_attr("iter_break")
-    str << "if(#{x}.#{iter_break}!==undefined)throw(#{x});"
+    iter_jump = @model.encode_globalattr("iter_jump")
+    str << "if(#{x} instanceof #{iter_jump})throw(#{x});"
     str << "#{process(handler)}"
     str << "}"
 
@@ -1065,15 +1083,23 @@ class MethodCompiler < SexpProcessor
   # STATEMENT
   #
   def process_return(exp)
-    raise if @want_expression
-    param = exp.shift
-    if param
-      str = without_result do
-        process(param)
+    return_value =
+      if param = exp.shift
+        want_expression do
+          without_result do
+            process(param)
+          end
+        end
+      else
+        @model.encode_nil
       end
-      "return #{str}" 
+    if @block_whileloop_stack.last == :iter
+      # return from within an iterator 
+      throw_iter_jump(return_value, unique_method_scope())
+    elsif @want_expression
+      throw_iter_jump(return_value)
     else
-      "return #{@model.encode_nil}"
+      "return #{return_value}"
     end
   end
 
@@ -1114,20 +1140,34 @@ class MethodCompiler < SexpProcessor
       raise if @want_expression
       "break"
     when :iter
-      iter_break = @model.encode_globalattr('iter_break')
-      if param = exp.shift
-        str = without_result do
-          process(param)
+      return_value =
+        if param = exp.shift
+          without_result do
+            process(param)
+          end
+        else
+          @model.encode_nil
         end
-        "#{iter_break}(#{str})"
-      else
-        "#{iter_break}(#{@model.encode_nil})"
-      end
+      throw_iter_jump(return_value)
     when nil
       raise("break not in loop/block scope")
     else
       raise "FATAL"
     end
+  end
+
+  def throw_iter_jump(return_value, scope=nil)
+    @iterators_used = true # used to produce catch code in this method
+    iter_jump = @model.encode_globalattr('iter_jump')
+    scope ||= "null"
+    th = 
+      if @want_expression
+        @model.encode_globalattr("throw_expr")
+      else
+        "throw"
+      end
+
+    "#{th}(new #{iter_jump}(#{return_value},#{scope}))"
   end
 
   #
@@ -1140,9 +1180,21 @@ class MethodCompiler < SexpProcessor
       raise if @want_expression
       "continue"
     when :iter
-      # next inside a code-block is the same as a return
-      exp.unshift :return
-      process(exp)
+      # next inside a code-block generates a "return" 
+      raise if @want_expression
+
+      return_value =
+        if param = exp.shift
+          want_expression do
+            without_result do
+              process(param)
+            end
+          end
+        else
+          @model.encode_nil
+        end
+
+      "return #{return_value}"
     when nil
       raise("next not in loop/block scope")
     else
@@ -1663,7 +1715,7 @@ class MethodCompiler < SexpProcessor
     old_iter_dvars = @current_iter_dvars
     @current_iter_dvars = Set.new 
     @block_whileloop_stack.push(:iter)
-    
+   
     # Get an argument name for the iterator function signature.
     arg_name = @model.encode_fresh_local_variable()
 

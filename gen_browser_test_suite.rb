@@ -1,7 +1,7 @@
 expected = `ruby gen_test_suite.rb | ruby -I./test`.chomp.  # remove last newline
   gsub("&", "&amp;").
   gsub("<", "&lt;").
-  gsub(">", "&gt;")
+  gsub(">", "&gt;").gsub("\n", "<br>")
 
 puts '<html><head><script>'
 puts `ruby gen_test_suite.rb | ./rubyjs_gen -I./test -P Browser -m TestSuite -`
@@ -12,7 +12,7 @@ var STDOUT = [];
 function flush()
 {
   document.getElementById('out').innerHTML = 
-    STDOUT.join("\\n").replace(/[&]/g, "&amp;").replace(/[<]/g, "&lt;").replace(/[>]/g, "&gt;");
+    STDOUT.join('\\n').replace(/[&]/g, "&amp;").replace(/[<]/g, "&lt;").replace(/[>]/g, "&gt;").replace(/\\n/g, "<br>");
 }
 
 function start()

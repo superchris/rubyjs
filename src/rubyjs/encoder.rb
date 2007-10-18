@@ -19,6 +19,14 @@ class Encoder
     @global_attribute_name_generator = NameGenerator.new
     @global_name_generator = NameGenerator.new
     reset_local_name_generator!
+
+    @unique_scope_ids = 0
+  end
+
+  def next_unique_scope_id()
+    n = @unique_scope_ids
+    @unique_scope_ids += 1
+    n
   end
 
   def reset_local_name_generator!
