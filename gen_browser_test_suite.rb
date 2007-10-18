@@ -1,10 +1,66 @@
-expected = `ruby gen_test_suite.rb | ruby -I./test`.chomp.  # remove last newline
+require 'tempfile'
+
+def gen_test_suite(tests)
+  script = ""
+  body = ""
+
+  script << "require 'common'\n\n"
+  tests.each_with_index do |file, i|
+    basename = File.basename(file)[0..-4]
+    klassname = basename.gsub(/(^|_)./) {|m| m[-1,1].upcase}
+    humanname = basename.gsub('_', ' ').capitalize
+
+    script << "#\n"
+    script << "# file: #{file}\n"
+    script << "#\n\n"
+    script << File.read(file)
+    script << "\n\n"
+    body << %{
+      puts '~~~~~~~~~~~~~~~~~~~~'
+      puts '#{humanname}'
+      puts '~~~~~~~~~~~~~~~~~~~~'
+      #{klassname}.main
+    }
+  end
+
+  script << %{
+    class TestSuite
+      def self.main
+        begin
+          #{body}
+        rescue Exception => a
+          p "unhandled exception"
+          p a
+        end
+      end
+    end
+    TestSuite.main unless $RUBYJS
+  }
+
+  return script
+end
+
+if ARGV.empty?
+  tests = Dir['test/test_*.rb']
+else
+  tests = Dir["test/test_{" + ARGV.join(',') + "}.rb"] 
+end
+
+rubycode = Tempfile.new('rubyjs')
+script = gen_test_suite(tests)
+rubycode.write(script)
+rubycode.close(false)
+html_script = script.gsub("&", "&amp;").
+  gsub("<", "&lt;").
+  gsub(">", "&gt;").gsub("\n", "<br/>")
+
+expected = `ruby -I./test < #{rubycode.path}`.chomp.  # remove last newline
   gsub("&", "&amp;").
   gsub("<", "&lt;").
-  gsub(">", "&gt;").gsub("\n", "<br>")
+  gsub(">", "&gt;").gsub("\n", "<br/>")
 
 puts '<html><head><script>'
-puts `ruby gen_test_suite.rb | ./rubyjs_gen -I./test -P Browser -m TestSuite -`
+puts `./rubyjs_gen -I./test -P Browser -m TestSuite #{rubycode.path}`
 puts %{
 
 var STDOUT = [];
@@ -12,7 +68,7 @@ var STDOUT = [];
 function flush()
 {
   document.getElementById('out').innerHTML = 
-    STDOUT.join('\\n').replace(/[&]/g, "&amp;").replace(/[<]/g, "&lt;").replace(/[>]/g, "&gt;").replace(/\\n/g, "<br>");
+    STDOUT.join('\\n').replace(/[&]/g, "&amp;").replace(/[<]/g, "&lt;").replace(/[>]/g, "&gt;").replace(/\\n/g, "<br/>");
 }
 
 function start()
@@ -39,6 +95,7 @@ function compare()
   #expected { background: #ccc; }
 </style>
 <body onload="start();">
+  <a href="#source">View Ruby source code</a><br/>
   <table cellspacing="5" cellpadding="5">
   <thead>
     <tr>
@@ -57,4 +114,5 @@ function compare()
   </tr>
   </tbody>
   </table>
+  <pre id="source">#{html_script}</pre>
 </body></html>}
