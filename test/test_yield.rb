@@ -81,7 +81,7 @@ class TestYield
   def test_loop2
     puts "loop2"
     i = 0 
-    res = loop do 
+    res = loop2 do 
       i += 1
       next if i % 2 == 1 
       p i
@@ -120,6 +120,14 @@ class TestYield
     p "after (NOT)"
   end
 
+  def test_proc
+    p "test_proc"
+    a = proc { return 0 }
+    p a.call
+    a = Proc.new { break 3 }
+    p a.call
+  end
+
   def test
     test_three_times_yield
     test_three_times_block
@@ -128,6 +136,8 @@ class TestYield
     test_loop
     test_loop2
     test_while_loop
+
+    test_proc
 
     p test_return_in_block
   end

@@ -210,6 +210,29 @@ module RubyJS; module Environment
   class Proc
     OBJECT_CONSTRUCTOR__ = "Function"
 
+    def self.new(&block)
+      raise ArgumentError, "tried to create Proc object without a block" if block.nil?
+      #
+      # wrap block inside another function, that catches iter_break returns.
+      #
+      `return (function() {
+        try {
+          return #<block>.#<m:call>.apply(#<block>, arguments);
+        } catch(e) 
+        {
+          if (e instanceof #<globalattr:iter_jump>) 
+          {
+            if (e.#<attr:scope> == null)
+            {`
+              raise LocalJumpError, "break from proc-closure"
+           `}
+            return e.#<attr:return_value>;
+          }
+          else throw(e);
+        }
+      })`
+    end
+
     def call(*args)
       `if (#<args>.length == 0) return #<self>();
        else if (#<args>.length == 1) return #<self>(#<args>[0]);
@@ -350,6 +373,10 @@ module RubyJS; module Environment
     def respond_to?(id) `
       var m = #<globalattr:mm>[#<id>]; 
       return (m !== undefined && #<self>[m] !== undefined)`
+    end
+
+    def proc(&block)
+      Proc.new(&block)
     end
 
     def raise(*args)
@@ -583,6 +610,7 @@ module RubyJS; module Environment
   class RuntimeError < StandardError; end
   class ArgumentError < StandardError; end
   class TypeError < StandardError; end
+  class LocalJumpError < StandardError; end
 
   #
   # NOTE: Strings in RubyJS are immutable!!!
