@@ -87,7 +87,7 @@ rubycode.write(script)
 rubycode.close(false)
 
 jscode = ruby2js(rubycode.path)
-File.open('browser.test.js', 'w+') {|f| f << jscode}
+File.open('test/browser.test.js', 'w+') {|f| f << jscode}
 
 html_script = script.gsub("&", "&amp;").
   gsub("<", "&lt;").
@@ -98,7 +98,8 @@ expected = `ruby -I./test < #{rubycode.path}`.chomp.  # remove last newline
   gsub("<", "&lt;").
   gsub(">", "&gt;").gsub("\n", "<br/>")
 
-puts %{<html><head><script language="javascript" src="browser.test.js"></script>
+File.open('test/browser.test.html', 'w+') do |f|
+f.puts %{<html><head><script language="javascript" src="browser.test.js"></script>
 <style>
   #expected { background: #ccc; }
 </style>
@@ -125,3 +126,4 @@ puts %{<html><head><script language="javascript" src="browser.test.js"></script>
   </table>
   <pre id="source">#{html_script}</pre>
 </body></html>}
+end
