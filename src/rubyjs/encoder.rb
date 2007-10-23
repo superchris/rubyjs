@@ -168,47 +168,4 @@ class Encoder
     return str
   end
 
-  #
-  # Note that this method only works correctly if each statment is
-  # separated by ";", especially assignments like:
-  #
-  # a.x = function() {
-  # };              <------- important!!!
-  #
-  def strip_ws_from_js_code(str)
-    arr = []
-    loop do 
-      if str =~ /(["'])/
-        pre = $~.pre_match
-        post = $~.post_match
-        arr << pre
-        s = $1
-        if post =~ /^(([^#{s}]|\\.)*#{s})/
-          str = $~.post_match
-          arr << s + $1
-        else
-          raise
-        end
-      else
-        arr << str
-        break
-      end
-    end
-
-    str = arr.map {|a|
-      if a[0,1] == '"' || a[0,1] == "'"
-        # keep strings as-is 
-        a
-      else
-        a.squeeze(";").                  # remove duplicate semicolons (;; -> ;)
-          gsub(/\/\/[^\n]*/,"").         # remove comments
-          gsub(/\s*([^\w\$])\s*/) { $1 } # remove unneccessary whitespace
-      end
-    }.join("")
-
-    # remove leading whitespace
-    str = $~.post_match if str =~ /^\s*/
-
-    return str
-  end
 end

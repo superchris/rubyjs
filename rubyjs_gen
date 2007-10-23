@@ -51,7 +51,6 @@ if __FILE__ == $0
     opts.on("--show-options", "--show-options", "Show all compiler options") do |out|
       puts "Compiler Options:"
       puts "  --opt NoArgumentArityChecks:: Disable generation of arity checking code"
-      puts "  --opt CompactCode:: Enable (dangerous) JS code compaction"
       exit
     end
     opts.on("-d", "--debug", "Turn on debug mode") do |out|
