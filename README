@@ -44,9 +44,6 @@ BUGS
 TODO
 
   --
-  method_missing. fix respond_to?. add methods
-
-  --
   Issue a warning whenever a destructive Ruby string method like gsub!
   is used. The reason behind this warning is that, due to efficience
   reasons, Ruby strings (which are mutable) are mapped to immutable
