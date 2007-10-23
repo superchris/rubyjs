@@ -43,11 +43,27 @@ class CodeGenerator
     return compact_code(ipol(code))
   end
   
+  def gen_mm_stubs
+    # Method name mapping
+
+    mm_stubs = ""
+    mm_stubs << "// method map\n"
+    mm_stubs << "var #<globalattr:mm> = {" 
+    i = []
+    # Javascript name -> Ruby name 
+    @world.all_method_names do |k,v|
+      i << "#{v.inspect}:#{k.inspect}" 
+    end
+    mm_stubs << i.join(",")
+    mm_stubs << "};\n"
+    mm_stubs << "var #<globalattr:mm_reverse> = {};\n"
+    mm_stubs << "for (var i in #<globalattr:mm>) #<globalattr:mm_reverse>[#<globalattr:mm>[i]] = i;\n"
+
+    ipol(mm_stubs)
+  end
+
   def generate
     str = ""
-
-    # Code of runtime
-    str << ipol(RUNTIME_INIT)
 
     #
     # Code for Class
@@ -96,23 +112,23 @@ class CodeGenerator
     @world.iterate_all(Set.new) do |m|
       klasses << @world.encode_constant(m[:name])
     end
-    str << @world.encode_globalattr('rebuild_classes') + "([" + klasses.join(",") + "]);"
+    str << ipol("var #<globalattr:klasses> = [#{klasses.join(",")}];\n" + 
+                "#<globalattr:rebuild_classes>(#<globalattr:klasses>);\n")
+
+    str << ipol("for (var i=0; i<#<globalattr:klasses>.length; i++) #<globalattr:mm_assign>(#<globalattr:klasses>[i]);\n")
 
     #
-    # now prepend MethodMissing stubs
-    # TODO: if OPTS
+    # prepend
     #
-    mm_stubs = ""
-    mm_stubs << "// method map\n"
-    mm_stubs << "var #<globalattr:mm> = {" 
-    i = []
-    @world.all_method_names do |k,v|
-      i << "#{k.inspect}:#{v.inspect}" 
-    end
-    mm_stubs << i.join(",")
-    mm_stubs << "};\n"
+    
+    str_prep = ""
 
-    return compact_code(ipol(mm_stubs) + str)
+    # Code of runtime
+    str_prep << ipol(RUNTIME_INIT)
+
+    str_prep << gen_mm_stubs()
+
+    return compact_code(str_prep + str)
   end
 
   def b_methods(kind, model, h)

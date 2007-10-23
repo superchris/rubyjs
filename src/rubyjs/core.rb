@@ -14,6 +14,47 @@ NilClass.prototype.toString = function() { return "nil"; };
 #<nil> = new NilClass();
 
 //
+// Generates a new method_missing function
+// for the given symbol +sym+.
+// 
+var #<globalattr:mm_fun_cache> = {}; 
+function #<globalattr:mm_fun>(sym)
+{
+  if (!#<globalattr:mm_fun_cache>[sym])
+  {
+    var fn = function() {
+      return #<globalattr:call_method_missing>(this, arguments, sym);
+    };
+    fn.#<attr:_mm> = true;
+    #<globalattr:mm_fun_cache>[sym] = fn;
+  }
+
+  return #<globalattr:mm_fun_cache>[sym];
+}
+
+function #<globalattr:call_method_missing>(obj, args, sym)
+{
+  var i, a;
+  a = [];
+  if (args.length == 0)
+    a.push(#<nil>);
+  else
+    a.push(args[0]);
+
+  a.push(#<globalattr:mm>[sym] || #<nil>);
+
+  for (i=1; i<args.length; i++)
+    a.push(args[i]);
+  
+  var m = obj.#<m:method_missing>;
+
+  if (m)
+    return m.apply(obj, a);
+  else
+    throw "FATAL: method_missing missing";
+}
+ 
+//
 // r: return value
 // s: scope (method scope)
 //
@@ -120,8 +161,8 @@ function #<globalattr:rebuild_class>(c)
   // include modules
   //
   // do that before, because when assigning instance methods of 
-  // the super class, a check for === undefined prevents from
-  // this method being overwritten.
+  // the super class, a check for === undefined prevents this method 
+  // from being overwritten.
   //
   for (i=0; i<c.#<attr:modules>.length; i++)
   {
@@ -161,6 +202,34 @@ function #<globalattr:rebuild_class>(c)
   // set class for instanciated objects
   c.#<attr:object_constructor>.prototype.#<attr:_class> = c;
 }
+
+//
+// assign method_missing stubs
+//
+function #<globalattr:mm_assign>(c)
+{
+  var i;
+
+  for (i in #<globalattr:mm>)  
+  {
+    if (c.#<attr:object_constructor>.prototype[i]===undefined)
+    {
+      c.#<attr:object_constructor>.prototype[i] = #<globalattr:mm_fun>(i);
+    }
+  }
+
+  if (c.#<attr:superclass> != #<nil>)
+  {
+    for (i in c.#<attr:superclass>)
+    {
+      if (c[i]===undefined)
+      {
+        c[i] = #<globalattr:mm_fun>(i);
+      }
+    }
+  }
+}
+
 
 function #<globalattr:def_class>(h)
 {
@@ -306,7 +375,6 @@ module RubyJS; module Environment
     def allocate
       `var o = new #<self>.#<attr:object_constructor>();
        return o;`
-       #o.#<attr:_class> = #<self>;
     end
 
     def new(*args, &block)
@@ -357,22 +425,32 @@ module RubyJS; module Environment
     end
     
     def method_missing(id, *args, &block)
-      raise "NoMethodError: undefined method `#{id}' for #{self.inspect}" 
+      raise NoMethodError, "undefined method `#{id}' for #{self.inspect}" 
     end
 
-    def __invoke(id, args, &block)
-      `return #<self>[#<id>].apply(#<self>, [#<block>].concat(#<args>))`
+    # id is a Javascript name, e.g. $aaa
+    def __invoke(id, args, &block) `
+      var m = #<self>[#<id>];
+      if (m)
+        return m.apply(#<self>, [#<block>].concat(#<args>));
+      else
+        return #<self>.#<m:method_missing>.apply(#<self>, 
+          [#<block>].concat([#<globalattr:mm>[#<id>]]).concat(#<args>));` 
     end
     
     # NOTE: In Ruby __send is __send__
-    def __send(id, *args, &block)
-      `return #<self>[#<globalattr:mm>[#<id>]].apply(#<self>, [#<block>].concat(#<args>))`
+    def __send(id, *args, &block) `
+      var m = #<self>[#<globalattr:mm_reverse>[#<id>]];
+      if (m) 
+        return m.apply(#<self>, [#<block>].concat(#<args>));
+      else
+        return #<self>.#<m:method_missing>.apply(#<self>, [#<block>].concat([#<id>]).concat(#<args>));`
     end
     alias send __send
 
     def respond_to?(id) `
-      var m = #<globalattr:mm>[#<id>]; 
-      return (m !== undefined && #<self>[m] !== undefined)`
+      var m = #<globalattr:mm_reverse>[#<id>]; 
+      return (m !== undefined && #<self>[m] !== undefined && !#<self>[m].#<attr:_mm>)`
     end
 
     def proc(&block)
@@ -919,7 +997,7 @@ module RubyJS; module Environment
     end
 
     def to_s
-      `return('[' + #<self>.toString() + ']');`
+      map {|i| i.to_s}.join
     end
 
     def inspect
