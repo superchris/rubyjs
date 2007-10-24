@@ -1,5 +1,5 @@
 #!/bin/sh
-base=`pwd`/`dirname $0`/..
+base=`pwd`/`dirname $0`/../..
 file=`mktemp /tmp/jsXXXX`
 cat > "$file" 
 if [ -x "$base/utils/jsc/RunScript" ]; then
