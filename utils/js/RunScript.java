@@ -57,7 +57,10 @@ public class RunScript {
             String line;
             s += "function println(o) { out.println(o); };\n";
             BufferedReader in = new BufferedReader(new InputStreamReader(System.in));  
-            while ( (line = in.readLine()) != null ) s += line;
+            while ( (line = in.readLine()) != null ) {
+              s += line;
+              s += "\n";
+            }
 
             Object result = cx.evaluateString(scope, s, "<cmd>", 1, null);
             //System.err.println(cx.toString(result));

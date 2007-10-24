@@ -14,7 +14,7 @@ class B < A
   end
 end
 
-class CCC
+class C
   def method_missing(id, *args, &block)
     p "mm: #{id}, #{args}"
   end
@@ -34,8 +34,8 @@ class TestSend
     p A.new.respond_to?(:c_method)
 
     puts "method_missing"
-    p CCC.new.respond_to?(:blah_blah)
-    CCC.new.blah_blah(1,2,3)
+    p C.new.respond_to?(:blah_blah)
+    C.new.blah_blah(1,2,3)
 
     begin
       A.new.blah_blah
