@@ -272,9 +272,10 @@ class MethodCompiler < SexpProcessor
 
     method_body << ";return #{@result_name}" if @result_name
 
-    str << "try{" if @iterators_used
-    str << method_body 
     if @iterators_used
+      str << "try{" 
+      str << method_body 
+
       #
       # Declare variable x?
       # No, catch introduced a new scope, so we don't have to
@@ -290,6 +291,8 @@ class MethodCompiler < SexpProcessor
       # scope == null or scope == uid
       str << "if(#{x} instanceof #{iter_jump} && (!#{x}.#{scope} || #{x}.#{scope}==#{uid}))return #{x}.#{return_value};"
       str << "throw(#{x})}"
+    else
+      str << method_body
     end
 
     str << "}"
