@@ -661,7 +661,7 @@ class MethodCompiler < SexpProcessor
     iter = get_iter()
 
     str = 
-    if $RUBYJS__OPTS.include?('OptimizeArithOps') and %w(+ - * /).include?(method.to_s) and
+    if $RUBYJS__OPTS.include?('OptimizeArithOps') and %w(> >= < <= + - * /).include?(method.to_s) and
           iter.nil? and args and args[0] == :array and args.size == 2
       without_result do 
         want_expression do

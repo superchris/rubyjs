@@ -13,7 +13,7 @@ def run_rubyjs(param, klassname, file)
 
   result = `#{cmd_rubyjs_gen} | #{cmd_run_js}`
   arr = result.split("\n")
-  time = arr.pop.split(" ")[2].to_f # user
+  time = arr.pop.split(" ")[2].sub(",", ".").to_f # user
   return [file, klassname, param, time.to_f, arr.join("\n")]
 end
 
@@ -35,7 +35,7 @@ def run_js(param, klassname, file)
 
   result = `#{cmd_run_js} < #{jscode.path}`
   arr = result.split("\n")
-  time = arr.pop.split(" ")[2].to_f # user
+  time = arr.pop.split(" ")[2].sub(",", ".").to_f # user
   return [file, klassname, param, time.to_f, arr.join("\n")]
 end
 
