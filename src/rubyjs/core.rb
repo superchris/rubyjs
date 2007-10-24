@@ -280,7 +280,7 @@ module RubyJS; module Environment
     OBJECT_CONSTRUCTOR__ = "Function"
 
     def self.new(&block)
-      raise ArgumentError, "tried to create Proc object without a block" if block.nil?
+      raise ArgumentError, "tried to create Proc object without a block" unless block
       #
       # wrap block inside another function, that catches iter_break returns.
       #
@@ -302,10 +302,10 @@ module RubyJS; module Environment
       })`
     end
 
-    def call(*args)
-      `if (#<args>.length == 0) return #<self>();
-       else if (#<args>.length == 1) return #<self>(#<args>[0]);
-       else return #<self>(#<args>);`
+    def call(*args) `
+      if (#<args>.length == 0) return #<self>();
+      else if (#<args>.length == 1) return #<self>(#<args>[0]);
+      else return #<self>(#<args>);`
     end
   end
 
@@ -372,9 +372,8 @@ module RubyJS; module Environment
   end
 
   class Class
-    def allocate
-      `var o = new #<self>.#<attr:object_constructor>();
-       return o;`
+    def allocate 
+      `return (new #<self>.#<attr:object_constructor>())`
     end
 
     def new(*args, &block)
@@ -388,7 +387,7 @@ module RubyJS; module Environment
     end
 
     def name
-      `return #<self>.#<attr:classname>;`
+      `return #<self>.#<attr:classname>`
     end
 
     alias inspect name
@@ -533,13 +532,7 @@ module RubyJS; module Environment
   module Enumerable
     def map(&block)
       result = []
-      each {|elem|
-        if block
-          result << block.call(elem)
-        else
-          result << elem 
-        end
-      }
+      each {|elem| result << (block ? block.call(elem) : elem) }
       result
     end
     alias collect map
