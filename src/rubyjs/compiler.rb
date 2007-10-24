@@ -502,10 +502,14 @@ class MethodCompiler < SexpProcessor
   # numeric literal, it gets surrounded by parens.
   #
   def generate_method_call_receiver_exp(recv_exp, method, iter, args)
+    generate_method_call(receiver_exp(recv_exp), method, iter, args)
+  end
+
+  def receiver_exp(recv_exp)
     is_num = is_numeric_literal(recv_exp)
     receiver = want_expression do process(recv_exp) end 
     receiver = "(" + receiver + ")" if is_num
-    generate_method_call(receiver, method, iter, args)
+    return receiver
   end
 
   #
@@ -654,8 +658,20 @@ class MethodCompiler < SexpProcessor
     method = exp.shift
     args = exp.shift
 
-    str = without_result do 
-      generate_method_call_receiver_exp(receiver, method, get_iter(), args)
+    iter = get_iter()
+
+    str = 
+    if $RUBYJS__OPTS.include?('OptimizeArithOps') and %w(+ - * /).include?(method.to_s) and
+          iter.nil? and args and args[0] == :array and args.size == 2
+      without_result do 
+        want_expression do
+          "(#{process(receiver)})#{method.to_s}(#{process(args[1])})"
+        end
+      end
+    else
+      without_result do 
+        generate_method_call_receiver_exp(receiver, method, iter, args)
+      end
     end
     resultify(str)
   end

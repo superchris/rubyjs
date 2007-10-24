@@ -51,6 +51,7 @@ if __FILE__ == $0
     opts.on("--show-options", "--show-options", "Show all compiler options") do |out|
       puts "Compiler Options:"
       puts "  --opt NoArgumentArityChecks:: Disable generation of arity checking code"
+      puts "  --opt OptimizeArithOps:: Enable native +-*/ operators"
       exit
     end
     opts.on("-d", "--debug", "Turn on debug mode") do |out|
@@ -106,7 +107,7 @@ if __FILE__ == $0
   gen = CodeGenerator.new
   str = "" 
   str << gen.generate()
-  str << gen.encode("function main() { #<#{options.main}>.#<m:main>() }") if options.main
+  str << gen.encode("function main() { return #<#{options.main}>.#<m:main>.apply(#<#{options.main}>, arguments); }") if options.main
   str << options.append
 
   options.outputs.each do |outname| 
