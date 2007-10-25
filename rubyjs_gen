@@ -52,6 +52,7 @@ if __FILE__ == $0
       puts "Compiler Options:"
       puts "  --opt NoArgumentArityChecks:: Disable generation of arity checking code"
       puts "  --opt OptimizeArithOps:: Enable native +-*/ operators"
+      puts "  --opt PrettyPrint:: Output more readable code"
       exit
     end
     opts.on("-d", "--debug", "Turn on debug mode") do |out|

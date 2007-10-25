@@ -230,7 +230,7 @@ class MethodCompiler < SexpProcessor
     to_declare = (@local_variables - @argument_variables).to_a
     to_declare << @result_name if @result_name
     unless to_declare.empty?
-      str << "var " + to_declare.join(",") + ";"
+      str << "var " + to_declare.join(",") + sep()
     end
 
     #
@@ -240,37 +240,37 @@ class MethodCompiler < SexpProcessor
     to_initialize << @result_name if @result_name
     unless to_initialize.empty?
       str << to_initialize.join("=")
-      str << "=#{@model.encode_nil};"
+      str << "=#{@model.encode_nil}#{sep()}"
     end
 
     #
     # initialize "self"
     #
-    str << "#{@model.encode_self}=this;"
+    str << "#{@model.encode_self}=this#{sep()}"
 
     #
     # If a block argument is given (&block) convert it to nil if it is
     # undefined. 
     #
     if @block_arg_name
-      str << "#{@block_arg_name}=#{block_name()}===undefined?#{@model.encode_nil}:#{block_name()};"
+      str << "#{@block_arg_name}=#{block_name()}===undefined?#{@model.encode_nil}:#{block_name()}#{sep()}"
     end
 
     #
     # generate initialization code for each read instance variable
     #
     @read_instance_variables.each do |iv|
-      str << "if(#{@model.encode_self}.#{iv}===undefined)#{@model.encode_self}.#{iv}=#{@model.encode_nil};"
+      str << "if(#{@model.encode_self}.#{iv}===undefined)#{@model.encode_self}.#{iv}=#{@model.encode_nil}#{sep()}"
     end
 
     # 
     # Used in a zsuper call to refer to the methods "arguments"
     # "arguments" itself does not work due to iterators using functions.
     if @arguments_name
-      str << "var #{@arguments_name}=arguments;"
+      str << "var #{@arguments_name}=arguments#{sep()}"
     end
 
-    method_body << ";return #{@result_name}" if @result_name
+    method_body << "#{sep()}return #{@result_name}" if @result_name
 
     if @iterators_used
       str << "try{" 
@@ -289,7 +289,7 @@ class MethodCompiler < SexpProcessor
 
       str << "}catch(#{x}){"
       # scope == null or scope == uid
-      str << "if(#{x} instanceof #{iter_jump} && (!#{x}.#{scope} || #{x}.#{scope}==#{uid}))return #{x}.#{return_value};"
+      str << "if(#{x} instanceof #{iter_jump} && (!#{x}.#{scope} || #{x}.#{scope}==#{uid}))return #{x}.#{return_value}#{sep()}"
       str << "throw(#{x})}"
     else
       str << method_body
@@ -298,6 +298,14 @@ class MethodCompiler < SexpProcessor
     str << "}"
 
     return str
+  end
+
+  def sep
+    if $RUBYJS__OPTS.include?('PrettyPrint')
+      ";\n"
+    else
+      ";"
+    end
   end
 
   def unique_method_scope
@@ -337,7 +345,7 @@ class MethodCompiler < SexpProcessor
     if @want_expression
       "(" + res.join(",") + ")"
     else
-      res.join(";")
+      res.join(sep())
     end
   end
 
@@ -439,7 +447,7 @@ class MethodCompiler < SexpProcessor
         str << "if(#{arg}===undefined)"
         str << "#{arg}="
         str << want_expression do process(value) end
-        str << ";"
+        str << sep()
       end
     end
 
@@ -454,18 +462,18 @@ class MethodCompiler < SexpProcessor
         # min_arity == infinity as well => we need no check
       else
         # +1 because we have a block argument anyway.
-        str2 << "if(arguments.length<#{min_arity+1})#{throw_argument_error(min_arity)};"
+        str2 << "if(arguments.length<#{min_arity+1})#{throw_argument_error(min_arity)}#{sep()}"
       end
     else
       if min_arity == 0
         # can't be less than 0 arguments anyway! => no check
-        str2 << "if(arguments.length>#{max_arity+1})#{throw_argument_error(max_arity)};"
+        str2 << "if(arguments.length>#{max_arity+1})#{throw_argument_error(max_arity)}#{sep()}"
       else
         if min_arity == max_arity
-          str2 << "if(arguments.length!=#{min_arity+1})#{throw_argument_error(min_arity)};"
+          str2 << "if(arguments.length!=#{min_arity+1})#{throw_argument_error(min_arity)}#{sep()}"
         else
-          str2 << "if(arguments.length<#{min_arity+1})#{throw_argument_error(min_arity)};"
-          str2 << "if(arguments.length>#{max_arity+1})#{throw_argument_error(max_arity)};"
+          str2 << "if(arguments.length<#{min_arity+1})#{throw_argument_error(min_arity)}#{sep()}"
+          str2 << "if(arguments.length>#{max_arity+1})#{throw_argument_error(max_arity)}#{sep()}"
         end
       end
     end
@@ -484,11 +492,11 @@ class MethodCompiler < SexpProcessor
       # is no way to convert it to an array, except looping over each
       # value and pushing the value into a new array.
       # FIXME: variable "i"
-      str << "#{@argument_splat}=[];"
+      str << "#{@argument_splat}=[]#{sep()}"
       @local_variables_need_no_initialization.add(@argument_splat)
       with_temporary_variable do |i|
         @local_variables_need_no_initialization.add(i)
-        str << "for(#{i}=#{@arguments_no_splat.size+1};#{i}<arguments.length;#{i}++)#{@argument_splat}.push(arguments[#{i}]);"
+        str << "for(#{i}=#{@arguments_no_splat.size+1};#{i}<arguments.length;#{i}++)#{@argument_splat}.push(arguments[#{i}])#{sep()}"
       end
     end
     
@@ -999,7 +1007,7 @@ class MethodCompiler < SexpProcessor
       if @want_expression 
         "(#{asgn}, #{if_code})"
       else
-        "#{asgn}; #{if_code}" 
+        "#{asgn}#{sep()}#{if_code}" 
       end
 
       code
@@ -1052,7 +1060,7 @@ class MethodCompiler < SexpProcessor
 
     # check whether it's an iterator break. if yes, pass it on
     iter_jump = @model.encode_globalattr("iter_jump")
-    str << "if(#{x} instanceof #{iter_jump})throw(#{x});"
+    str << "if(#{x} instanceof #{iter_jump})throw(#{x})#{sep()}"
     str << "#{process(handler)}"
     str << "}"
 
@@ -1143,7 +1151,7 @@ class MethodCompiler < SexpProcessor
     end
 
     if @want_result
-      str << ";" + resultify(@model.encode_nil) + ";"
+      str << sep() + resultify(@model.encode_nil) + sep()
     end
 
     return str
@@ -1797,20 +1805,20 @@ class MethodCompiler < SexpProcessor
     unless @current_iter_dvars.empty?
       var_str << "var "
       var_str << @current_iter_dvars.to_a.join(",")
-      var_str << ";"
+      var_str << sep()
     end
 
     # declare and initialize the return value
     if @result_name
-      var_str << "var #{@result_name}=#{@model.encode_nil};"
+      var_str << "var #{@result_name}=#{@model.encode_nil}#{sep()}"
     end
 
     # NOTE: we don't need to initialize any dvar to nil, as 
     # they can't be used before being assigned to (because
     # otherwise they are vcall's and not dynamic variables).   
 
-    str = fun_str + var_str + asgn_str + ";" + block_str
-    str << ";return #{@result_name}" if @result_name
+    str = fun_str + var_str + asgn_str + sep() + block_str
+    str << "#{sep()}return #{@result_name}" if @result_name
     str << "}"
 
     put_iter(str)

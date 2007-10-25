@@ -131,7 +131,14 @@ class CodeGenerator
       end
     end
     unless m.empty?
-      h[kind.to_s] = "{" + m.map {|name, fn| @world.encode_method(name) + ": #{fn}" }.join(",") + "}"
+      h[kind.to_s] = "{" + m.map {|name, fn| 
+        if $RUBYJS__OPTS.include?('PrettyPrint')
+          @world.encode_method(name) + ":\n" + 
+          %[/* #{ model[:name] }#{kind.to_s == "methods" ? "." : "#"}#{ name } */\n#{fn}\n\n]
+        else
+          @world.encode_method(name) + ": #{fn}" 
+        end
+      }.join(",") + "}"
     end
   end
 
