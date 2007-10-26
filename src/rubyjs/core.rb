@@ -874,23 +874,40 @@ module RubyJS; module Environment
   class Bignum < Number; end
   class Float < Number; end
 
+  #
+  # Every method that returns an element has to
+  # check this element for +null+. This is required
+  # to seamlessly use Javascript data without needing
+  # to convert it before usage.
+  #
+  # The reverse, passing a RubyJS Array to Javascript
+  # without conversion of +nil+ to +null+ is of course
+  # not possible!
+  #
+  # NOTE: Following condition holds true:
+  #   v == null <=> v=null || v=undefined
+  #
   class Array
     OBJECT_CONSTRUCTOR__ = "Array"
 
     include Enumerable
 
-    def each
-      `for (var i=0; i < #<self>.length; i++) {`
-      yield `#<self>[i]`
-      `}`
-      self
+    def each() `
+      var elem;
+      for (var i=0; i < #<self>.length; i++) {
+        elem = #<self>[i];`
+        yield `(elem == null ? #<nil> : elem)`
+     `}
+      return #<self>`
     end
 
-    def each_with_index
-      `for (var i=0; i < #<self>.length; i++) {`
-      yield `#<self>[i]`, `i`
-      `}`
-      self
+    def each_with_index() `  
+      var elem;
+      for (var i=0; i < #<self>.length; i++) {
+        elem = #<self>[i];` 
+        yield `(elem == null ? #<nil> : elem)`, `i`
+     `}
+      return #<self>`
     end
 
     def join(sep="")
@@ -938,12 +955,20 @@ module RubyJS; module Environment
     alias size length
 
     def first
-      `var v = #<self>[0]; return ((v === undefined || v === null) ? #<nil> : v)`
+      `var v = #<self>[0]; return (v == null ? #<nil> : v)`
+    end
+
+    def last
+      `var v = #<self>[#<self>.length - 1]; return (v == null ? #<nil> : v)`
+    end
+
+    def clear
+      `#<self>.length=0; return #<self>` 
     end
 
     # TODO: check arrary bounds
     def [](i)
-      `var v = #<self>[#<i>]; return ((v === undefined || v === null) ? #<nil> : v)`
+      `var v = #<self>[#<i>]; return (v == null ? #<nil> : v)`
     end
 
     def []=(i, val)
@@ -958,12 +983,14 @@ module RubyJS; module Environment
       `#<self>.push(#<arg>); return #<self>`
     end
 
-    def pop
-      `return #<self>.pop()`
+    def pop() `
+      var elem = #<self>.pop();
+      return (elem == null ? #<nil> : elem)`
     end
 
-    def shift
-      `return #<self>.shift()`
+    def shift() `
+      var elem = #<self>.shift();
+      return (elem == null ? #<nil> : elem)`
     end
 
     def delete(obj) `
@@ -1028,17 +1055,18 @@ module RubyJS; module Environment
     OBJECT_CONSTRUCTOR__ = "RegExp"
   end
 
+  #
+  # We prefix every element by a ":"
+  #
   class Hash
     include Enumerable
 
     #
     # Construct an empty Hash
     #
-    def initialize
-      `
+    def initialize() `
       #<self>.#<attr:items> = {}; 
-      #<self>.#<attr:default_value> = #<nil>;
-      `
+      #<self>.#<attr:default_value> = #<nil>;`
     end
 
     #
@@ -1060,7 +1088,7 @@ module RubyJS; module Environment
       // Javascript, the entries are arrays which contain the collisions.
       // NOTE that we have to prefix the hash code with a prefix so that
       // there are no collisions with methods etc.   
-      // I prefix it for now with 1.
+      // I prefix it for now with ":".
       //
       var items = {};
       var hashed_key, current_key, current_val;
@@ -1068,7 +1096,7 @@ module RubyJS; module Environment
       for (var i = 0; i < #<list>.length; i += 2)
       {
         current_key = #<list>[i];
-        hashed_key = "1" + current_key.#<m:hash>();
+        hashed_key = ":" + current_key.#<m:hash>();
         current_val = #<list>[i+1];
 
         if (items[hashed_key] === undefined)
@@ -1089,9 +1117,18 @@ module RubyJS; module Environment
       `
     end
 
-    def [](key)
-      `
-      var hashed_key = "1" + #<key>.#<m:hash>();
+    def [](key) `
+      if (!#<self>.#<attr:items>)
+      {
+        // this is a Javascript Object, not a RubyJS Hash object.
+        // we directly look the key up. it's fast but not Ruby-like,
+        // so be careful!
+        
+        var elem = #<self>[#<key>];
+        return (elem == null ? #<nil> : elem);
+      }
+
+      var hashed_key = ":" + #<key>.#<m:hash>();
       var bucket = #<self>.#<attr:items>[hashed_key];
 
       if (bucket !== undefined)
@@ -1112,9 +1149,18 @@ module RubyJS; module Environment
       `
     end
 
-    def []=(key, value)
-      `
-      var hashed_key = "1" + #<key>.#<m:hash>();
+    def []=(key, value) `
+      if (!#<self>.#<attr:items>)
+      {
+        // this is a Javascript Object, not a RubyJS Hash object.
+        // we directly look the key up. it's fast but not Ruby-like,
+        // so be careful!
+        
+        #<self>[#<key>] = #<value>;
+        return #<value>; 
+      }
+
+      var hashed_key = ":" + #<key>.#<m:hash>();
       var bucket = #<self>.#<attr:items>[hashed_key];
 
       if (bucket !== undefined)
@@ -1134,7 +1180,6 @@ module RubyJS; module Environment
         }
         // key not found in this bucket. append key, value pair to bucket
         bucket.push(#<key>, #<value>);
-        return #<value>;
       }
       else 
       {
@@ -1142,8 +1187,8 @@ module RubyJS; module Environment
         // create new bucket
         //
         #<self>.#<attr:items>[hashed_key] = [#<key>, #<value>];
-        return #<value>;
       }
+      return #<value>;
       `
     end
 
@@ -1155,12 +1200,27 @@ module RubyJS; module Environment
       map {|k,v| v}
     end
 
-    def each 
-      `
+    def each() `
+      if (!#<self>.#<attr:items>)
+      {
+        // this is a Javascript Object, not a RubyJS Hash object.
+        // we directly look the key up. it's fast but not Ruby-like,
+        // so be careful!
+        var key, value;
+        for (key in #<self>)
+        {
+          value = #<self>[key];`
+          yield `(key == null ? #<nil> : key)`, `(value == null ? #<nil> : value)`;
+       `
+        }
+        
+        return #<nil>;
+      }
+
       var key, bucket, i;
       for (key in #<self>.#<attr:items>)
       {
-        if (key[0] == "1")
+        if (key[0] == ":")
         {
           bucket = #<self>.#<attr:items>[key];
           for (i=0; i<bucket.length; i+=2)
@@ -1170,6 +1230,7 @@ module RubyJS; module Environment
           }
         }
       }
+      return #<nil>;
       `
     end
 

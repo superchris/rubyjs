@@ -2,7 +2,7 @@ require 'tempfile'
 require 'test/gen_test_suite'
 
 def ruby2js(rubycode_path)
-  jscode = `./rubyjs_gen -I./test -P Browser -m TestSuite #{rubycode_path}`
+  jscode = `./rubyjs_gen -I./test --opt PrettyPrint -P Browser -m TestSuite #{rubycode_path}`
   jscode << %{
 var STDOUT = [];
 

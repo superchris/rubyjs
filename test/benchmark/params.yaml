@@ -1,3 +1,7 @@
 BmVm1Block:  [0, 300000]
 BmVm1Const:  [0, 300000]
 BmVm1Ensure: [0, 300000]
+BmCallConv1: [0, 1000000]
+BmCallConv2: [0, 1000000]
+BmVarAcc1:   [0, 10000000]
+BmVarAcc2:   [0, 10000000]
