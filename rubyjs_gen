@@ -77,6 +77,8 @@ if __FILE__ == $0
     exit
   end
 
+  options.load_path << File.join(File.dirname(__FILE__), "src")
+
   $RUBYJS__LOAD_PATH = options.load_path.map {|i| File.expand_path(i)}  
   $RUBYJS__PLATFORM = options.platform
   $RUBYJS = true    # to distinguish between Ruby and RubyJS
