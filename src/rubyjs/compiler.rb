@@ -670,6 +670,21 @@ class MethodCompiler < SexpProcessor
 
     iter = get_iter()
 
+    #
+    # RubyJS::inline("str")
+    #
+    # A different form of Javascript inline. We have this form
+    # because ``-style Javascript-inline has a different esacping
+    # of \. Sometimes we want no escaping, so
+    #
+    #   RubyJS::inline %q(...) could be used.
+    #
+    if receiver == [:const, :RubyJS] and method == :inline and
+       args[0] == :array and args.size == 2 and args[1].size == 2 and args[1][0] == :str and iter.nil?
+      raise if @want_expression
+      return args[1][1]
+    end
+
     str = 
     if $RUBYJS__OPTS.include?('OptimizeArithOps') and %w(> >= < <= + - * /).include?(method.to_s) and
           iter.nil? and args and args[0] == :array and args.size == 2
