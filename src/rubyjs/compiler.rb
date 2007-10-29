@@ -682,7 +682,7 @@ class MethodCompiler < SexpProcessor
     if receiver == [:const, :RubyJS] and method == :inline and
        args[0] == :array and args.size == 2 and args[1].size == 2 and args[1][0] == :str and iter.nil?
       raise if @want_expression
-      return args[1][1]
+      return @model.interpolate(args[1][1])
     end
 
     str = 
