@@ -48,7 +48,7 @@ def eval_into(module_scope, &block)
 	next
       end
     end
-    raise "require: #{file} not found"
+    raise ::RuntimeError, "require: #{file} not found"
   end
 
 

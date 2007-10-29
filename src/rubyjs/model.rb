@@ -186,8 +186,12 @@ class Model < Encoder
 
     if value.is_a?(::Class) or value.is_a?(::Module)
       # A class or module
-      model = @models[value] || raise("unrecognized class/module referenced by constant")
-      return old_encode_constant(model[:name])
+
+      if model = @models[value]
+        return old_encode_constant(model[:name])
+      else
+        raise("unrecognized class/module referenced by constant")
+      end
     else
       # A value
       if value.is_a?(Fixnum)
