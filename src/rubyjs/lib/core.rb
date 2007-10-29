@@ -256,6 +256,33 @@ class Object
   def hash
     `return #<self>.toString()`
   end
+
+  def method(id)
+    Method.new(self, id)
+  end
+end
+
+class Method
+  def initialize(object, method_id)
+    @object, @method_id = object, method_id
+
+    m = nil
+   `#<m> = #<object>[#<globalattr:mm_reverse>[#<method_id>]];
+    if (#<m>==null) #<m> = #<nil>;`
+    if m
+      @method = m
+    else
+      raise NameError, "undefined method `#{method_id}' for class `#{object.class.name}'"
+    end
+  end
+
+  def call(*args, &block)
+    `return #<self>.#<@method>.apply(#<self>.#<@object>, [#<block>].concat(#<args>))`
+  end
+
+  def inspect
+    "#<Method: #{@object.class.name}##{@method_id}>"
+  end
 end
 
 module Enumerable

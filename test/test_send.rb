@@ -49,5 +49,17 @@ class TestSend
     rescue NoMethodError
       p "goood"
     end
+
+    puts "class Method"
+    m = "hallo".method(:to_s)
+    p m
+    p m.call
+
+    a = [1,2,3]
+    m = a.method(:+)
+    p m
+    p m.call([2,3])
+    p m
+    p a
   end
 end
