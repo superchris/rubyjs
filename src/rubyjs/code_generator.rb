@@ -107,7 +107,9 @@ class CodeGenerator
     str << ipol("var #<globalattr:klasses> = [#{klasses.join(",")}];\n" + 
                 "#<globalattr:rebuild_classes>(#<globalattr:klasses>);\n")
 
-    str << ipol("for (var i=0; i<#<globalattr:klasses>.length; i++) #<globalattr:mm_assign>(#<globalattr:klasses>[i]);\n")
+    unless $RUBYJS__OPTS.include?('NoMethodMissing')
+      str << ipol("for (var i=0; i<#<globalattr:klasses>.length; i++) #<globalattr:mm_assign>(#<globalattr:klasses>[i]);\n")
+    end
 
     #
     # prepend
@@ -118,7 +120,10 @@ class CodeGenerator
     # Code of runtime
     str_prep << ipol(RUNTIME_INIT)
 
-    str_prep << gen_mm_stubs()
+    unless $RUBYJS__OPTS.include?('NoMethodMissing')
+      str_prep << ipol(RUNTIME_MM)
+      str_prep << gen_mm_stubs()
+    end
 
     return str_prep + str
   end

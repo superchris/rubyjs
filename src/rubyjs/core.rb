@@ -5,14 +5,7 @@
 # All rights reserved.
 #
 
-RUNTIME_INIT = <<EOS
-// declare nil
-function NilClass() {}
-
-// FIXME: remove
-NilClass.prototype.toString = function() { return "nil"; };
-#<nil> = new NilClass();
-
+RUNTIME_MM = <<EOS
 //
 // Generates a new method_missing function
 // for the given symbol +sym+.
@@ -53,6 +46,43 @@ function #<globalattr:call_method_missing>(obj, args, sym)
   else
     throw "FATAL: method_missing missing";
 }
+
+//
+// assign method_missing stubs
+//
+function #<globalattr:mm_assign>(c)
+{
+  var i;
+
+  for (i in #<globalattr:mm>)  
+  {
+    if (c.#<attr:object_constructor>.prototype[i]===undefined)
+    {
+      c.#<attr:object_constructor>.prototype[i] = #<globalattr:mm_fun>(i);
+    }
+  }
+
+  if (c.#<attr:superclass> != #<nil>)
+  {
+    for (i in c.#<attr:superclass>)
+    {
+      if (c[i]===undefined)
+      {
+        c[i] = #<globalattr:mm_fun>(i);
+      }
+    }
+  }
+}
+EOS
+
+RUNTIME_INIT = <<EOS
+// declare nil
+function NilClass() {}
+
+// FIXME: remove
+NilClass.prototype.toString = function() { return "nil"; };
+#<nil> = new NilClass();
+
  
 //
 // r: return value
@@ -202,34 +232,6 @@ function #<globalattr:rebuild_class>(c)
   // set class for instanciated objects
   c.#<attr:object_constructor>.prototype.#<attr:_class> = c;
 }
-
-//
-// assign method_missing stubs
-//
-function #<globalattr:mm_assign>(c)
-{
-  var i;
-
-  for (i in #<globalattr:mm>)  
-  {
-    if (c.#<attr:object_constructor>.prototype[i]===undefined)
-    {
-      c.#<attr:object_constructor>.prototype[i] = #<globalattr:mm_fun>(i);
-    }
-  }
-
-  if (c.#<attr:superclass> != #<nil>)
-  {
-    for (i in c.#<attr:superclass>)
-    {
-      if (c[i]===undefined)
-      {
-        c[i] = #<globalattr:mm_fun>(i);
-      }
-    }
-  }
-}
-
 
 function #<globalattr:def_class>(h)
 {

@@ -18,6 +18,16 @@ if __FILE__ == $0
   options.debug = false
   options.opts = [] 
 
+  OPTS = %w(NoArgumentArityChecks NoMethodMissing OptimizeArithOps PrettyPrint)
+
+  def show_options
+    puts "Compiler Options:"
+    puts "  --opt NoArgumentArityChecks:: Disable generation of arity checking code"
+    puts "  --opt NoMethodMissing:: Disable method_missing functionality"
+    puts "  --opt OptimizeArithOps:: Enable native +-*/ operators"
+    puts "  --opt PrettyPrint:: Output more readable code"
+  end
+
   opts = OptionParser.new do |opts|
     opts.banner = "Usage: rubyjs_gen [options] [file, [file, ...]]"
     opts.on("-r", "--require LIBRARY",
@@ -46,13 +56,16 @@ if __FILE__ == $0
       options.outputs << out
     end
     opts.on("-O", "--opt OPTION", "Set a specific compiler option") do |out|
-      options.opts << out
+      if OPTS.include?(out)
+        options.opts << out
+      else
+        puts "WRONG option"
+        show_options()
+        exit 1
+      end
     end
     opts.on("--show-options", "--show-options", "Show all compiler options") do |out|
-      puts "Compiler Options:"
-      puts "  --opt NoArgumentArityChecks:: Disable generation of arity checking code"
-      puts "  --opt OptimizeArithOps:: Enable native +-*/ operators"
-      puts "  --opt PrettyPrint:: Output more readable code"
+      show_options()
       exit
     end
     opts.on("-d", "--debug", "Turn on debug mode") do |out|

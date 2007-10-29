@@ -253,14 +253,14 @@ class MethodCompiler < SexpProcessor
     # undefined. 
     #
     if @block_arg_name
-      str << "#{@block_arg_name}=#{block_name()}===undefined?#{@model.encode_nil}:#{block_name()}#{sep()}"
+      str << "#{@block_arg_name}=#{block_name()}==null?#{@model.encode_nil}:#{block_name()}#{sep()}"
     end
 
     #
     # generate initialization code for each read instance variable
     #
     @read_instance_variables.each do |iv|
-      str << "if(#{@model.encode_self}.#{iv}===undefined)#{@model.encode_self}.#{iv}=#{@model.encode_nil}#{sep()}"
+      str << "if(#{@model.encode_self}.#{iv}==null)#{@model.encode_self}.#{iv}=#{@model.encode_nil}#{sep()}"
     end
 
     # 
@@ -430,8 +430,10 @@ class MethodCompiler < SexpProcessor
 
     #
     # Generate code for the default values of arguments. We check
-    # whether a argument has been assigned a value, if not (=== undefined), 
+    # whether a argument has been assigned a value, if not (== null or == undefined), 
     # then we assign the default value.
+    #
+    # NOTE: A check to ==null also returns true if the argument is undefined.
     #
     if default_values
       raise unless default_values[0] == :block
@@ -444,7 +446,7 @@ class MethodCompiler < SexpProcessor
         @argument_variables.add(arg)
         value = dv[2]
 
-        str << "if(#{arg}===undefined)"
+        str << "if(#{arg}==null)"
         str << "#{arg}="
         str << want_expression do process(value) end
         str << sep()
@@ -1654,8 +1656,8 @@ class MethodCompiler < SexpProcessor
   # leads to the following javascript code 
   #
   #   (_t = [b,a],
-  #    a  = _t[0] === undefined ? nil : _t[0], 
-  #    b  = _t[1] === undefined ? nil : _t[1])
+  #    a  = _t[0] == null ? nil : _t[0], 
+  #    b  = _t[1] == null ? nil : _t[1])
   #
   # When a splat argument is given, there's just an
   # additional assignment which takes the rest of the
@@ -1677,7 +1679,7 @@ class MethodCompiler < SexpProcessor
 
           # lhs[0] == :array -> skip it
           lhs[1..-1].each_with_index do |assignment, i|  # for example where assignment == [:lasgn, :a]
-            assignment << s(:special_inline_js_value, "#{tmp}[#{i}]===undefined?#{@model.encode_nil}:#{tmp}[#{i}]")
+            assignment << s(:special_inline_js_value, "#{tmp}[#{i}]==null?#{@model.encode_nil}:#{tmp}[#{i}]")
             assgn << process(assignment)
           end
 
@@ -1781,7 +1783,7 @@ class MethodCompiler < SexpProcessor
       # with one argument.
 
       sasgn_iter = @model.encode_globalattr("sasgn_iter")
-      params << [:special_inline_js_value, "#{arg_name}===undefined?#{@model.encode_nil}:#{arg_name}"]
+      params << [:special_inline_js_value, "#{arg_name}==null?#{@model.encode_nil}:#{arg_name}"]
 
       want_expression(false) do
         without_result do
