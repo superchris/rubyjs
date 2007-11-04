@@ -137,9 +137,13 @@ class TestYield
     test_loop2
     test_while_loop
 
-    test_proc
+    begin
+      test_proc
+    rescue LocalJumpError => e
+      p e
+    end
 
-    p test_return_in_block
+    p test_return_in_block()
   end
 
   def self.main
