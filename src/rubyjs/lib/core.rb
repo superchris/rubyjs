@@ -516,9 +516,9 @@ class String
     return (i == -1) ? #<nil> : i` 
   end
 
-  def match(pattern) `
-    var i = #<self>.match(#<pattern>);
-    return (i === null) ? #<nil> : i`
+  def =~(pattern) `
+    var i = #<self>.search(#<pattern>);
+    return (i == -1 ? #<nil> : i)`
   end
 
   def gsub(pattern, replacement=nil)
@@ -806,6 +806,12 @@ end
 
 class Regexp
   OBJECT_CONSTRUCTOR__ = "RegExp"
+end
+
+class MatchData
+  def initialize(match)
+    @match = match
+  end
 end
 
 #

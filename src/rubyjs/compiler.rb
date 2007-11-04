@@ -1494,19 +1494,33 @@ class MethodCompiler < SexpProcessor
   #
   # EXPRESSION
   #
+  # Regular expression lookup $1 .. $9
+  #
+  def process_nth_ref(exp)
+    n = exp.shift
+    raise if n < 1 or n > 9
+    resultify("(RegExp.$#{n} || #{@model.encode_nil})")
+  end
+
+  #
+  # EXPRESSION
+  #
   # Global variable lookup
   #
   def process_gvar(exp)
     gvar = exp.shift
 
-    gvar_name = 
-      if gvar.to_s == "$!"
+    res = 
+      case gvar.to_s
+      when "$!"
         # this is a special variable which holds the current exception 
         exception_name()  
       else
-        @model.encode_global_variable(gvar)
+        gvar_name = @model.encode_global_variable(gvar)
+        "(typeof(#{gvar_name})=='undefined'?#{@model.encode_nil}:#{gvar_name})"
       end
-    resultify("(typeof(#{gvar_name})=='undefined'?#{@model.encode_nil}:#{gvar_name})")
+
+    resultify(res)
   end
 
   #
