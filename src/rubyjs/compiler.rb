@@ -1463,6 +1463,10 @@ class MethodCompiler < SexpProcessor
 
     lvar_name = @model.encode_local_variable(lvar)
     @local_variables.add(lvar_name)
+    # local variables need not to be initialized, because they
+    # have to be asigned to before usage, otherwise they would
+    # not be local variables but methods instead.
+    @local_variables_need_no_initialization.add(lvar_name)
 
     str = without_result do
       want_expression do

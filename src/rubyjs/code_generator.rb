@@ -87,7 +87,13 @@ function NilClass() {}
 NilClass.prototype.toString = function() { return "nil"; };
 #<nil> = new NilClass();
 
- 
+//
+// define a null-function (used by HTTPRequest)
+//
+function #<globalattr:null_func>()
+{
+}
+
 //
 // r: return value
 // s: scope (method scope)
