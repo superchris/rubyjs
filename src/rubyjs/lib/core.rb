@@ -247,15 +247,12 @@ class Object
     `return #<self>.#<attr:_class>`
   end
 
-  def inspect
+  def to_s
     `return #<self>.toString()`
   end
 
-  alias to_s inspect
-
-  def hash
-    `return #<self>.toString()`
-  end
+  alias inspect to_s
+  alias hash to_s
 
   def method(id)
     Method.new(self, id)
@@ -822,7 +819,8 @@ class Hash
   #
   def initialize() `
     #<self>.#<attr:items> = {}; 
-    #<self>.#<attr:default_value> = #<nil>;`
+    #<self>.#<attr:default_value> = #<nil>;
+    return #<nil>`
   end
 
   #
@@ -835,10 +833,9 @@ class Hash
   #   {1 => 2, 3 => 4, 5 => 6}
   #
   def self.new_from_key_value_list(*list) 
+    raise ArgumentError if list.length % 2 != 0 
     obj = allocate()
     `
-    if (#<list>.length % 2 != 0) throw('ArgumentError');
-
     // 
     // we use an associate array to store the items. But unlike
     // Javascript, the entries are arrays which contain the collisions.
@@ -852,17 +849,11 @@ class Hash
     for (var i = 0; i < #<list>.length; i += 2)
     {
       current_key = #<list>[i];
-      hashed_key = ":" + current_key.#<m:hash>();
       current_val = #<list>[i+1];
+      hashed_key = ":" + current_key.#<m:hash>();
 
-      if (items[hashed_key] === undefined)
-      {
-        // 
-        // create new bucket
-        // a bucket stores all the elements with key collisions.
-        //
-        items[hashed_key] = [];
-      }
+      // make sure that a bucket exists
+      if (!items[hashed_key]) items[hashed_key] = [];
 
       items[hashed_key].push(current_key, current_val);
     }
@@ -891,7 +882,7 @@ class Hash
     var hashed_key = ":" + #<key>.#<m:hash>();
     var bucket = #<self>.#<attr:items>[hashed_key];
 
-    if (bucket !== undefined)
+    if (bucket)
     {
       //
       // find the matching element inside the bucket
@@ -923,7 +914,7 @@ class Hash
     var hashed_key = ":" + #<key>.#<m:hash>();
     var bucket = #<self>.#<attr:items>[hashed_key];
 
-    if (bucket !== undefined)
+    if (bucket)
     {
       //
       // find the matching element inside the bucket
@@ -980,7 +971,7 @@ class Hash
     var key, bucket, i;
     for (key in #<self>.#<attr:items>)
     {
-      if (key[0] == ":")
+      if (key.charAt(0) == ":")
       {
         bucket = #<self>.#<attr:items>[key];
         for (i=0; i<bucket.length; i+=2)
@@ -996,7 +987,7 @@ class Hash
 
   def inspect
     str = "{"
-    str += map {|k, v| (k.inspect + " => " + v.inspect) }.join(", ")
+    str += map {|k, v| (k.inspect + "=>" + v.inspect) }.join(", ")
     str += "}"
     str
   end
