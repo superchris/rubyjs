@@ -501,7 +501,11 @@ class DOM
   # listener:: the listener to receive events
   #
   def self.setEventListener(elem, listener)
-    `#<elem>.#<attr:listener> = (#<listener> == #<nil>) ? null : #<listener>; return #<nil>`
+    `#<elem>.#<attr:listener> = (#<listener> === #<nil>) ? null : #<listener>; return #<nil>`
+  end
+
+  def self.removeEventListener(elem)
+    `#<elem>.#<attr:listener> = null; return #<nil>`
   end
 
   #
@@ -845,9 +849,9 @@ class DOM
   # elem:: the element whose inner HTML is to be set
   # html:: the new html
   #
-  def self.setInnerHTML(elem, html)
-    html ||= ''
-    `#<elem>.innerHTML = #<html>; return #<nil>`
+  def self.setInnerHTML(elem, html='') `
+    #<elem>.innerHTML = #<html>;
+    return #<nil>`
   end
 
   #
@@ -915,7 +919,7 @@ class DOM
   # elem::   the element to stringize
   # return:: a string form of the element
   #
-  def self.toString(elem)
+  def self.to_s(elem)
     `return #<elem>.outerHTML`
   end
 
