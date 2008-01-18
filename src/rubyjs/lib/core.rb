@@ -32,6 +32,7 @@ class Proc
   end
 
   def call(*args) `
+    // TODO: use switch/case
     if (#<args>.length == 0) return #<self>();
     else if (#<args>.length == 1) return #<self>(#<args>[0]);
     else return #<self>(#<args>);`
