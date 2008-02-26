@@ -76,7 +76,7 @@ class Widget < UIObject
       # Remove old event listener to avoid leaking. onDetach will not do this
       # for us, because it is only called when the widget itself is detached from
       # the document.
-      Element.setEventListener(getElement(), nil)
+      DOM.removeEventListener(getElement())
     end
 
     super(elem)
@@ -85,7 +85,7 @@ class Widget < UIObject
       # Hook the event listener back up on the new element. onAttach will not
       # do this for us, because it is only called when the widget itself is
       # attached to the document.
-      Element.setEventListener(elem, self)
+      DOM.setEventListener(elem, self)
     end
   end
 
@@ -120,7 +120,7 @@ class Widget < UIObject
     # Set the main element's event listener. This should only be set
     # while the widget is attached, because it creates a circular
     # reference between JavaScript and the DOM.
-    Element.setEventListener(getElement(), self)
+    DOM.setEventListener(getElement(), self)
 
     # Now that the widget is attached, call onLoad().
     onLoad()
@@ -146,7 +146,7 @@ class Widget < UIObject
   
     # Clear out the element's event listener (breaking the circular
     # reference between it and the widget).
-    Element.setEventListener(getElement(), nil);
+    DOM.removeEventListener(getElement())
   end
 
   #

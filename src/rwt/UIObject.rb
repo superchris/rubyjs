@@ -205,12 +205,12 @@ class UIObject
       raise "Null widget handle!"
     end
 
-    className = Element.getProperty(elem, "className").strip
+    className = DOM.getProperty(elem, "className").strip
 
     # Ensure a primary style name
     if className.empty?
       className = STYLE_EMPTY
-      Element.setProperty(elem, "className", className)
+      DOM.setProperty(elem, "className", className)
     end
 
     if mode != MODE_GET
@@ -267,7 +267,7 @@ class UIObject
 
     #<newClassName> = #<newClassName>.join(" ");`
 
-    Element.setProperty(elem, "className", newClassName)
+    DOM.setProperty(elem, "className", newClassName)
   end
 
   private :styleNameHelper
@@ -283,7 +283,7 @@ class UIObject
   # return:: the object's absolute left position
   #
   def getAbsoluteLeft
-    Element.getAbsoluteLeft(@element)
+    DOM.getAbsoluteLeft(@element)
   end
 
   #
@@ -293,7 +293,7 @@ class UIObject
   # return:: the object's absolute top position
   #
   def getAbsoluteTop
-    Element.getAbsoluteTop(@element)
+    DOM.getAbsoluteTop(@element)
   end
   
   #
@@ -303,7 +303,7 @@ class UIObject
   # return:: the object's offset height
   #
   def getOffsetHeight
-    Element.getPropertyInt(@element, "offsetHeight")
+    DOM.getPropertyInt(@element, "offsetHeight")
   end
 
   #
@@ -313,7 +313,7 @@ class UIObject
   # return:: the object's offset width
   #
   def getOffsetWidth
-    Element.getPropertyInt(@element, "offsetWidth")
+    DOM.getPropertyInt(@element, "offsetWidth")
   end
 
   #
@@ -327,7 +327,7 @@ class UIObject
     # it won't accept negative numbers in length measurements
     # FIXME: assert extractLengthValue(height.trim().toLowerCase()) >= 0 : "CSS heights should not be negative";
 
-    Element.setStyleAttribute(@element, "height", height)
+    DOM.setStyleAttribute(@element, "height", height)
   end
 
   #
@@ -341,7 +341,7 @@ class UIObject
     # it won't accept negative numbers in length measurements
     # FIXME: assert extractLengthValue(width.trim().toLowerCase()) >= 0 : "CSS widths should not be negative";
     
-    Element.setStyleAttribute(@element, "width", width)
+    DOM.setStyleAttribute(@element, "width", width)
   end
 
   #
@@ -383,7 +383,7 @@ class UIObject
   # See +Event+.
   #
   def sinkEvents(eventBitsToAdd)
-    Element.sinkEvents(@element, eventBitsToAdd | Element.getEventsSunk(@element))
+    DOM.sinkEvents(@element, eventBitsToAdd | DOM.getEventsSunk(@element))
   end
 
   #
@@ -395,7 +395,7 @@ class UIObject
   # See #sinkEvents and +Event+.
   #
   def unsinkEvents(eventBitsToRemove)
-    Element.sinkEvents(@element, Element.getEventsSunk(@element) & (~eventBitsToRemove))
+    DOM.sinkEvents(@element, DOM.getEventsSunk(@element) & (~eventBitsToRemove))
   end
 
   #-------------------------------------------------------------------
@@ -424,7 +424,7 @@ class UIObject
   def setElement(elem)
     if @element
       # replace element in its parent with elem.
-      Element.replace(@element, elem)
+      DOM.replace(@element, elem)
     end
 
     @element = elem
@@ -445,7 +445,7 @@ class UIObject
   # return:: the object's title
   #
   def getTitle
-    Element.getProperty(@element, "title")
+    DOM.getProperty(@element, "title")
   end
 
   #
@@ -458,9 +458,9 @@ class UIObject
   #
   def setTitle(title)
     if title
-      Element.setAttribute(@element, "title", title)
+      DOM.setAttribute(@element, "title", title)
     else
-      Element.removeAttribute(@element, "title")
+      DOM.removeAttribute(@element, "title")
     end
   end
 
@@ -470,7 +470,7 @@ class UIObject
   # return:: +true+ if the object is visible
   #
   def isVisible
-    Element.isVisible(@element)
+    DOM.isVisible(@element)
   end
 
   #
@@ -479,7 +479,7 @@ class UIObject
   # visible:: +true+ to show the object, +false+ to hide it
   #
   def setVisible(visible=true)
-    Element.setVisible(@element, visible)
+    DOM.setVisible(@element, visible)
   end
 
   #
@@ -488,8 +488,8 @@ class UIObject
   # 
   # return:: a string representation of the object
   #
-  def toString
-    @element ? Element.toString(@element) : "(null handle)"
+  def to_s
+    @element ? DOM.to_s(@element) : "(null handle)"
   end
 
 end # class UIObject

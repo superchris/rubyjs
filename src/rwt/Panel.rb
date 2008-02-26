@@ -50,7 +50,7 @@ class Panel < Widget
 
     # Attach it at the DOM and GWT levels.
     if container
-      Element.appendChild(container, w.getElement)
+      DOM.appendChild(container, w.getElement)
     end
 
     w.setParent(self)
@@ -69,7 +69,7 @@ class Panel < Widget
     # Remove it at the DOM and GWT levels.
     elem = w.getElement
     w.setParent(nil)
-    Element.removeChild(Element.getParent(elem), elem)
+    DOM.removeChild(DOM.getParent(elem), elem)
   end
 
   def onAttach

@@ -1,5 +1,5 @@
 require 'rwt/Event'
-require 'rwt/Element'
+require 'rwt/DOM'
 require 'rwt/UIObject'
 require 'rwt/Widget'
 require 'rwt/Panel'
@@ -9,10 +9,10 @@ require 'rwt/Label'
 
 class MyWidget < Widget
   def initialize
-    setElement(Element.createDiv)
+    setElement(DOM.createDiv)
     sinkEvents(Event::ONCLICK)
     setTitle('test')
-    Element.setInnerText(getElement(), 'click me')
+    DOM.setInnerText(getElement(), 'click me')
   end
 
   def onBrowserEvent(ev)

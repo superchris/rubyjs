@@ -36,12 +36,12 @@ class AbsolutePanel < Panel
   def initialize
     @children = []
 
-    setElement(Element.createDiv)
+    setElement(DOM.createDiv)
 
     # Setting the panel's position style to 'relative' causes it to be treated
     # as a new positioning context for its children.
-    Element.setStyleAttribute(getElement(), "position", "relative");
-    Element.setStyleAttribute(getElement(), "overflow", "hidden");
+    DOM.setStyleAttribute(getElement(), "position", "relative");
+    DOM.setStyleAttribute(getElement(), "overflow", "hidden");
   end
 
   #
@@ -71,7 +71,7 @@ class AbsolutePanel < Panel
     # The Widget should be removed from its parent before any positional
     # changes are made to prevent flickering.
     w.removeFromParent
-    Element.setAbsolutePixelPosition(w.getElement, left, top)
+    DOM.setAbsolutePixelPosition(w.getElement, left, top)
     add(w)
   end
   
@@ -86,7 +86,7 @@ class AbsolutePanel < Panel
     # The Widget should be removed from its parent before any positional
     # changes are made to prevent flickering.
     w.removeFromParent
-    Element.changeToStaticPositioning(w.getElement)
+    DOM.changeToStaticPositioning(w.getElement)
     add(w)
   end
 
@@ -99,7 +99,7 @@ class AbsolutePanel < Panel
   #
   def getWidgetLeft(w)
     checkWidgetParent(w)
-    return Element.getAbsoluteLeft(w.getElement) - Element.getAbsoluteLeft(getElement())
+    return DOM.getAbsoluteLeft(w.getElement) - DOM.getAbsoluteLeft(getElement())
   end
 
   #
@@ -111,7 +111,7 @@ class AbsolutePanel < Panel
   #
   def getWidgetTop(w)
     checkWidgetParent(w)
-    return Element.getAbsoluteTop(w.getElement) - Element.getAbsoluteTop(getElement())
+    return DOM.getAbsoluteTop(w.getElement) - DOM.getAbsoluteTop(getElement())
   end
 
   #
@@ -123,7 +123,7 @@ class AbsolutePanel < Panel
   #
   def setWidgetPosition(w, left, top)
     checkWidgetParent(w)
-    Element.setAbsolutePixelPosition(w.getElement, left, top)
+    DOM.setAbsolutePixelPosition(w.getElement, left, top)
   end
   
   #
@@ -134,7 +134,7 @@ class AbsolutePanel < Panel
   #
   def setWidgetPositionToStatic(w)
     checkWidgetParent(w)
-    Element.changeToStaticPositioning(w.getElement)
+    DOM.changeToStaticPositioning(w.getElement)
   end
 
   protected
@@ -149,7 +149,7 @@ class AbsolutePanel < Panel
   #
   def disown(w)
     super(w)
-    Element.changeToStaticPositioning(w.getElement)
+    DOM.changeToStaticPositioning(w.getElement)
   end
 
   private

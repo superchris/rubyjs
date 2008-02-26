@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.impl;
 
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
@@ -41,7 +40,7 @@ public abstract class DOMImpl {
     return e;
   }-*/;
 
-  public abstract Element createInputRadioElement(String group);
+  public abstract Element createInputRadioElement(String name);
 
   public Element createSelectElement(boolean multiple) {
     Element select = createElement("select");
@@ -56,23 +55,27 @@ public abstract class DOMImpl {
   }-*/;
 
   public native boolean eventGetAltKey(Event evt) /*-{
-    return evt.altKey;
+    return !!evt.altKey;
   }-*/;
 
   public native int eventGetButton(Event evt) /*-{
-    return evt.button;
+    return evt.button || -1;
   }-*/;
 
   public native int eventGetClientX(Event evt) /*-{
-    return evt.clientX;
+    return evt.clientX || -1;
   }-*/;
 
   public native int eventGetClientY(Event evt) /*-{
-    return evt.clientY;
+    return evt.clientY || -1;
   }-*/;
 
   public native boolean eventGetCtrlKey(Event evt) /*-{
-    return evt.ctrlKey;
+    return !!evt.ctrlKey;
+  }-*/;
+
+  public native Element eventGetCurrentTarget(Event evt) /*-{
+    return evt.currentTarget;
   }-*/;
 
   public abstract Element eventGetFromElement(Event evt);
@@ -80,29 +83,30 @@ public abstract class DOMImpl {
   public native int eventGetKeyCode(Event evt) /*-{
     // 'which' gives the right key value, except when it doesn't -- in which
     // case, keyCode gives the right value on all browsers.
-    return evt.which || evt.keyCode;
+    // If all else fails, return an error code
+    return evt.which || evt.keyCode || -1;
   }-*/;
 
   public native boolean eventGetMetaKey(Event evt) /*-{
-    return !!evt.getMetaKey;
+    return !!evt.metaKey;
   }-*/;
 
   public abstract int eventGetMouseWheelVelocityY(Event evt);
 
   public native boolean eventGetRepeat(Event evt) /*-{
-    return evt.repeat;
+    return !!evt.repeat;
   }-*/;
 
   public native int eventGetScreenX(Event evt) /*-{
-    return evt.screenX;
+    return evt.screenX || -1;
   }-*/;
 
   public native int eventGetScreenY(Event evt) /*-{
-    return evt.screenY;
+    return evt.screenY || -1;
   }-*/;
 
   public native boolean eventGetShiftKey(Event evt) /*-{
-    return evt.shiftKey;
+    return !!evt.shiftKey;
   }-*/;
 
   public abstract Element eventGetTarget(Event evt);
@@ -266,19 +270,17 @@ public abstract class DOMImpl {
       int index);
 
   /**
-   * @see DOM#insertListItem(Element, String, String, int)
+   * @see com.google.gwt.user.client.DOM#insertListItem(Element, String, String, int)
    */
-  public void insertListItem(Element select, String item, String value,
-      int index) {
-    Element option = DOM.createElement("OPTION");
-    DOM.setInnerText(option, item);
-    DOM.setElementProperty(option, "value", value);
-    if (index == -1) {
-      DOM.appendChild(select, option);
+  public native void insertListItem(Element select, String item, String value,
+      int index)/*-{
+    var option = new Option(item, value);
+    if (index == -1 || index > select.options.length - 1) {
+      select.add(option, null);
     } else {
-      DOM.insertChild(select, option, index);
+      select.add(option, select.options[index]);      
     }
-  }
+  }-*/;
 
   public abstract boolean isOrHasChild(Element parent, Element child);
 
@@ -400,5 +402,25 @@ public abstract class DOMImpl {
 
   public native String toString(Element elem) /*-{
     return elem.outerHTML;
+  }-*/;
+
+  /**
+   * Gets the height of the browser window's client area excluding the
+   * scroll bar.
+   * 
+   * @return the window's client height
+   */
+  public native int windowGetClientHeight() /*-{
+    return $doc.body.clientHeight; 
+  }-*/;
+
+  /**
+   * Gets the width of the browser window's client area excluding the
+   * vertical scroll bar.
+   * 
+   * @return the window's client width
+   */
+  public native int windowGetClientWidth() /*-{
+    return $doc.body.clientWidth; 
   }-*/;
 }

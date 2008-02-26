@@ -60,7 +60,7 @@ class Label < Widget
   #            +nil+ to don't care.
   #
   def initialize(text=nil, wordWrap=nil)
-    setElement(Element.createDiv)
+    setElement(DOM.createDiv)
     sinkEvents(Event::ONCLICK | Event::MOUSEEVENTS | Event::ONMOUSEWHEEL)
     setStyleName("rwt-Label")
     setText(text) if text
@@ -119,19 +119,19 @@ class Label < Widget
 =end
 
   def getText
-    Element.getInnerText(getElement())
+    DOM.getInnerText(getElement())
   end
 
   def getWordWrap
-    Element.getStyleAttribute(getElement(), "whiteSpace") != 'nowrap'
+    DOM.getStyleAttribute(getElement(), "whiteSpace") != 'nowrap'
   end
 
   def setText(text)
-    Element.setInnerText(getElement(), text)
+    DOM.setInnerText(getElement(), text)
   end
 
   def setWordWrap(wrap)
-    Element.setStyleAttribute(getElement(), "whiteSpace", wrap ? "normal" : "nowrap")
+    DOM.setStyleAttribute(getElement(), "whiteSpace", wrap ? "normal" : "nowrap")
   end
 
   def onBrowserEvent(event)

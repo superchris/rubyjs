@@ -29,6 +29,8 @@ import java.util.ArrayList;
  */
 public class DOM {
 
+  // The current event being fired
+  private static Event currentEvent = null;
   private static DOMImpl impl;
   private static Element sCaptureElem;
 
@@ -53,296 +55,6 @@ public class DOM {
     // Add the event preview to the stack. It will automatically
     // begin receiving events.
     sEventPreviewStack.add(preview);
-  }
-
-  /**
-   * Appends one element to another's list of children.
-   *
-   * @param parent the parent element
-   * @param child its new child
-   */
-  public static void appendChild(Element parent, Element child) {
-    impl.appendChild(parent, child);
-  }
-
-  /**
-   * Compares two elements for equality (note that reference equality is not
-   * sufficient to determine equality among elements on most browsers).
-   *
-   * @param elem1 the first element to be compared
-   * @param elem2 the second element to be compared
-   * @return <code>true</code> if they are in fact the same element
-   * @see #isOrHasChild(Element, Element)
-   */
-  public static boolean compare(Element elem1, Element elem2) {
-    return impl.compare(elem1, elem2);
-  }
-
-  /**
-   * Creates an HTML A element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createAnchor() {
-    return impl.createElement("A");
-  }
-
-  /**
-   * Creates an HTML BUTTON element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createButton() {
-    return impl.createElement("button");
-  }
-
-  /**
-   * Creates an HTML CAPTION element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createCaption() {
-    return impl.createElement("caption");
-  }
-
-  /**
-   * Creates an HTML COL element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createCol() {
-    return impl.createElement("col");
-  }
-
-  /**
-   * Creates an HTML COLGROUP element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createColGroup() {
-    return impl.createElement("colgroup");
-  }
-
-  /**
-   * Creates an HTML DIV element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createDiv() {
-    return impl.createElement("div");
-  }
-
-  /**
-   * Creates an HTML element.
-   *
-   * @param tagName the HTML tag of the element to be created
-   * @return the newly-created element
-   */
-  public static Element createElement(String tagName) {
-    return impl.createElement(tagName);
-  }
-
-  /**
-   * Creates an HTML FIELDSET element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createFieldSet() {
-    return impl.createElement("fieldset");
-  }
-
-  /**
-   * Creates an HTML FORM element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createForm() {
-    return impl.createElement("form");
-  }
-
-  /**
-   * Creates an HTML IFRAME element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createIFrame() {
-    return impl.createElement("iframe");
-  }
-
-  /**
-   * Creates an HTML IMG element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createImg() {
-    return impl.createElement("img");
-  }
-
-  /**
-   * Creates an HTML INPUT type='CHECK' element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createInputCheck() {
-    return impl.createInputElement("checkbox");
-  }
-
-  /**
-   * Creates an HTML INPUT type='PASSWORD' element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createInputPassword() {
-    return impl.createInputElement("password");
-  }
-
-  /**
-   * Creates an HTML INPUT type='RADIO' element.
-   *
-   * @param group the name of the group with which this radio button will be
-   *          associated
-   * @return the newly-created element
-   */
-  public static Element createInputRadio(String group) {
-    return impl.createInputRadioElement(group);
-  }
-
-  /**
-   * Creates an HTML INPUT type='TEXT' element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createInputText() {
-    return impl.createInputElement("text");
-  }
-
-  /**
-   * Creates an HTML LABEL element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createLabel() {
-    return impl.createElement("label");
-  }
-
-  /**
-   * Creates an HTML LEGEND element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createLegend() {
-    return impl.createElement("legend");
-  }
-
-  /**
-   * Creates an HTML OPTIONS element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createOptions() {
-    return impl.createElement("options");
-  }
-
-  /**
-   * Creates a single-selection HTML SELECT element. Equivalent to 
-   * <pre>
-   * createSelect(false)
-   * </pre>
-   *
-   * @return the newly-created element
-   */
-  public static Element createSelect() {
-    return DOM.createSelect(false);
-  }
-
-  /**
-   * Creates an HTML SELECT element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createSelect(boolean multiple) {
-    return impl.createSelectElement(multiple);
-  }
-
-  /**
-   * Creates an HTML SPAN element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createSpan() {
-    return impl.createElement("span");
-  }
-
-  /**
-   * Creates an HTML TABLE element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createTable() {
-    return impl.createElement("table");
-  }
-
-  /**
-   * Creates an HTML TBODY element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createTBody() {
-    return impl.createElement("tbody");
-  }
-
-  /**
-   * Creates an HTML TD element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createTD() {
-    return impl.createElement("td");
-  }
-
-  /**
-   * Creates an HTML TEXTAREA element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createTextArea() {
-    return impl.createElement("textarea");
-  }
-
-  /**
-   * Creates an HTML TFOOT element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createTFoot() {
-    return impl.createElement("tfoot");
-  }
-
-  /**
-   * Creates an HTML TH element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createTH() {
-    return impl.createElement("th");
-  }
-
-  /**
-   * Creates an HTML THEAD element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createTHead() {
-    return impl.createElement("thead");
-  }
-
-  /**
-   * Creates an HTML TR element.
-   *
-   * @return the newly-created element
-   */
-  public static Element createTR() {
-    return impl.createElement("tr");
   }
 
   /**
@@ -405,6 +117,31 @@ public class DOM {
    */
   public static boolean eventGetCtrlKey(Event evt) {
     return impl.eventGetCtrlKey(evt);
+  }
+  
+  /**
+   * Gets the current event that is being fired.  The current event
+   * is only available within the lifetime of the onBrowserEvent function.
+   * Once the onBrowserEvent method returns, the current event is reset
+   * to null.
+   * 
+   * @return the current event
+   */
+  public static Event eventGetCurrentEvent() {
+    return currentEvent;
+  }
+
+  /**
+   * Gets the current target element of the given event. This is the element
+   * whose listener fired last, not the element which fired the event
+   * initially.
+   *
+   * @param evt the event
+   * @return the event's current target element
+   * @see DOM#eventGetTarget(Event)
+   */
+  public static Element eventGetCurrentTarget(Event evt) {
+    return impl.eventGetCurrentTarget(evt);
   }
 
   /**
@@ -577,205 +314,6 @@ public class DOM {
   }
 
   /**
-   * Gets an element's absolute left coordinate in the document's coordinate
-   * system.
-   *
-   * @param elem the element to be measured
-   * @return the element's absolute left coordinate
-   */
-  public static int getAbsoluteLeft(Element elem) {
-    return impl.getAbsoluteLeft(elem);
-  }
-
-  /**
-   * Gets an element's absolute top coordinate in the document's coordinate
-   * system.
-   *
-   * @param elem the element to be measured
-   * @return the element's absolute top coordinate
-   */
-  public static int getAbsoluteTop(Element elem) {
-    return impl.getAbsoluteTop(elem);
-  }
-
-  /**
-   * Gets any named attribute from an element, as a string.
-   *
-   * @param elem the element whose attribute is to be retrieved
-   * @param attr the name of the attribute
-   * @return the attribute's value
-   * @deprecated Use the more appropriately named
-   * {@link #getElementProperty(Element, String)} instead.
-   */
-  public static String getAttribute(Element elem, String attr) {
-    return getElementProperty(elem, attr);
-  }
-
-  /**
-   * Gets a boolean attribute on the given element.
-   *
-   * @param elem the element whose attribute is to be set
-   * @param attr the name of the attribute to be set
-   * @return the attribute's value as a boolean
-   * @deprecated Use the more appropriately named
-   * {@link #getElementPropertyBoolean(Element, String)} instead.
-   */
-  public static boolean getBooleanAttribute(Element elem, String attr) {
-    return getElementPropertyBoolean(elem, attr);
-  }
-
-  /**
-   * Gets the element that currently has mouse capture.
-   *
-   * @return a handle to the capture element, or <code>null</code> if none
-   *         exists
-   */
-  public static Element getCaptureElement() {
-    return sCaptureElem;
-  }
-
-  /**
-   * Gets an element's n-th child element.
-   *
-   * @param parent the element whose child is to be retrieved
-   * @param index the index of the child element
-   * @return the n-th child element
-   */
-  public static Element getChild(Element parent, int index) {
-    return impl.getChild(parent, index);
-  }
-
-  /**
-   * Gets the number of child elements present in a given parent element.
-   *
-   * @param parent the element whose children are to be counted
-   * @return the number of children
-   */
-  public static int getChildCount(Element parent) {
-    return impl.getChildCount(parent);
-  }
-
-  /**
-   * Gets the index of a given child element within its parent.
-   *
-   * @param parent the parent element
-   * @param child the child element
-   * @return the child's index within its parent, or <code>-1</code> if it is
-   *         not a child of the given parent
-   */
-  public static int getChildIndex(Element parent, Element child) {
-    return impl.getChildIndex(parent, child);
-  }
-
-  /**
-   * Gets the named attribute from the element.
-   *
-   * @param elem the element whose property is to be retrieved
-   * @param attr the name of the attribute
-   * @return the value of the attribute
-   */
-  public static String getElementAttribute(Element elem, String attr) {
-     return impl.getElementAttribute(elem, attr);
-  }
-
-  /**
-   * Gets the element associated with the given unique id within the entire
-   * document.
-   *
-   * @param id the id whose associated element is to be retrieved
-   * @return the associated element, or <code>null</code> if none is found
-   */
-  public static Element getElementById(String id) {
-    return impl.getElementById(id);
-  }
-  /**
-   * Gets any named property from an element, as a string.
-   *
-   * @param elem the element whose property is to be retrieved
-   * @param prop the name of the property
-   * @return the property's value
-   */
-  public static String getElementProperty(Element elem, String prop) {
-     return impl.getElementProperty(elem, prop);
-  }
-
-  /**
-   * Gets any named property from an element, as a boolean.
-   *
-   * @param elem the element whose property is to be retrieved
-   * @param prop the name of the property
-   * @return the property's value as a boolean
-   */
-  public static boolean getElementPropertyBoolean(Element elem, String prop) {
-     return impl.getElementPropertyBoolean(elem, prop);
-  }
-
-  /**
-   * Gets any named property from an element, as an int.
-   *
-   * @param elem the element whose property is to be retrieved
-   * @param prop the name of the property
-   * @return the property's value as an int
-   */
-  public static int getElementPropertyInt(Element elem, String prop) {
-     return impl.getElementPropertyInt(elem, prop);
-  }
-
-  /**
-   * Gets the current set of events sunk by a given element.
-   *
-   * @param elem the element whose events are to be retrieved
-   * @return a bitfield describing the events sunk on this element (its possible
-   *         values are described in {@link Event})
-   */
-  public static int getEventsSunk(Element elem) {
-    return impl.getEventsSunk(elem);
-  }
-
-  /**
-   * Gets the first child element of the given element.
-   *
-   * @param elem the element whose child is to be retrieved
-   * @return the child element
-   */
-  public static Element getFirstChild(Element elem) {
-    return impl.getFirstChild(elem);
-  }
-
-  /**
-   * Gets the src attribute of an img element. This method is paired with
-   * {@link #setImgSrc(Element, String)} so that it always returns the correct
-   * url.
-   *
-   * @param img a non-null img whose src attribute is to be read.
-   * @return the src url of the img
-   */
-  public static String getImgSrc(Element img) {
-    return impl.getImgSrc(img);
-  }
-
-  /**
-   * Gets an HTML representation of an element's children.
-   *
-   * @param elem the element whose HTML is to be retrieved
-   * @return the HTML representation of the element's children
-   */
-  public static String getInnerHTML(Element elem) {
-    return impl.getInnerHTML(elem);
-  }
-
-  /**
-   * Gets the text contained within an element. If the element has child
-   * elements, only the text between them will be retrieved.
-   *
-   * @param elem the element whose inner text is to be retrieved
-   * @return the text inside this element
-   */
-  public static String getInnerText(Element elem) {
-    return impl.getInnerText(elem);
-  }
-
-  /**
    * Gets an integer attribute on a given element.
    *
    * @param elem the element whose attribute is to be retrieved
@@ -800,65 +338,10 @@ public class DOM {
   }
 
   /**
-   * Gets an element's next sibling element.
-   *
-   * @param elem the element whose sibling is to be retrieved
-   * @return the sibling element
-   */
-  public static Element getNextSibling(Element elem) {
-    return impl.getNextSibling(elem);
-  }
-
-  /**
-   * Gets an element's parent element.
-   *
-   * @param elem the element whose parent is to be retrieved
-   * @return the parent element
-   */
-  public static Element getParent(Element elem) {
-    return impl.getParent(elem);
-  }
-
-  /**
-   * Gets an attribute of the given element's style.
-   *
-   * @param elem the element whose style attribute is to be retrieved
-   * @param attr the name of the style attribute to be retrieved
-   * @return the style attribute's value
-   */
-  public static String getStyleAttribute(Element elem, String attr) {
-    return impl.getStyleAttribute(elem, attr);
-  }
-
-  /**
-   * Inserts an element as a child of the given parent element, before another
-   * child of that parent.
-   * 
-   * @param parent the parent element
-   * @param child the child element to add to <code>parent</code>
-   * @param before an existing child element of <code>parent</code> before
-   *          which <code>child</code> will be inserted
-   */
-  public static void insertBefore(Element parent, Element child, Element before) {
-    impl.insertBefore(parent, child, before);
-  }
-
-  /**
-   * Inserts an element as a child of the given parent element.
-   *
-   * @param parent the parent element
-   * @param child the child element to add to <code>parent</code>
-   * @param index the index before which the child will be inserted (any value
-   *          greater than the number of existing children will cause the child
-   *          to be appended)
-   */
-  public static void insertChild(Element parent, Element child, int index) {
-    impl.insertChild(parent, child, index);
-  }
-
-  /**
    * Creates an <code>&lt;option&gt;</code> element and inserts it as a child
-   * of the specified <code>&lt;select&gt;</code> element.
+   * of the specified <code>&lt;select&gt;</code> element. If the index is
+   * less than zero, or greater than or equal to the length of the list, then
+   * the option element will be appended to the end of the list.
    * 
    * @param select the <code>&lt;select&gt;</code> element
    * @param item the text of the new item; cannot be <code>null</code>
@@ -869,18 +352,6 @@ public class DOM {
   public static void insertListItem(Element select, String item, String value,
       int index) {
     impl.insertListItem(select, item, value, index);
-  }
-
-  /**
-   * Determine whether one element is equal to, or the child of, another.
-   *
-   * @param parent the potential parent element
-   * @param child the potential child element
-   * @return <code>true</code> if the relationship holds
-   * @see #compare(Element, Element)
-   */
-  public static boolean isOrHasChild(Element parent, Element child) {
-    return impl.isOrHasChild(parent, child);
   }
 
   /**
@@ -895,26 +366,6 @@ public class DOM {
       sCaptureElem = null;
     }
     impl.releaseCapture(elem);
-  }
-
-  /**
-   * Removes a child element from the given parent element.
-   *
-   * @param parent the parent element
-   * @param child the child element to be removed
-   */
-  public static void removeChild(Element parent, Element child) {
-    impl.removeChild(parent, child);
-  }
-
-  /**
-   * Removes the named attribute from the given element.
-   *
-   * @param elem the element whose attribute is to be removed
-   * @param attr the name of the element to remove
-   */
-  public static void removeElementAttribute(Element elem, String attr) {
-    impl.removeElementAttribute(elem, attr);
   }
 
   /**
@@ -946,32 +397,7 @@ public class DOM {
     impl.scrollIntoView(elem);
   }
 
-  /**
-   * Sets an attribute on the given element.
-   *
-   * @param elem the element whose attribute is to be set
-   * @param attr the name of the attribute to be set
-   * @param value the new attribute value
-   * @deprecated Use the more appropriately named
-   * {@link #setElementProperty(Element, String, String)} instead.
-   */
-  public static void setAttribute(Element elem, String attr, String value) {
-    setElementProperty(elem, attr, value);
-  }
-
-  /**
-   * Sets a boolean attribute on the given element.
-   *
-   * @param elem the element whose attribute is to be set
-   * @param attr the name of the attribute to be set
-   * @param value the attribute's new boolean value
-   * @deprecated Use the more appropriately named
-   * {@link #setElementPropertyBoolean(Element, String, boolean)} instead.
-   */
-  public static void setBooleanAttribute(Element elem, String attr,
-      boolean value) {
-    setElementPropertyBoolean(elem, attr, value);
-  }
+ }
 
   /**
    * Sets mouse-capture on the given element. This element will directly receive
@@ -984,64 +410,7 @@ public class DOM {
     impl.setCapture(elem);
   }
 
-  /**
-   * Sets an attribute on a given element.
-   *
-   * @param elem element whose attribute is to be set
-   * @param attr the name of the attribute
-   * @param value the value to which the attribute should be set
-   */
-  public static void setElementAttribute(Element elem, String attr,
-      String value) {
-    impl.setElementAttribute(elem, attr, value);
-  }
 
-  /**
-   * Sets a property on the given element.
-   *
-   * @param elem the element whose property is to be set
-   * @param prop the name of the property to be set
-   * @param value the new property value
-   */
-  public static void setElementProperty(Element elem, String prop,
-      String value) {
-    impl.setElementProperty(elem, prop, value);
-  }
-
-  /**
-   * Sets a boolean property on the given element.
-   *
-   * @param elem the element whose property is to be set
-   * @param prop the name of the property to be set
-   * @param value the new property value as a boolean
-   */
-  public static void setElementPropertyBoolean(Element elem, String prop,
-      boolean value) {
-    impl.setElementPropertyBoolean(elem, prop, value);
-  }
-
-  /**
-   * Sets an int property on the given element.
-   *
-   * @param elem the element whose property is to be set
-   * @param prop the name of the property to be set
-   * @param value the new property value as an int
-   */
-  public static void setElementPropertyInt(Element elem, String prop,
-      int value) {
-    impl.setElementPropertyInt(elem, prop, value);
-  }
-
-  /**
-   * Sets the {@link EventListener} to receive events for the given element.
-   * Only one such listener may exist for a single element.
-   *
-   * @param elem the element whose listener is to be set
-   * @param listener the listener to receive {@link Event events}
-   */
-  public static void setEventListener(Element elem, EventListener listener) {
-    impl.setEventListener(elem, listener);
-  }
 
   /**
    * Sets the src attribute of an img element. This method ensures that imgs
@@ -1076,19 +445,6 @@ public class DOM {
   }
 
   /**
-   * Sets an integer attribute on the given element.
-   *
-   * @param elem the element whose attribute is to be set
-   * @param attr the name of the attribute to be set
-   * @param value the attribute's new integer value
-   * @deprecated Use the more appropriately named
-   * {@link #setElementPropertyInt(Element, String, int)} instead.
-   */
-  public static void setIntAttribute(Element elem, String attr, int value) {
-    setElementPropertyInt(elem, attr, value);
-  }
-
-  /**
    * Sets an integer attribute on the given element's style.
    *
    * @param elem the element whose style attribute is to be set
@@ -1112,31 +468,6 @@ public class DOM {
   }
 
   /**
-   * Sets an attribute on the given element's style.
-   *
-   * @param elem the element whose style attribute is to be set
-   * @param attr the name of the style attribute to be set
-   * @param value the style attribute's new value
-   */
-  public static void setStyleAttribute(Element elem, String attr,
-      String value) {
-    impl.setStyleAttribute(elem, attr, value);
-  }
-
-  /**
-   * Sets the current set of events sunk by a given element. These events will
-   * be fired to the nearest {@link EventListener} specified on any of the
-   * element's parents.
-   *
-   * @param elem the element whose events are to be retrieved
-   * @param eventBits a bitfield describing the events sunk on this element (its
-   *          possible values are described in {@link Event})
-   */
-  public static void sinkEvents(Element elem, int eventBits) {
-    impl.sinkEvents(elem, eventBits);
-  }
-
-  /**
    * Returns a stringized version of the element. This string is for debugging
    * purposes and will NOT be consistent on different browsers.
    *
@@ -1146,7 +477,27 @@ public class DOM {
   public static String toString(Element elem) {
     return impl.toString(elem);
   }
+  
+  /**
+   * Gets the height of the browser window's client area excluding the
+   * scroll bar.
+   * 
+   * @return the window's client height
+   */
+  public static int windowGetClientHeight() {
+    return impl.windowGetClientHeight();
+  }
 
+  /**
+   * Gets the width of the browser window's client area excluding the
+   * vertical scroll bar.
+   * 
+   * @return the window's client width
+   */
+  public static int windowGetClientWidth() {
+    return impl.windowGetClientWidth();
+  }
+  
   /**
    * This method is called directly by native code when any event is fired.
    *
@@ -1207,7 +558,14 @@ public class DOM {
       }
     }
 
-    // Pass the event to the listener.
-    listener.onBrowserEvent(evt);
+    // Preserve the current event in case we are in a reentrant event dispatch.
+    Event prevCurrentEvent = currentEvent;
+    currentEvent = evt;
+    try {
+      // Pass the event to the listener.
+      listener.onBrowserEvent(evt);
+    } finally {
+      currentEvent = prevCurrentEvent;
+    }
   }
 }
