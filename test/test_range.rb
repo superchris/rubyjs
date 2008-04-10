@@ -5,6 +5,10 @@ class TestRange
     p a.last
     p a
 
+    i = 1
+    p ((i..i+5).to_s)
+    p ((i...i+i).to_s)
+
     p ((0..2).to_s)
     p ((0...2).to_s)
 
@@ -45,6 +49,19 @@ class TestRange
     p ((0..2) == (0..2))
     p ((0..2) == Range.new(0,2))
     p ((0..2) == (0...2))
+
+    j = 55
+    p j
+    for i in 1..100
+      j = i
+    end
+    p j
+
+    j = 54
+    p j
+    for j in 1..100
+    end
+    p j
   end
 
   def self.main

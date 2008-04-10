@@ -626,6 +626,47 @@ class MethodCompiler < SexpProcessor
   end
 
   #
+  # for var in expr do ... end
+  #
+  def process_for(exp)
+    receiver = exp.shift
+    asgn = exp.shift
+    block = exp.shift
+
+    new_exp = [:iter,
+      [:call, receiver, :each],
+      asgn,
+      block]
+
+    process(new_exp)
+  end
+
+  def process_dot2(exp)
+    range(exp, false)
+  end
+
+  def process_dot3(exp)
+    range(exp, true)
+  end
+
+  def range(exp, exclude_end)
+    from = exp.shift
+    to = exp.shift
+
+    without_result do 
+      want_expression do
+        from = process(from)
+        to = process(to)
+      end
+    end
+
+    range = @model.lookup_constant('::Range') 
+    @model.add_method_call(m = @model.encode_method("new"))
+    res = "#{range}.#{m}(#{@model.encode_nil},#{from},#{to},#{exclude_end})"
+    resultify(res)
+  end
+
+  #
   # EXPRESSION
   #
   # Attribute assignment: receiver.attr=(value)
