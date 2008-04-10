@@ -8,6 +8,6 @@ module Kernel
 
   def puts(obj="")
     obj = obj.to_s
-    `STDOUT.push(#<obj>)`
+    `STDOUT_puts(#<obj>)`
   end
 end

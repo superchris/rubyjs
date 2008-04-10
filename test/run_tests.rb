@@ -12,7 +12,7 @@ script = gen_test_suite(tests)
 rubycode.write(script)
 rubycode.close(false)
 
-jsout = `./rubyjs_gen -I./test -a ";main()" -m TestSuite #{rubycode.path} | ./utils/js/run.sh`
+jsout = `./bin/rubyjs -I./test -a ";main()" -m TestSuite #{rubycode.path} | ./utils/js/run.sh`
 rbout = `ruby -I./test < #{rubycode.path}`
 
 if jsout == rbout

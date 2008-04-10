@@ -1,0 +1,7 @@
+RUBYJS_BIN = File.join(File.dirname(__FILE__), "..", "..", "bin", "rubyjs")
+
+task "ex1.js" do 
+  sh "#{RUBYJS_BIN} -m Main -o ex1.js ex1.rb"
+end
+
+task :default => "ex1.js"

@@ -1,0 +1,9 @@
+RUBYJS_BIN = File.join(File.dirname(__FILE__), "..", "..", "bin", "rubyjs")
+OPTS=%w(NoMethodMissing NoArgumentArityChecks OptimizeArithOps).map {|o| "--opt #{o}"}.join(" ")
+#PLATFORM="--platform Konqueror"
+
+task "hw.js" do 
+  sh "#{RUBYJS_BIN} #{OPTS} --main HelloWorld -o hw.js hw.rb"
+end
+
+task :default => "hw.js"

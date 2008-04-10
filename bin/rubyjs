@@ -4,140 +4,137 @@ require 'optparse'
 require 'ostruct'
 require 'rubygems'
 
+options = OpenStruct.new 
+options.load_path = []
+options.library = []
+options.platform = []
+options.outputs = []
+options.main = nil
+options.code = nil
+options.append = "" 
+options.debug = false
+options.opts = [] 
 
-if __FILE__ == $0
+OPTS = %w(NoArgumentArityChecks NoMethodMissing OptimizeArithOps PrettyPrint)
 
-  options = OpenStruct.new 
-  options.load_path = []
-  options.library = []
-  options.platform = []
-  options.outputs = []
-  options.main = nil
-  options.code = nil
-  options.append = "" 
-  options.debug = false
-  options.opts = [] 
+def show_options
+  puts "Compiler Options:"
+  puts "  --opt NoArgumentArityChecks:: Disable generation of arity checking code"
+  puts "  --opt NoMethodMissing:: Disable method_missing functionality"
+  puts "  --opt OptimizeArithOps:: Enable native +-*/ operators"
+  puts "  --opt PrettyPrint:: Output more readable code"
+end
 
-  OPTS = %w(NoArgumentArityChecks NoMethodMissing OptimizeArithOps PrettyPrint)
-
-  def show_options
-    puts "Compiler Options:"
-    puts "  --opt NoArgumentArityChecks:: Disable generation of arity checking code"
-    puts "  --opt NoMethodMissing:: Disable method_missing functionality"
-    puts "  --opt OptimizeArithOps:: Enable native +-*/ operators"
-    puts "  --opt PrettyPrint:: Output more readable code"
+opts = OptionParser.new do |opts|
+  opts.banner = "Usage: rubyjs_gen [options] [file, [file, ...]]"
+  opts.on("-r", "--require LIBRARY",
+          "Require the LIBRARY before executing your script") do |lib|
+    options.library << lib
   end
-
-  opts = OptionParser.new do |opts|
-    opts.banner = "Usage: rubyjs_gen [options] [file, [file, ...]]"
-    opts.on("-r", "--require LIBRARY",
-            "Require the LIBRARY before executing your script") do |lib|
-      options.library << lib
-    end
-    opts.on("-I", "--load-path DIRECTORY", "Specifies load path") do |lib|
-      options.load_path << lib
-    end
-    opts.on("-P", "--platform PLATFORM", "Specifies platform") do |plat|
-      options.platform << plat
-    end
-    opts.on("-m", "--main CLASSNAME", "Entry point") do |main|
-      raise "only one entry point allowed" if options.main
-      options.main = main
-    end
-    opts.on("-e", "--eval STRING", "Eval code") do |code|
-      raise "only one code allowed" if options.code
-      options.code = code
-    end
-    opts.on("-a", "--append JSCODE", "Append Javascript code") do |append|
-      options.append << append
-      options.append << "\n"
-    end
-    opts.on("-o", "--output FILE", "Filename to write output to") do |out|
-      options.outputs << out
-    end
-    opts.on("-O", "--opt OPTION", "Set a specific compiler option") do |out|
-      if OPTS.include?(out)
-        options.opts << out
-      else
-        puts "WRONG option"
-        show_options()
-        exit 1
-      end
-    end
-    opts.on("--show-options", "--show-options", "Show all compiler options") do |out|
+  opts.on("-I", "--load-path DIRECTORY", "Specifies load path") do |lib|
+    options.load_path << lib
+  end
+  opts.on("-P", "--platform PLATFORM", "Specifies platform") do |plat|
+    options.platform << plat
+  end
+  opts.on("-m", "--main CLASSNAME", "Entry point") do |main|
+    raise "only one entry point allowed" if options.main
+    options.main = main
+  end
+  opts.on("-e", "--eval STRING", "Eval code") do |code|
+    raise "only one code allowed" if options.code
+    options.code = code
+  end
+  opts.on("-a", "--append JSCODE", "Append Javascript code") do |append|
+    options.append << append
+    options.append << "\n"
+  end
+  opts.on("-o", "--output FILE", "Filename to write output to") do |out|
+    options.outputs << out
+  end
+  opts.on("-O", "--opt OPTION", "Set a specific compiler option") do |out|
+    if OPTS.include?(out)
+      options.opts << out
+    else
+      puts "WRONG option"
       show_options()
-      exit
-    end
-    opts.on("-d", "--debug", "Turn on debug mode") do |out|
-      options.debug = true
-    end
-    opts.on_tail("-h", "--help", "Show this message") do
-      puts opts
-      exit
+      exit 1
     end
   end
-
-  args = ARGV.dup
-  opts.parse!(args)
-
-  # output to STDOUT by default
-  if options.outputs.empty?
-    options.outputs << "-"
+  opts.on("--show-options", "--show-options", "Show all compiler options") do |out|
+    show_options()
+    exit
   end
-
-  if args.empty? and !options.code
+  opts.on("-d", "--debug", "Turn on debug mode") do |out|
+    options.debug = true
+  end
+  opts.on_tail("-h", "--help", "Show this message") do
     puts opts
     exit
   end
+end
 
-  options.load_path << File.join(File.dirname(__FILE__), "src")
-  options.load_path << File.join(File.dirname(__FILE__), "src", "rubyjs", "lib")
+args = ARGV.dup
+opts.parse!(args)
 
-  $RUBYJS__LOAD_PATH = options.load_path.map {|i| File.expand_path(i)}  
-  $RUBYJS__LOAD_PATH << "."
-  $RUBYJS__PLATFORM = options.platform
-  $RUBYJS = true    # to distinguish between Ruby and RubyJS
-  $RUBYJS__DEBUG = options.debug
-  $RUBYJS__OPTS = options.opts
+# output to STDOUT by default
+if options.outputs.empty?
+  options.outputs << "-"
+end
 
-  # load RubyJS
-  $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), "src"))
-  require 'rubyjs'
+if args.empty? and !options.code
+  puts opts
+  exit
+end
 
-  # process requires
+src_dir = File.expand_path(File.join(File.dirname(__FILE__), "..", "src"))
+options.load_path << src_dir
+options.load_path << File.join(src_dir, "rubyjs", "lib")
 
-  eval_into(RubyJS::Environment) do |eval|
-    $RUBYJS__LOAD_PATH.unshift File.join(File.dirname(__FILE__), "src", "lib")
-    require 'core'
-    $RUBYJS__LOAD_PATH.shift
+$RUBYJS__LOAD_PATH = options.load_path.map {|i| File.expand_path(i)}  
+$RUBYJS__LOAD_PATH << "."
+$RUBYJS__PLATFORM = options.platform
+$RUBYJS = true    # to distinguish between Ruby and RubyJS
+$RUBYJS__DEBUG = options.debug
+$RUBYJS__OPTS = options.opts
 
-    options.library.each do |lib|
-      require lib 
-    end
+# load RubyJS
+$LOAD_PATH.unshift(src_dir)
+require 'rubyjs'
 
-    eval.call(options.code) if options.code
+# process requires
 
-    args.each do |file|
-      if file == '-'
-        eval.call(STDIN.read)
-      else
-        eval.call(File.read(file))
-      end
-    end
+eval_into(RubyJS::Environment) do |eval|
+  $RUBYJS__LOAD_PATH.unshift File.join(src_dir, "rubyjs", "lib")
+  require 'core'
+  $RUBYJS__LOAD_PATH.shift
+
+  options.library.each do |lib|
+    require lib 
   end
 
-  gen = CodeGenerator.new
-  str = "" 
-  str << gen.generate()
-  str << gen.encode("function main() { return #<#{options.main}>.#<m:main>.apply(#<#{options.main}>, arguments); }") if options.main
-  str << options.append
+  eval.call(options.code) if options.code
 
-  options.outputs.each do |outname| 
-    if outname == "-"
-      STDOUT << str
-      STDOUT.flush
+  args.each do |file|
+    if file == '-'
+      eval.call(STDIN.read)
     else
-      File.open(outname, 'w+') {|f| f << str }
+      eval.call(File.read(file))
     end
+  end
+end
+
+gen = CodeGenerator.new
+str = "" 
+str << gen.generate()
+str << gen.encode("function main() { return #<#{options.main}>.#<m:main>.apply(#<#{options.main}>, arguments); }") if options.main
+str << options.append
+
+options.outputs.each do |outname| 
+  if outname == "-"
+    STDOUT << str
+    STDOUT.flush
+  else
+    File.open(outname, 'w+') {|f| f << str }
   end
 end
