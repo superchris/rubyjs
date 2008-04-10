@@ -1,0 +1,5 @@
+task "client.js" do 
+  sh "rubyjs --main Client -o client.js client.rb"
+end
+
+task :default => "client.js"

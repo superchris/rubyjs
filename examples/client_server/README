@@ -1,0 +1,18 @@
+Start the server:
+
+  ruby -rubygems server.rb
+
+Then point your browser at:
+
+  http://localhost:3000/index.html
+
+and click the link.
+
+This will send an AJAX request to the server, which in turn returns JSON
+encoded data. This JSON data is converted to a RubyJS data structure
+which is actually the same as the data structure that is converted to
+JSON on the server side (in this example: [{'Hello' => 'World!'}],
+i.e. an Array that contains a Hash). Then, the #inspect method is called
+for this data structure, which returns a String representation of that
+data structure, actually the same as you'd get when you call #inspect
+in a regular Ruby application.
