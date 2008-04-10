@@ -26,7 +26,7 @@ def show_options
 end
 
 opts = OptionParser.new do |opts|
-  opts.banner = "Usage: rubyjs_gen [options] [file, [file, ...]]"
+  opts.banner = "Usage: rubyjs [options] [file, [file, ...]]"
   opts.on("-r", "--require LIBRARY",
           "Require the LIBRARY before executing your script") do |lib|
     options.library << lib
