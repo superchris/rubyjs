@@ -2,11 +2,11 @@ require 'rubygems'
 
 spec = Gem::Specification.new do |s|
   s.name = 'rubyjs'
-  s.version = '0.7.1'
+  s.version = '0.8.0'
   s.summary = 'RubyJS is a Ruby to Javascript Compiler.'
 
   s.files = Dir['**/*']
-  s.add_dependency('RubyInline', '>= 3.6.0')
+  s.add_dependency('ParseTree', '>= 2.1.1')
 
   s.require_path = 'src'
   s.bindir = 'bin'

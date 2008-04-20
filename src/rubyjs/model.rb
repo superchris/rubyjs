@@ -25,14 +25,20 @@ class MethodExtractor < SexpProcessor
     @methods = {} 
   end
 
+  def process_defs(exp)
+    defs, _self, name, code, *r = *exp
+    raise unless r.empty?
+    raise unless _self == s(:self)
+
+    @methods[name.to_s] = s(:defn, name, code) 
+    return s()
+  end
+
   def process_defn(exp)
-    defn, name, code = *exp  
-    name = name.to_s
-    if name =~ /^self\.(.*)$/
-      @methods[$1] = exp
-    else
-      @instance_methods[name] = exp
-    end
+    defn, name, code, *r = *exp  
+    raise unless r.empty?
+
+    @instance_methods[name.to_s] = exp
     return s()
   end
 end
@@ -233,7 +239,7 @@ class Model < Encoder
     name = namify(klass)
 
     me = MethodExtractor.new
-    me.process(ParseTree.new.parse_tree(klass))
+    me.process(*ParseTree.new.parse_tree(klass))
 
     if klass.is_a?(::Class)
       a = klass.ancestors

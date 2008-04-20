@@ -137,6 +137,8 @@ class TestYield
     test_loop2
     test_while_loop
 
+    (proc {||}).call
+
     begin
       test_proc
     rescue LocalJumpError => e

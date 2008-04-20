@@ -9,6 +9,7 @@ class DebugNameGenerator
 
   def initialize
     @tmp_counter = 0
+    @cache = {}
   end
   
   def fresh
@@ -61,15 +62,31 @@ class DebugNameGenerator
 
   def get(name)
     raise unless name.is_a?(String)
-    MAP.each do |pat, rep|
-      name = name.gsub(pat, "$" + rep)
-    end
 
-    if name !~ /^[A-Za-z_\$0-9]+$/
-      STDERR.puts name
-    end
+    if @cache[name]
+      return @cache[name]
+    else
+      name2 = name
+      MAP.each do |pat, rep|
+        name2 = name2.gsub(pat, "$" + rep)
+      end
 
-    return name
+      if name2 !~ /^[A-Za-z_\$0-9]+$/
+        STDERR.puts name2
+      end
+
+      @cache[name] = name2
+      return name2
+    end
   end
+
+  def cache
+    @cache
+  end
+
+  def reverse_lookup(encoded_name)
+    @cache.index(encoded_name)
+  end
+
 
 end

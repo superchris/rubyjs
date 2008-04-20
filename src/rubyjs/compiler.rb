@@ -1312,17 +1312,30 @@ class MethodCompiler < SexpProcessor
   # String interpolation
   #
   def process_dstr(exp)
-    pre_str = exp.shift
-    res = without_result do
+    arr = []
+    arr << exp.shift.inspect
+
+    without_result do
       want_expression do
-        # NOTE:
-        # We use +to_s+, and the + operator to
-        # build the interpolated string.
-        @model.add_method_call(to_s = @model.encode_method("to_s"))
-        "(" + ([pre_str.inspect] + exp.map {|e| "(" + process(e) + ").#{to_s}()"}).join(" + ") + ")"
+        exp.each {|e| arr << "(" + process(e) + ")" }
       end
     end
+
     exp.clear
+    resultify("(" + arr.join(" + ") + ")")
+  end
+
+  def process_evstr(exp)
+    e = exp.shift
+
+    @model.add_method_call(to_s = @model.encode_method("to_s"))
+
+    res = without_result do
+      want_expression do
+        "(" + process(e) + ").#{to_s}()" 
+      end
+    end
+ 
     resultify(res)
   end
 
@@ -1829,7 +1842,7 @@ class MethodCompiler < SexpProcessor
       # Case 1: {}: Any number of arguments may be passed
       arity = -1
       fun_str << "function(){"
-    elsif params == :zero_arguments
+    elsif params == 0
       # Case 2: {||}: Zero arguments
       arity = 0
       fun_str << "function(){"
