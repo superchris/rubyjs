@@ -9,18 +9,21 @@ COPYRIGHT
 
 ABOUT
 
-  RubyJS translates Ruby code into Javascript code. NOTE that it executes the
-  Ruby code before it translates it into Javascript. This has the advantage of
-  being able to (mis-)use all of Ruby's meta-programming tricks in the global
-  scope (i.e. for defining classes and methods, NOT within methods!).
+  RubyJS translates Ruby code into Javascript code. NOTE that it executes
+  the Ruby code before it translates it into Javascript. This has the
+  advantage of being able to (mis-)use all of Ruby's meta-programming
+  tricks in the global scope (i.e. for defining classes and methods, NOT
+  within methods!).
 
 REQUIREMENTS
 
-  * ParseTree 1.7.1 (with patches) -> included in vendor/
+  * Ruby >= 1.8.6
+  * ParseTree >= 2.1.1 
 
 MAPPING
 
-  The mapping from Ruby objects (left) to Javascript values (right) are given below. 
+  The mapping from Ruby objects (left) to Javascript values (right) are
+  given below. 
 
   true          -> true (class Boolean)
   false         -> false (class Boolean)
