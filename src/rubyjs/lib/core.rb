@@ -120,6 +120,10 @@ class Class
     `return #<self>.#<attr:classname>`
   end
 
+  def instance_methods
+    allocate.methods
+  end
+  
   alias inspect name
 
   def self.new(superclass, classname, object_constructor=nil)
@@ -255,6 +259,16 @@ class Object
   alias inspect to_s
   alias hash to_s
 
+  def methods
+    methods = [];
+    `for (meth in #<self>) {
+       if (typeof #<self>[meth] == "function") {
+         #<methods>.push(#<globalattr:mm>[meth]);
+       }
+    }`
+    methods
+  end
+    
   def method(id)
     Method.new(self, id)
   end
