@@ -34,14 +34,14 @@
       raise StandardError, msg unless test
     end
 
-    #  def assert_block msg = "assert_block failed."
-    #    assert yield, msg
-    #  end
-    #
-    #  def assert_equal exp, act, msg = ""
-    #    msg += '.' unless msg.empty?
-    #    assert exp == act, "#{msg}\n<#{exp.inspect}> expected but was\n<#{act.inspect}>.".strip
-    #  end
+    def assert_block msg = "assert_block failed."
+      assert yield, msg
+    end
+    
+    def assert_equal exp, act, msg = ""
+      msg += '.' unless msg.empty?
+      assert exp == act, "#{msg}\n<#{exp.inspect}> expected but was\n<#{act.inspect}>.".strip
+    end
     #
     #  def assert_in_delta exp, act, delta, msg = "Expected #{exp} to be within #{delta} of #{act}"
     #    assert delta.to_f > (exp.to_f - act.to_f).abs, msg
