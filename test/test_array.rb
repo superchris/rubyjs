@@ -1,26 +1,17 @@
-class TestArray
-  if $RUBYJS
-    def array
-      [1, 2, `null`, [`null`, `null`, 4]]
-    end
-  else
-    def array
-      [1, 2, nil, [nil, nil, 4]]
-    end
-  end
+require 'microunit'
+class TestArray < TestCase
 
-  def test
-    # delete
+  def test_array
+    a = [1, 2, `null`, [`null`, `null`, 4]]
+    assert_equal a, [1, 2, nil, [nil, nil, 4]]
+    assert a.eql? [1, 2, nil, [nil, nil, 4]] 
+  end
+  
+  def test_delete
     a = [ "a", "b", "b", "b", "c" ]
-    p a.delete("b")                   #=> "b"
-    p a                               #=> ["a", "c"]
-    p a.delete("z")                   #=> nil
-
-    puts "test native JS array mapping"
-    p array()
+    a.delete "b"
+    assert_equal a, ["a", "c"]
   end
+  
 
-  def self.main
-    new.test
-  end
 end

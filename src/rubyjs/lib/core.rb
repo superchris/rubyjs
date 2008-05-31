@@ -788,6 +788,10 @@ class Array
     map {|i| i.to_s}.join
   end
 
+  def ==(obj)
+    self.eql?(obj)
+  end
+  
   def inspect
     str = "["
     str += self.map {|elem| elem.inspect}.join(", ")
@@ -796,27 +800,11 @@ class Array
   end
 
   def eql?(other)
-    `
-    if (!(#<other> instanceof Array)) return false;
-    if (#<self>.length != #<other>.length) return false;  
-
-    //
-    // compare element-wise
-    //
-    for (var i = 0; i < #<self>.length; i++) 
-    {
-      if (! #<self>[i].#<m:eql?>(#<nil>, #<other>[i]))
-      {
-        // 
-        // at least for one element #eql? holds not true
-        //
-        return false;
-      }
-    }
-    
-    return true;
-    `
+    each_with_index do |elem, i|
+      return false unless elem.eql? other[i]
+    end
   end
+
 end
 
 class Regexp
