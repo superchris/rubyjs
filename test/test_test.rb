@@ -14,11 +14,4 @@ class TestTest < TestCase
     assert_equal 1 + 1, 2, "1 + 1 == 2"
   end
   
-  def self.main
-    #puts TestTest.instance_methods.join(",")
-    TestRunner.run(TestTest)
-    "foo"
-  rescue StandardError => error
-    puts error
-  end
 end
