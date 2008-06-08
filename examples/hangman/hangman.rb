@@ -96,6 +96,7 @@ class Hangman
   def guess(letter)
     if letters.include?(letter)
       @guessed_letters[letter] = true
+      @letters_div.inner_html = display_word
       puts "You win!" if won? 
     else
       @misses += 1
@@ -105,7 +106,6 @@ class Hangman
         @guess_button["disabled"] = true
       end
     end
-    @letters_div.inner_html = display_word
     @guess_input["value"] = ""
   end
   
@@ -117,7 +117,7 @@ class Hangman
     @guessed_letters.values.each do |guessed|
       return false unless guessed
     end
-    return 
+    return true
   end
 
   def self.main

@@ -805,6 +805,12 @@ class Array
     end
   end
 
+  def include?(candidate)
+    each do |elem|
+      return true if elem.eql?(candidate)
+    end
+    false
+  end
 end
 
 class Regexp

@@ -127,7 +127,11 @@ end
 gen = CodeGenerator.new
 str = "" 
 str << gen.generate()
-str << gen.encode("function main() { return #<#{options.main}>.#<m:main>.apply(#<#{options.main}>, arguments); }") if options.main
+if options.main
+  klass, method = options.main.split(".")
+  method ||= "main"
+  str << gen.encode("#<#{klass}>.#<m:#{method}>.apply(#<#{klass}>); ")
+end
 str << options.append
 
 options.outputs.each do |outname| 

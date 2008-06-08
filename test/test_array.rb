@@ -13,5 +13,9 @@ class TestArray < TestCase
     assert_equal a, ["a", "c"]
   end
   
-
+  def test_include
+    assert [1, 2, 3].include? 2
+    assert ! [1, 3].include?(2)
+  end
+  
 end
