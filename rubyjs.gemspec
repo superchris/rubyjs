@@ -6,7 +6,6 @@ spec = Gem::Specification.new do |s|
   s.summary = 'RubyJS is a Ruby to Javascript Compiler.'
 
   s.files = Dir['**/*']
-
   s.add_dependency('ParseTree', '>= 2.1.1')
   s.requirements << "Ruby >= 1.8.6"
 
