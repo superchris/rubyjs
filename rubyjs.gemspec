@@ -2,7 +2,7 @@ require 'rubygems'
 
 spec = Gem::Specification.new do |s|
   s.name = 'rubyjs'
-  s.version = '0.8.0'
+  s.version = '0.8.1'
   s.summary = 'RubyJS is a Ruby to Javascript Compiler.'
 
   s.files = Dir['**/*']
