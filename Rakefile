@@ -54,7 +54,7 @@ spec = Gem::Specification.new do |s|
 
   s.files = [#{files}]
   s.add_dependency('ParseTree', '>= 2.1.1')
-  s.requirements << "Ruby >= 1.8.6"
+  s.required_ruby_version = ">= 1.8.6"
 
   s.require_path = 'src'
   s.bindir = 'bin'
