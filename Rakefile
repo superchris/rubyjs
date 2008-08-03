@@ -45,11 +45,11 @@ desc "Generate a rubyspec file that github won't complain about"
 task :generate_gemspec do
   files = Dir['**/*'].reject {|name| name =~ /^nbproject/}.
       map {|entry| "'#{entry}'"}.join(", ")
-  File.open("superchris-rubyjs.gemspec", "w") do |f|
+  File.open("rubyjs.gemspec", "w") do |f|
     f.puts <<EOF
 spec = Gem::Specification.new do |s|
-  s.name = 'superchris-rubyjs'
-  s.version = '0.8.2'
+  s.name = 'rubyjs'
+  s.version = '0.8.1'
   s.summary = 'RubyJS is a Ruby to Javascript Compiler. This is a fork with some added features.'
 
   s.files = [#{files}]
