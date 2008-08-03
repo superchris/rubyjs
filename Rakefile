@@ -48,9 +48,9 @@ task :generate_gemspec do
   File.open("rubyjs.gemspec", "w") do |f|
     f.puts <<EOF
 spec = Gem::Specification.new do |s|
-  s.name = 'rubyjs'
-  s.version = '0.8.1'
-  s.summary = 'RubyJS is a Ruby to Javascript Compiler.'
+  s.name = 'superchris-rubyjs'
+  s.version = '0.8.2'
+  s.summary = 'RubyJS is a Ruby to Javascript Compiler. This is a fork with some added features.'
 
   s.files = [#{files}]
   s.add_dependency('ParseTree', '>= 2.1.1')
@@ -60,10 +60,8 @@ spec = Gem::Specification.new do |s|
   s.bindir = 'bin'
   s.executables = ['rubyjs']
 
-  s.author = "Michael Neumann"
-  s.email = "mneumann@ntecs.de"
-  s.homepage = "http://rubyforge.org/projects/rubyjs"
-  s.rubyforge_project = "rubyjs"
+  s.author = "fork by Chris Nelson, originally by Michael Neumann"
+  s.email = "me@christophernelsonconsulting.com"
 end   
 EOF
   end
