@@ -45,7 +45,7 @@ desc "Generate a rubyspec file that github won't complain about"
 task :generate_gemspec do
   files = Dir['**/*'].reject {|name| name =~ /^nbproject/}.
       map {|entry| "'#{entry}'"}.join(", ")
-  File.open("rubyjs.gemspec", "w") do |f|
+  File.open("superchris-rubyjs.gemspec", "w") do |f|
     f.puts <<EOF
 spec = Gem::Specification.new do |s|
   s.name = 'superchris-rubyjs'
