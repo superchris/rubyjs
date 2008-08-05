@@ -1,19 +1,20 @@
-#module MicroUnit
+module MicroUnit
   class TestCase
-    #  def self.reset
-    #    @@test_suites = {}
-    #  end
-    #
-    #  reset
-    #
-    #  def self.inherited klass
-    #    @@test_suites[klass] = true
-    #  end
-    #
-    #  def self.test_suites
-    #    @@test_suites.keys.sort_by { |ts| ts.name }
-    #  end
-    #
+#    def self.reset
+#      @@test_suites = {}
+#    end
+#
+#    reset
+
+#    def self.inherited klass
+#      @test_suites ||= {}
+#      @test_suites[klass] = true
+#    end
+#
+#    def self.test_suites
+#      @test_suites.keys.sort_by { |ts| ts.name }
+#    end
+
     attr_accessor :_assertions
 
     def setup
@@ -184,4 +185,4 @@
       @failures += 1
     end
   end
-#end
+end

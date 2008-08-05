@@ -7,6 +7,8 @@
 
 class DebugNameGenerator
 
+  PREFIX = "___"
+  
   def initialize
     @tmp_counter = 0
     @cache = {}
@@ -52,7 +54,8 @@ class DebugNameGenerator
     %w(< lt),
     %w([]= set),
     %w([] at),
-    %w(= eq)
+    %w(= eq),
+    %w(:: doublecolon)
   ]
 
   #
@@ -68,7 +71,7 @@ class DebugNameGenerator
     else
       name2 = name
       MAP.each do |pat, rep|
-        name2 = name2.gsub(pat, "$" + rep)
+        name2 = name2.gsub(pat, PREFIX + rep)
       end
 
       if name2 !~ /^[A-Za-z_\$0-9]+$/

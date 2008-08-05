@@ -25,16 +25,12 @@ rule ".html" => ".js" do |t|
     <title></title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     
-    <script src="#{t.source.pathmap("%f")}"></script>
+    
     
   </head>
   <body>
       
-  <script>
-
-main();
-
-</script>
+  <script src="#{t.source.pathmap("%f")}"></script>
   </body>
 </html>    
 EOHTML

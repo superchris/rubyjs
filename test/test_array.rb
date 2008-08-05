@@ -1,5 +1,6 @@
 require 'microunit'
-class TestArray < TestCase
+
+class TestArray < MicroUnit::TestCase
 
   def test_array
     a = [1, 2, `null`, [`null`, `null`, 4]]
