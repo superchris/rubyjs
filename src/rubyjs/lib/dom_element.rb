@@ -21,8 +21,9 @@ class DOMElement
   end
   
   def []=(attr, value)
+    attr_name = attr.to_s
     element = @dom_element
-    `#<element>[#<attr>] = #<value>;`
+    `#<element>[#<attr_name>] = #<value>;`
     nil
   end
   

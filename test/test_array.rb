@@ -15,7 +15,7 @@ class TestArray < MicroUnit::TestCase
   end
   
   def test_include
-    assert [1, 2, 3].include? 2
+    assert [1, 2, 3].include? 5
     assert ! [1, 3].include?(2)
   end
   
