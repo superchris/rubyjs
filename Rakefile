@@ -40,7 +40,7 @@ end
 desc "Generate a rubyspec file that github won't complain about"
 task :generate_gemspec do
   files = Dir['**/*'].reject { |file|
-    file if [/^nbproject/, /^examples/, /~$/, /\.gem$/, /test\/*.js/, /test\/*.html/ ].detect { |exp| file =~ exp  }
+    file if [/^nbproject/, /^examples/, /~$/, /\.gem$/, /test\/.*.js/, /test\/.*.html/ ].detect { |exp| file =~ exp  }
   }.map {|entry| "'#{entry}'"}.join(", \n")
   File.open("rubyjs.gemspec", "w") do |f|
     f.puts <<EOF
