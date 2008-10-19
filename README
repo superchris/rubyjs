@@ -13,7 +13,7 @@ ABOUT
   the Ruby code before it translates it into Javascript. This has the
   advantage of being able to (mis-)use all of Ruby's meta-programming
   tricks in the global scope (i.e. for defining classes and methods, NOT
-  within methods!).
+  within methods!).  This fork adds several nifty features.
 
 REQUIREMENTS
 
