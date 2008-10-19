@@ -125,6 +125,10 @@ class Class
   end
   
   alias inspect name
+  
+  def to_s
+    name
+  end
 
   def self.new(superclass, classname, object_constructor=nil)
     unless object_constructor
@@ -535,7 +539,11 @@ class String
     var i = #<self>.search(#<pattern>);
     return (i == -1 ? #<nil> : i)`
   end
-
+  
+  def ==(obj)
+    `return (#<self> == #<obj>)`
+  end
+  
   def gsub(pattern, replacement=nil)
     # from prototype.js
     result, source, match = "", self, nil
@@ -555,8 +563,7 @@ class String
   end
 
   def sub(pattern, replacement)
-    # FIXME: block
-    `#<self>.replace(pattern, replacement)`
+    `return #<self>.replace(#<pattern>, #<replacement>)`
   end
 
   def [](index, len=nil)
@@ -570,6 +577,19 @@ class String
       return nil if len < 0
       `return #<self>.substring(#<index>, #<index>+#<len>)`
     end
+  end
+  
+  def tr(from, to)   
+    newstr = self
+    for i in 0..(from.length)
+      replace_with = to.length > i ? to[i] : to
+      newstr = newstr.gsub(from[i], replace_with)
+    end
+    newstr
+  end
+  
+  def downcase
+    `return #<self>.toLowerCase();`
   end
 end
 

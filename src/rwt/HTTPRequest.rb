@@ -47,12 +47,12 @@ class HTTPRequest
     `return new XMLHttpRequest()`
   end
 
-  def self.asyncImpl(url, method, data="", user=nil, pwd=nil)
+  def self.asyncImpl(url, method, data="", content_type="text/plain",user=nil, pwd=nil)
     xmlHttp = createXmlHTTPRequest()
    `
     try {
       #<xmlHttp>.open(#<method>, #<url>, true);
-      #<xmlHttp>.setRequestHeader("Content-Type", "text/plain; charset=utf-8");
+      #<xmlHttp>.setRequestHeader("Content-Type", #<content_type> + "; charset=utf-8");
       #<xmlHttp>.onreadystatechange = function() {
         if (#<xmlHttp>.readyState == 4) {
           #<xmlHttp>.onreadystatechange = #<globalattr:null_func>; `

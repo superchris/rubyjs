@@ -1,5 +1,8 @@
-class TestString
-  def test
+require 'microunit'
+
+class TestString < MicroUnit::TestCase
+  
+  def xtest
     # inspect
     p "hello"
     p "hallo\b\t\n"
@@ -33,6 +36,7 @@ class TestString
     @b = 4.5
     p "#{@a},#{@b}"
 
+    
     # gsub
     s = "hallo".gsub("l", "r")
     p s
@@ -44,8 +48,27 @@ class TestString
     p s
     "hallllllo".gsub(/(l)l/) {|i| p i }
   end
-
-  def self.main
-    new.test
+  
+  def test_gsub
+    assert_equal "harro", "hallo".gsub("l", "r")
   end
+  
+  def test_sub
+    assert_equal "otfo", "foot".sub(/(fo)(ot)/, '$2fo')
+    assert_equal "Foo_Bar", "FooBar".sub(/([a-z\d])([A-Z])/, '$1_$2')
+  end
+
+  def test_tr
+    # from the standard lib docs
+    assert_equal "h*ll*", "hello".tr('aeiou', '*')
+    #assert_equal "*e**o", "hello".tr('^aeiou', '*')   #=> 
+    assert_equal "hippo", "hello".tr('el', 'ip')      #=> 
+    #assert_equal "ifmmp", "hello".tr('a-y', 'b-z')    #=>    
+  end
+  
+  def test_downcase
+    assert_equal "foo", "Foo".downcase
+    assert_equal "foo", "fOO".downcase
+  end
+  
 end
