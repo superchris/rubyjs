@@ -147,7 +147,9 @@ class MethodCompiler < SexpProcessor
     #
     @exception_name = nil
 
-
+    # The newest version of sexp-processor seems to need this for things to
+    # work.  It isn't good that I don't understand why :(
+    @require_empty = false
 
     #
     # Each method has a unique id assigned to it (a simple integer).
