@@ -1,0 +1,21 @@
+GEM
+  remote: http://rubygems.org/
+  specs:
+    ParseTree (2.1.1)
+      RubyInline (>= 3.6.0)
+      hoe (>= 1.4.0)
+    RubyInline (3.9.0)
+      ZenTest (~> 4.3)
+    ZenTest (4.6.0)
+    hoe (2.10.0)
+      rake (~> 0.8)
+    rake (0.9.2)
+    sexp_processor (3.0.5)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  ParseTree (= 2.1.1)
+  rake
+  sexp_processor
